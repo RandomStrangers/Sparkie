@@ -36,9 +36,9 @@ namespace GoldenSparks.Gui {
             chat_cbTabBots.Checked = Server.Config.TablistBots;
             
             chat_txtShutdown.Text = Server.Config.DefaultShutdownMessage;
-            chat_chkCheap.Checked = Server.Config.ShowInvulnerableMessage;
+            chat_chkCheap.Checked = Server.Config.ShowInvincibleMessage;
             chat_txtCheap.Enabled = chat_chkCheap.Checked;
-            chat_txtCheap.Text = Server.Config.InvulnerableMessage;
+            chat_txtCheap.Text = Server.Config.InvincibleMessage;
             chat_txtBan.Text = Server.Config.DefaultBanMessage;
             chat_txtPromote.Text = Server.Config.DefaultPromoteMessage;
             chat_txtDemote.Text = Server.Config.DefaultDemoteMessage;
@@ -58,8 +58,8 @@ namespace GoldenSparks.Gui {
             Server.Config.TablistBots = chat_cbTabBots.Checked;
             
             Server.Config.DefaultShutdownMessage = chat_txtShutdown.Text;
-            Server.Config.ShowInvulnerableMessage = chat_chkCheap.Checked;
-            Server.Config.InvulnerableMessage = chat_txtCheap.Text;
+            Server.Config.ShowInvincibleMessage = chat_chkCheap.Checked;
+            Server.Config.InvincibleMessage = chat_txtCheap.Text;
             Server.Config.DefaultBanMessage = chat_txtBan.Text;
             Server.Config.DefaultPromoteMessage = chat_txtPromote.Text;
             Server.Config.DefaultDemoteMessage = chat_txtDemote.Text;

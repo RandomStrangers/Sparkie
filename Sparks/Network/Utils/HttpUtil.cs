@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -63,9 +63,9 @@ namespace GoldenSparks.Network {
                 if (webEx != null && webEx.Response != null) webEx.Response.Close();
             } catch { }
         }
+        
 
-
-        public class CustomWebClient : WebClient {
+        class CustomWebClient : WebClient {
             protected override WebRequest GetWebRequest(Uri address) {
                 HttpWebRequest req = (HttpWebRequest)base.GetWebRequest(address);
                 req.ServicePoint.BindIPEndPointDelegate = BindIPEndPointCallback;
@@ -76,7 +76,7 @@ namespace GoldenSparks.Network {
         
         static IPEndPoint BindIPEndPointCallback(ServicePoint servicePoint, IPEndPoint remoteEP, int retryCount) {
             IPAddress localIP = null;
-            if (Server.Listener != null) {
+            if (Server.Listener.IP != null) {
                 localIP = Server.Listener.IP;
             } else if (!IPAddress.TryParse(Server.Config.ListenIP, out localIP)) {
                 return null;
@@ -98,51 +98,37 @@ namespace GoldenSparks.Network {
             wrapped.AuthenticateAsClient(host, null, TLS_ALL, false);
             return wrapped;
         }
-
+        
+        
+        const string DROPBOX_HTTP_PREFIX  = "http://www.dropbox";
+        const string DROPBOX_HTTPS_PREFIX = "https://www.dropbox";
+        
         /// <summary> Prefixes a URL by http:// if needed, and converts dropbox webpages to direct links. </summary>
-        public static void FilterURL(ref string url)
-        {
+        public static void FilterURL(ref string url) {
             if (!url.CaselessStarts("http://") && !url.CaselessStarts("https://"))
                 url = "http://" + url;
-            const string DROPBOX_HTTP_PREFIX = "http://www.dropbox";
-            const string DROPBOX_HTTPS_PREFIX = "https://www.dropbox";
+            
             // a lot of people try linking to the dropbox page instead of directly to file, so auto correct
-            if (url.CaselessStarts(DROPBOX_HTTP_PREFIX))
-            {
+            if (url.CaselessStarts(DROPBOX_HTTP_PREFIX)) {
                 url = AdjustDropbox(url, DROPBOX_HTTP_PREFIX.Length);
-            }
-            else if (url.CaselessStarts(DROPBOX_HTTPS_PREFIX))
-            {
+            } else if (url.CaselessStarts(DROPBOX_HTTPS_PREFIX)) {
                 url = AdjustDropbox(url, DROPBOX_HTTPS_PREFIX.Length);
-
-                url = url.Replace("dl.dropboxusercontent.com", "dl.dropbox.com");
             }
+            
+            url = url.Replace("dl.dropboxusercontent.com", "dl.dropbox.com");
         }
-        static string AdjustDropbox(string url, int prefixLen)
-        {
+        
+        static string AdjustDropbox(string url, int prefixLen) {
             url = "https://dl.dropbox" + url.Substring(prefixLen);
 
             return url
+                .Replace("dl=1", "dl=0")
                 .Replace("?dl=0", "")
                 .Replace("&dl=0", "")
                 .Replace("%dl=0", "");
         }
-
-        static bool CheckHttpOrHttps(Player p, string url)
-        {
-            Uri uri;
-            // only check valid URLs here
-            if (!url.Contains("://")) return true;
-            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) return true;
-
-            string scheme = uri.Scheme;
-            if (scheme.CaselessEq("http") || scheme.CaselessEq("https")) return true;
-
-            p.Message("&WOnly http:// or https:// urls are supported, " +
-                      "{0} is a {1}:// url", url, scheme);
-            return false;
-        }
-
+        
+        
         /// <summary> Prefixes a URL by http:// if needed, and converts dropbox webpages to direct links. </summary>
         /// <remarks> Ensures URL is a valid http/https URI. </remarks>
         public static Uri GetUrl(Player p, ref string url) {
@@ -155,29 +141,22 @@ namespace GoldenSparks.Network {
             }
             return uri;
         }
-
-        static string DescribeError(Exception ex)
-        {
-            try
-            {
-                WebException webEx = (WebException)ex;
-                // prefer explicit http status error codes if possible
-                try
-                {
-                    int status = (int)((HttpWebResponse)webEx.Response).StatusCode;
-                    return "(" + status + " error) from ";
-                }
-                catch
-                {
-                    return "(" + webEx.Status + ") from ";
-                }
-            }
-            catch
-            {
-                return null;
-            }
+        
+        static bool CheckHttpOrHttps(Player p, string url) {
+            Uri uri;
+            // only check valid URLs here
+            if (!url.Contains("://")) return true;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) return true;
+            
+            string scheme = uri.Scheme;
+            if (scheme.CaselessEq("http") || scheme.CaselessEq("https")) return true;
+            
+            p.Message("&WOnly http:// or https:// urls are supported, " +
+                      "{0} is a {1}:// url", url, scheme);
+            return false;
         }
-
+        
+        
         public static byte[] DownloadData(string url, Player p) {
             Uri uri = GetUrl(p, ref url);
             if (uri == null) return null;
@@ -218,6 +197,21 @@ namespace GoldenSparks.Network {
             byte[] data = DownloadData(p, url, uri);
             if (data == null) p.Message("&WThe url may need to end with its extension (such as .jpg).");
             return data;
+        }
+        
+        static string DescribeError(Exception ex) {
+            try {
+                WebException webEx = (WebException)ex;
+                // prefer explicit http status error codes if possible
+                try {
+                    int status = (int)((HttpWebResponse)webEx.Response).StatusCode;
+                    return "(" + status + " error) from ";
+                } catch {
+                    return "(" + webEx.Status + ") from ";
+                }
+            } catch {
+                return null;
+            }
         }
     }
 }

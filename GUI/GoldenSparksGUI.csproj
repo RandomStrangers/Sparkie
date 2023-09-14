@@ -122,9 +122,6 @@
     <Compile Include="PropertyWindow\PropertyWindow.Economy.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PropertyWindow\PropertyWindow.Games.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="PropertyWindow\PropertyWindow.General.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -149,7 +146,6 @@
     <Compile Include="Settings\LevelProperties.cs" />
     <Compile Include="Settings\PlayerProperties.cs" />
     <Compile Include="Settings\TypeConverters.cs" />
-    <Compile Include="Settings\ZombieProperties.cs" />
     <Compile Include="..\GUI\properties\AssemblyInfo.cs" />
     <Compile Include="UPnP.cs" />
     <Compile Include="Window\Window.cs">
@@ -182,7 +178,7 @@
   <ItemGroup>
     <Content Include="GSC.ico" />
     <Content Include="Resources\%24this.Icon.ico" />
-    <None Include="Resources\RandomStrangers.ico" />
+    <None Include="Resources\GSC.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

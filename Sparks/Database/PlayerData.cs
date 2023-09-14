@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,14 +16,13 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Data;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.DB {
-    
+namespace GoldenSparks.DB 
+{
     /// <summary> Retrieves or sets player stats in the database. </summary>
-    public class PlayerData {
-
+    public class PlayerData 
+    {
         public const string ColumnDeaths = "totalDeaths";
         public const string ColumnLogins = "totalLogin";
         public const string ColumnMoney  = "Money";
@@ -51,8 +50,7 @@ namespace GoldenSparks.DB {
         public long TotalModified, TotalDrawn, TotalPlaced, TotalDeleted;
         public TimeSpan TotalTime;
         
-        static object ReadID(IDataRecord record, object arg) { return record.GetInt32(0); }
-        public static void Create(Player p) {
+        internal static void Create(Player p) {
             p.prefix = "";
             p.SetColor(p.group.Color);
             p.FirstLogin = DateTime.Now;
@@ -62,10 +60,14 @@ namespace GoldenSparks.DB {
             Database.AddRow("Players", "Name, IP, FirstLogin, LastLogin, totalLogin, Title, " +
                             "totalDeaths, Money, totalBlocks, totalKicked, Messages, TimeSpent",
                             p.name, p.ip, now, now, 1, "", 0, 0, 0, 0, 0, (long)p.TotalTime.TotalSeconds);
-            
-            object id = Database.ReadRows("Players", "ID", null, ReadID, "WHERE Name=@0", p.name);
-            if (id != null) {
-                p.DatabaseID = (int)id;
+
+            int id = -200;
+            Database.ReadRows("Players", "ID", 
+                                record => id = record.GetInt32(0),
+                                "WHERE Name=@0", p.name);
+
+            if (id != -200) {
+                p.DatabaseID = id;
             } else {
                 p.DatabaseID = NameConverter.InvalidNameID(p.name);
             }
@@ -95,8 +97,8 @@ namespace GoldenSparks.DB {
             p.money = Money;
             p.TimesBeenKicked = Kicks;
         }
-
-        public static PlayerData Parse(IDataRecord record) {
+        
+        internal static PlayerData Parse(ISqlRecord record) {
             PlayerData data = new PlayerData();
             data.Name = record.GetText(ColumnName);
             data.IP   = record.GetText(ColumnIP);
@@ -108,7 +110,7 @@ namespace GoldenSparks.DB {
                 long secs = long.Parse(rawTime);
                 data.TotalTime = TimeSpan.FromSeconds(secs);
             } catch {
-                data.TotalTime = rawTime.ParseOldDBTimeSpent();
+                data.TotalTime = Database.ParseOldDBTimeSpent(rawTime);
             }
             
             data.FirstLogin = ParseDateTime(record, ColumnFirstLogin);
@@ -133,17 +135,16 @@ namespace GoldenSparks.DB {
             data.TotalDeleted  = UnpackHi(drawn);
             return data;
         }
-        public static object Read(IDataRecord record, object arg) { return Parse(record); }
-
-        public static long ParseLong(string value) {
+        
+        internal static long ParseLong(string value) {
             return (value.Length == 0 || value.CaselessEq("null")) ? 0 : long.Parse(value);
         }
-
-        public static int ParseInt(string value) {
+        
+        internal static int ParseInt(string value) {
             return (value.Length == 0 || value.CaselessEq("null")) ? 0 : int.Parse(value);
         }
-
-        public static string ParseColor(string raw) {
+        
+        internal static string ParseColor(string raw) {
             if (raw.Length == 0) return raw;
             
             // Try parse color name, then color code
@@ -152,7 +153,7 @@ namespace GoldenSparks.DB {
             return Colors.Name(raw).Length == 0 ? "" : raw;
         }
         
-        static DateTime ParseDateTime(IDataRecord record, string name) {
+        static DateTime ParseDateTime(ISqlRecord record, string name) {
             int i = record.GetOrdinal(name);
             // dates are a major pain
             try {
@@ -167,15 +168,15 @@ namespace GoldenSparks.DB {
                 }
             }
         }
-
-
-        public static long UnpackHi(long value) {
+        
+        
+        internal static long UnpackHi(long value) {
             return (value >> HiBitsShift) & HiBitsMask;
         }
-        public static long UnpackLo(long value) {
+        internal static long UnpackLo(long value) {
             return value & LoBitsMask;
         }
-        public static long Pack(long hi, long lo) {
+        internal static long Pack(long hi, long lo) {
             return hi << HiBitsShift | lo; 
         }
 

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,20 +22,18 @@ using GoldenSparks.Maths;
 using GoldenSparks.Tasks;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Games {
-
+namespace GoldenSparks.Games 
+{
     /// <summary> Represents a missile that adjusts the direction it is
     /// travelling in based on the player's current orientation. </remarks>
-    public class Missile : Weapon {
+    public class Missile : Weapon 
+    {
         public override string Name { get { return "Missile"; } }
         public WeaponType type;
         
-        public override void Disable() {
-            p.aiming = false;
-            p.weapon = null;
-        }
+        protected override void OnDisabled(Player p) { }
 
-        public override void OnActivated(Vec3F32 dir, BlockID block) {
+        protected override void OnActivated(Vec3F32 dir, BlockID block) {
             MissileData args = new MissileData();
             args.block = block;
             args.type  = type;
@@ -46,8 +44,9 @@ namespace GoldenSparks.Games {
             p.CriticalTasks.Add(task);
             Disable();
         }
-
-        public class MissileData : AmmunitionData {
+        
+        protected class MissileData : AmmunitionData 
+        {
             public WeaponType type;
             public Vec3U16 pos;
             public List<Vec3S32> buffer = new List<Vec3S32>();
@@ -55,12 +54,12 @@ namespace GoldenSparks.Games {
 
         /// <summary> Called when a missile has collided with a block. </summary>
         /// <returns> true if this block stops the missile, false if it should continue moving. </returns>
-        public virtual bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
+        protected virtual bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
             return true;
         }
-
+        
         /// <summary> Called when a missile has collided with a player. </summary>
-        public virtual void OnHitPlayer(MissileData args, Player pl) {
+        protected virtual void OnHitPlayer(MissileData args, Player pl) {
             pl.HandleDeath(Block.Cobblestone, "@p &Swas hit by a missile from " + p.ColoredName);
         }
         
@@ -93,7 +92,8 @@ namespace GoldenSparks.Games {
             args.dir   = DirUtils.GetDirVector(p.Rot.RotY, p.Rot.HeadX);
             int i;
             
-            for (i = 1; ; i++) {
+            for (i = 1; ; i++) 
+            {
                 Vec3U16 target = args.PosAt(i);
                 BlockID block  = p.level.GetBlock(target.X, target.Y, target.Z);
                 
@@ -145,10 +145,11 @@ namespace GoldenSparks.Games {
         }
     }   
         
-    public class PenetrativeMissile : Missile {
+    public class PenetrativeMissile : Missile 
+    {
         public override string Name { get { return "Penetrative missile"; } }
-
-        public override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
+        
+        protected override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
             if (p.level.physics < 2) return true;
             
             if (!p.level.Props[block].LavaKills) return true;
@@ -158,31 +159,33 @@ namespace GoldenSparks.Games {
         }
     }
        
-    public class ExplosiveMissile : Missile {
+    public class ExplosiveMissile : Missile 
+    {
         public override string Name { get { return "Explosive missile"; } }
-
-        public override void OnHitPlayer(MissileData args, Player pl) {
+        
+        protected override void OnHitPlayer(MissileData args, Player pl) {
             if (pl.level.physics >= 3) {
                 pl.HandleDeath(Block.Cobblestone, "@p &Swas blown up by " + p.ColoredName, true);
             } else {
                 base.OnHitPlayer(args, pl);
             }
         }
-
-        public override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
+                
+        protected override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
             if (p.level.physics >= 3) p.level.MakeExplosion(pos.X, pos.Y, pos.Z, 1);
             return true;
         }
     }
         
-    public class TeleportMissile : Missile {
+    public class TeleportMissile : Missile 
+    {
         public override string Name { get { return "Teleporter missile"; } }
-
-        public override void OnHitPlayer(MissileData args, Player pl) {
+        
+        protected override void OnHitPlayer(MissileData args, Player pl) {
             args.DoTeleport(p);
         }
-
-        public override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
+        
+        protected override bool OnHitBlock(MissileData args, Vec3U16 pos, BlockID block) {
             args.DoTeleport(p);
             return true;
         }

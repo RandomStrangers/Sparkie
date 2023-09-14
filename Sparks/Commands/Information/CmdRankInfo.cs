@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,15 +17,17 @@
 */
 using System;
 using System.Collections.Generic;
-using System.IO;
 
-namespace GoldenSparks.Commands.Info { 
-    public sealed class CmdRankInfo : Command2 {        
+namespace GoldenSparks.Commands.Info 
+{
+    public sealed class CmdRankInfo : Command2 
+    {
         public override string name { get { return "RankInfo"; } }
         public override string shortcut { get { return "ri"; } }
         public override string type { get { return CommandTypes.Moderation; } }
         public override LevelPermission defaultRank { get { return LevelPermission.AdvBuilder; } }
         public override bool UseableWhenFrozen { get { return true; } }
+        public override bool MessageBlockRestricted { get { return false; } }
         
         public override void Use(Player p, string name, CommandData data) {
             if (CheckSuper(p, name, "player name")) return;
@@ -65,7 +67,7 @@ namespace GoldenSparks.Commands.Info {
                 string reason = args.Length <= offset ? "(no reason given)" : args[offset].Replace("%20", " ");
                
                 p.Message("&aFrom {0} &ato {1} &a{2} ago", 
-                               Group.GetColoredName(oldRank), Group.GetColoredName(newRank), 
+                               Group.GetColoredName(oldRank), Group.GetColoredName(newRank),
                                delta.Shorten(true, false));
                 p.Message("&aBy &S{0}&a, reason: &S{1}", p.FormatNick(args[1]), reason);
             }

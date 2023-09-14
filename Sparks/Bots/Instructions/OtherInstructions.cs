@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,10 +18,11 @@
 using System;
 using System.IO;
 
-namespace GoldenSparks.Bots {
-    
+namespace GoldenSparks.Bots 
+{    
     /// <summary> Causes the bot to reset to the and execute first instruction. </summary>
-    public sealed class ResetInstruction : BotInstruction {
+    public sealed class ResetInstruction : BotInstruction 
+    {
         public ResetInstruction() { Name = "reset"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -36,7 +37,8 @@ namespace GoldenSparks.Bots {
     }
     
     /// <summary> Causes the bot to be removed from the world. </summary>
-    public sealed class RemoveInstruction : BotInstruction {
+    public sealed class RemoveInstruction : BotInstruction 
+    {
         public RemoveInstruction() { Name = "remove"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -51,14 +53,14 @@ namespace GoldenSparks.Bots {
     }
     
     /// <summary> Causes the bot to switch to a different AI. </summary>
-    public sealed class LinkScriptInstruction : BotInstruction {
+    public sealed class LinkScriptInstruction : BotInstruction 
+    {
         public LinkScriptInstruction() { Name = "linkscript"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
             string ai = (string)data.Metadata;
             if (File.Exists("bots/" + ai)) {
                 ScriptFile.Parse(Player.Sparks, bot, ai);
-
                 return true;
             }
             bot.NextInstruction(); return true;
@@ -74,7 +76,7 @@ namespace GoldenSparks.Bots {
             string script = args.Length > 3 ? args[3] : "";
             if (script.Length == 0) {
                 p.Message("LinkScript requires a script name as a parameter");
-            } else {
+            } else if (Formatter.ValidFilename(p, script)) {
                 w.WriteLine(Name + " " + script);
             }
         }
@@ -87,7 +89,8 @@ namespace GoldenSparks.Bots {
     }
     
     /// <summary> Causes the bot to wait/do nothing for a certain interval. </summary>
-    public sealed class WaitInstruction : BotInstruction {
+    public sealed class WaitInstruction : BotInstruction 
+    {
         public WaitInstruction() { Name = "wait"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {

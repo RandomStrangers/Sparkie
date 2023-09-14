@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -39,11 +39,11 @@ namespace GoldenSparks.Drawing.Ops
         
         /// <summary> Block to highlight deletions with. </summary>
         public BlockID DeleteHighlight = DefaultDeleteHighlight;
-
-
-        public string who;
-        public int[] ids;
-        public bool found = false;
+        
+        
+        internal string who;
+        internal int[] ids;
+        internal int totalChanges = 0;
         
         public HighlightDrawOp() {
             Flags = 0;
@@ -91,7 +91,7 @@ namespace GoldenSparks.Drawing.Ops
             if (x < Min.X || y < Min.Y || z < Min.Z) return;
             if (x > Max.X || y > Max.Y || z > Max.Z) return;
             output(Place((ushort)x, (ushort)y, (ushort)z, highlight));
-            found = true;
+            totalChanges++;
         }
     }
 }

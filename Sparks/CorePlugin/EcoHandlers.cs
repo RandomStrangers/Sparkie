@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,9 +22,9 @@ using GoldenSparks.Eco;
 using GoldenSparks.SQL;
 
 namespace GoldenSparks.Core {
-    public static class EcoHandlers {
-
-        public static void HandleEcoTransaction(EcoTransaction transaction) {
+    internal static class EcoHandlers {
+        
+        internal static void HandleEcoTransaction(EcoTransaction transaction) {
             switch (transaction.Type) {
                 case EcoTransactionType.Purchase:
                     HandlePurchase(transaction); break;
@@ -40,7 +40,7 @@ namespace GoldenSparks.Core {
         static void HandlePurchase(EcoTransaction data) {
             Economy.EcoStats stats = Economy.RetrieveStats(data.TargetName);
             stats.TotalSpent += data.Amount;
-            stats.Purchase = data.ItemDescription + "%3 for %f" + data.Amount + " %3" + Server.Config.Currency
+            stats.Purchase = data.ItemDescription + " &3for &f" + data.Amount + " &3$currency"
                 + " on %f" + DateTime.Now.ToString(CultureInfo.InvariantCulture);
             
             Player p = PlayerInfo.FindExact(data.TargetName);
@@ -85,8 +85,8 @@ namespace GoldenSparks.Core {
         }
 
         static string Format(string action, EcoTransaction data) {
-            string entry = "%f" + data.Amount + "%3 " + Server.Config.Currency + action
-                + "%3 on %f" + DateTime.Now.ToString(CultureInfo.InvariantCulture);
+            string entry = "&f" + data.Amount + " &3$currency" + action
+                + "&3 on %f" + DateTime.Now.ToString(CultureInfo.InvariantCulture);
             string reason = data.Reason;
             
             if (reason == null) return entry;

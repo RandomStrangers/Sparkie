@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,7 +17,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.Blocks.Extended;
 using GoldenSparks.Blocks.Physics;
 using GoldenSparks.Network;
@@ -25,9 +24,9 @@ using GoldenSparks.SQL;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Blocks {
-    public static class WalkthroughBehaviour {
+    internal static class WalkthroughBehaviour {
 
-        public static bool Door(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        internal static bool Door(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.physics == 0) return true;
 
             BlockID physForm;
@@ -35,23 +34,23 @@ namespace GoldenSparks.Blocks {
             p.level.Blockchange(x, y, z, physForm, false, args);
             return true;
         }
-
-        public static bool Train(Player p, BlockID block, ushort x, ushort y, ushort z) {
-            if (!p.trainInvulnerable && p.level.Config.KillerBlocks) p.HandleDeath(Block.Train);
+        
+        internal static bool Train(Player p, BlockID block, ushort x, ushort y, ushort z) {
+            if (!p.trainInvincible && p.level.Config.KillerBlocks) p.HandleDeath(Block.Train);
             return true;
         }
-
-        public static bool DoPortal(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        
+        internal static bool DoPortal(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.PosToInt(x, y, z) == p.lastWalkthrough) return true;
             return Portal.Handle(p, x, y, z);
         }
-
-        public static bool DoMessageBlock(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        
+        internal static bool DoMessageBlock(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.PosToInt(x, y, z) == p.lastWalkthrough) return true;
             return MessageBlock.Handle(p, x, y, z, false);
         }
-
-        public static bool Checkpoint(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        
+        internal static bool Checkpoint(Player p, BlockID block, ushort x, ushort y, ushort z) {
             p.useCheckpointSpawn = true;
             p.checkpointX = x; p.checkpointY = (ushort)(y + 1); p.checkpointZ = z;
             p.checkpointRotX = p.Rot.RotY; p.checkpointRotY = p.Rot.HeadX;
@@ -60,13 +59,9 @@ namespace GoldenSparks.Blocks {
             if (index != p.lastCheckpointIndex) {
                 Position pos = p.Pos;
                 pos.X = x * 32 + 16; pos.Z = z * 32 + 16;
+
                 if (Server.Config.CheckpointsRespawnClientside) {
-                    if (p.Supports(CpeExt.SetSpawnpoint)) {
-                        p.Send(Packet.SetSpawnpoint(pos, p.Rot, p.hasExtPositions));
-                    } else {
-                        p.SendPos(Entities.SelfID, pos, p.Rot);
-                        Entities.Spawn(p, p);
-                    }
+                    p.Session.SendSetSpawnpoint(pos, p.Rot);
                     p.Message("Your spawnpoint was updated.");
                 }
                 p.lastCheckpointIndex = index;

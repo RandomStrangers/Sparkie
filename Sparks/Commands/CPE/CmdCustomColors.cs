@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,8 +18,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace GoldenSparks.Commands.CPE {    
-    public sealed class CmdCustomColors : Command2 {        
+namespace GoldenSparks.Commands.CPE 
+{    
+    public sealed class CmdCustomColors : Command2 
+    {        
         public override string name { get { return "CustomColors"; } }
         public override string shortcut { get { return "ccols"; } }
         public override string type { get { return CommandTypes.Chat; } }
@@ -79,19 +81,22 @@ namespace GoldenSparks.Commands.CPE {
         }
         
         static void ListHandler(Player p, string cmd, string modifier) {
-            List<ColorDesc> validCols = new List<ColorDesc>(Colors.List.Length);
-            foreach (ColorDesc col in Colors.List) {
-                if (col.IsModified()) validCols.Add(col);
+            List<ColorDesc> validColors = new List<ColorDesc>(Colors.List.Length);
+            foreach (ColorDesc color in Colors.List) 
+            {
+                if (color.IsModified()) validColors.Add(color);
             }
-            MultiPageOutput.Output(p, validCols, FormatColor, cmd, "Colors", modifier, true);
+            
+            Paginator.Output(p, validColors, PrintColor, 
+                             cmd, "Colors", modifier);
         }
         
         // Not very elegant, because we don't want the % to be escaped like everywhere else
-        public static string FormatColor(ColorDesc col) {
+        internal static void PrintColor(Player p, ColorDesc col) {
             string format = "{0} &{1}({2})&S - %&S{1}, falls back to &{3}%&{3}{3}";
             if (col.Code == col.Fallback) format = "{0} &{1}({2})&S - %&S{1}";
 
-            return string.Format(format, col.Name, col.Code, Utils.Hex(col.R, col.G, col.B), col.Fallback);
+            p.Message(format, col.Name, col.Code, Utils.Hex(col.R, col.G, col.B), col.Fallback);
         }
         
         void EditHandler(Player p, string[] args) {

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -25,19 +25,25 @@ namespace GoldenSparks.Levels.IO
     /// <summary> Reads/Loads block data (and potentially metadata) encoded in a particular format. </summary>
     public abstract class IMapImporter 
     {
-        public abstract string Extension { get; }
+        public abstract string Extension   { get; }
         public abstract string Description { get; }
+        
+        public virtual Level Read(string path, string name, bool metadata) {
+            using (FileStream fs = File.OpenRead(path))
+                return Read(fs, name, metadata);
+        }
         
         public abstract Level Read(Stream src, string name, bool metadata);
 
-        public Vec3U16 ReadDimensions(string path) {
+        public virtual Vec3U16 ReadDimensions(string path) {
             using (FileStream fs = File.OpenRead(path))
                 return ReadDimensions(fs);
         }
-        
-        public abstract Vec3U16 ReadDimensions(Stream src);
 
-        public static void ConvertCustom(Level lvl) {
+        public abstract Vec3U16 ReadDimensions(Stream src);
+        
+        
+        protected static void ConvertCustom(Level lvl) {
             ushort x, y, z;
             byte[] blocks = lvl.blocks; // local var to avoid JIT bounds check
             for (int i = 0; i < blocks.Length; i++) {
@@ -49,10 +55,10 @@ namespace GoldenSparks.Levels.IO
                 lvl.FastSetExtTile(x, y, z, raw);
             }
         }
-
+        
         /// <summary> Reads the given number of bytes from the given stream </summary>
         /// <remarks> Throws EndOfStreamException if unable to read sufficient bytes </remarks>
-        public static void ReadFully(Stream s, byte[] data, int count) {
+        protected static void ReadFully(Stream s, byte[] data, int count) {
             int offset = 0;
             while (count > 0) {
                 int read = s.Read(data, offset, count);
@@ -81,11 +87,9 @@ namespace GoldenSparks.Levels.IO
         }
         
         /// <summary> Decodes the given level file into a Level instance </summary>
-        public static Level Read(string path, string name, bool metadata) {
+        public static Level Decode(string path, string name, bool metadata) {
             IMapImporter imp = GetFor(path) ?? Formats[0];
-            
-            using (FileStream fs = File.OpenRead(path))
-                return imp.Read(fs, name, metadata);
+            return imp.Read(path, name, metadata);
         }
     }
 

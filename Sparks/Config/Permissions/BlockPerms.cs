@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,38 +20,29 @@ using System.Collections.Generic;
 using System.IO;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Blocks {
-
+namespace GoldenSparks.Blocks 
+{
     /// <summary> Represents which ranks are allowed (and which are disallowed) to use a block. </summary>
-    public sealed class BlockPerms : ItemPerms {
+    public sealed class BlockPerms : ItemPerms 
+    {
         public BlockID ID;
         public override string ItemName { get { return ID.ToString(); } }
         
-        public BlockPerms(BlockID id, LevelPermission min, List<LevelPermission> allowed,
-                          List<LevelPermission> disallowed) : base(min, allowed, disallowed) {
+        static BlockPerms[] List = new BlockPerms[Block.SUPPORTED_COUNT];
+        
+        
+        public BlockPerms(BlockID id, LevelPermission min) : base(min) {
             ID = id;
         }
         
         public BlockPerms Copy() {
-            BlockPerms copy = new BlockPerms(ID, 0, null, null);
-            CopyTo(copy); return copy;
-        }
-        
-        public static BlockPerms[] List = new BlockPerms[Block.ExtendedCount];
+            BlockPerms copy = new BlockPerms(ID, 0);
+            CopyPermissionsTo(copy); return copy;
+        }        
+       
 
         /// <summary> Find the permissions for the given block. </summary>
         public static BlockPerms Find(BlockID b) { return List[b]; }
-        
-        /// <summary> Sets the permissions for the given block. </summary>
-        public static void Set(BlockID b, LevelPermission min,
-                               List<LevelPermission> allowed, List<LevelPermission> disallowed) {
-            BlockPerms perms = List[b];
-            if (perms == null) {
-                List[b] = new BlockPerms(b, min, allowed, disallowed);
-            } else {
-                perms.Init(min, allowed, disallowed);
-            }
-        }
 
         
         public static void ResendAllBlockPermissions() {
@@ -77,12 +68,29 @@ namespace GoldenSparks.Blocks {
         
         static void SaveCore() {
             using (StreamWriter w = new StreamWriter(Paths.BlockPermsFile)) {
-                WriteHeader(w, "each block", "Block ID", "lava");
+                WriteHeader(w, "block", "each block", "Block ID", "lava");
 
-                foreach (BlockPerms perms in List) {
+                foreach (BlockPerms perms in List) 
+                {
                     if (Block.Undefined(perms.ID)) continue;
                     w.WriteLine(perms.Serialise());
                 }
+            }
+        }
+
+        
+        /// <summary> Applies new block permissions to server state. </summary>
+        public static void ApplyChanges() {
+            foreach (Group grp in Group.AllRanks) 
+            {
+                SetUsable(grp);
+            }
+        }
+        
+        public static void SetUsable(Group grp) {
+            foreach (BlockPerms perms in List) 
+            {
+                grp.Blocks[perms.ID] = perms.UsableBy(grp.Permission);
             }
         }
         
@@ -91,13 +99,6 @@ namespace GoldenSparks.Blocks {
         public static void Load() {
             lock (ioLock) LoadCore();
             ApplyChanges();
-        }
-        
-        /// <summary> Applies new block permissions to server state. </summary>
-        public static void ApplyChanges() {
-            foreach (Group grp in Group.GroupList) {
-                grp.SetUsableBlocks();
-            }
         }
 
         static void LoadCore() {
@@ -121,7 +122,6 @@ namespace GoldenSparks.Blocks {
                 BlockID block;
                 if (!BlockID.TryParse(args[0], out block)) {
                     // Old format - Name : Lowest : Disallow : Allow
-
                     block = Block.Parse(Player.Sparks, args[0]);
                 }
                 if (block == Block.Invalid) continue;
@@ -139,8 +139,19 @@ namespace GoldenSparks.Blocks {
             }
         }
         
+      public static void Set(BlockID b, LevelPermission min,
+                        List<LevelPermission> allowed, List<LevelPermission> disallowed) {
+            BlockPerms perms = List[b];
+            if (perms == null) {
+                perms   = new BlockPerms(b, min);
+                List[b] = perms;
+            }
+            perms.Init(min, allowed, disallowed);
+        }
+        
+        
         static void SetDefaultPerms() {
-            for (BlockID block = 0; block < Block.ExtendedCount; block++) {
+            for (BlockID block = 0; block < Block.SUPPORTED_COUNT; block++) {
                 BlockProps props = Block.Props[block];
                 LevelPermission min;
                 

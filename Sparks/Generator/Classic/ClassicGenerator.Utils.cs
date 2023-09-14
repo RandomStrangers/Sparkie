@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using GoldenSparks;
 
-namespace ClassicalSharp.Generator {
-    
-    public sealed partial class ClassicGenerator {
-        
+namespace GoldenSparks.Generator.Classic
+{
+    public sealed partial class ClassicGenerator 
+    {
         static int Floor(float value) {
             int valueI = (int)value;
             return value < valueI ? valueI - 1 : valueI;
@@ -81,7 +81,7 @@ namespace ClassicalSharp.Generator {
         }
     }
     
-    // Based on https://docs.oracle.com/javase/7/docs/api/java/util/Sparks.html
+    // Based on https://docs.oracle.com/javase/7/docs/api/java/util/Random.html
     public sealed class JavaRandom {
         
         long seed;

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace GoldenSparks.Commands {
-    
-    public class Alias {
-        
+namespace GoldenSparks.Commands 
+{  
+    public class Alias 
+    {
         public static List<Alias> coreAliases = new List<Alias>();
         public static List<Alias> aliases = new List<Alias>();
         public string Trigger, Target, Format;
@@ -44,11 +44,10 @@ namespace GoldenSparks.Commands {
             Trigger = trigger; Target = target; Format = format;
         }
 
-        public static void Load() {
+        public static void LoadCustom() {
             aliases.Clear();
-            coreAliases.Clear();
             
-            if (!File.Exists(Paths.AliasesFile)) { Save(); return; }
+            if (!File.Exists(Paths.AliasesFile)) { SaveCustom(); return; }
             PropertiesFile.Read(Paths.AliasesFile, LineProcessor, ':');
         }
         
@@ -56,7 +55,7 @@ namespace GoldenSparks.Commands {
             aliases.Add(new Alias(key, value));
         }
 
-        public static void Save() {
+        public static void SaveCustom() {
             using (StreamWriter sw = new StreamWriter(Paths.AliasesFile)) {
                 sw.WriteLine("# Aliases can be in one of three formats:");
                 sw.WriteLine("# trigger : command");
@@ -66,7 +65,8 @@ namespace GoldenSparks.Commands {
                 sw.WriteLine("# trigger : command <prefix> {args} <suffix>");
                 sw.WriteLine("#    e.g. \"mod : setrank {args} mod\" means /mod is treated as /setrank <args given by user> mod");
                 
-                foreach (Alias a in aliases) {
+                foreach (Alias a in aliases) 
+                {
                     if (a.Format == null) {
                         sw.WriteLine(a.Trigger + " : " + a.Target);
                     } else {
@@ -77,27 +77,30 @@ namespace GoldenSparks.Commands {
         }
 
         public static Alias Find(string cmd) {
-            foreach (Alias alias in aliases) {
+            foreach (Alias alias in aliases) 
+            {
                 if (alias.Trigger.CaselessEq(cmd)) return alias;
             }
-            foreach (Alias alias in coreAliases) {
+            foreach (Alias alias in coreAliases) 
+            {
                 if (alias.Trigger.CaselessEq(cmd)) return alias;
             }
             return null;
         }
         
         /// <summary> Registers default aliases specified by a command. </summary>
-        public static void RegisterDefaults(Command cmd) {
+        internal static void RegisterDefaults(Command cmd) {
             CommandAlias[] aliases = cmd.Aliases;
             if (aliases == null) return;
             
-            foreach (CommandAlias a in aliases) {
+            foreach (CommandAlias a in aliases) 
+            {
                 Alias alias = new Alias(a.Trigger, cmd.name, a.Format);
                 coreAliases.Add(alias);
             }
         }
         
-        public static void UnregisterDefaults(Command cmd) {
+        internal static void UnregisterDefaults(Command cmd) {
             if (cmd.Aliases == null) return;
             coreAliases.RemoveAll(a => a.Target == cmd.name);
         }

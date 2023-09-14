@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -14,16 +14,13 @@ permissions and limitations under the Licenses.
  */
 using System;
 using GoldenSparks.Events.EntityEvents;
-using GoldenSparks.Games;
 using GoldenSparks.Network;
-using GoldenSparks.Maths;
-using BlockID = System.UInt16;
 
-namespace GoldenSparks {
-
+namespace GoldenSparks 
+{
     /// <summary> Contains methods related to the management of entities (such as players). </summary>
-    public static class Entities {
-
+    public static class Entities 
+    {
         public const byte SelfID = 0xFF;
         public const ushort CharacterHeight = 51;
         
@@ -52,7 +49,7 @@ namespace GoldenSparks {
                     Spawn(other, p, pos, rot, possession);
                 } else if (p == other && self) {
                     other.Pos = pos; other.SetYawPitch(rot.RotY, rot.HeadX);
-                    other.lastPos = other.Pos; other.lastRot = other.Rot;
+                    other._lastPos = other.Pos; other._lastRot = other.Rot;
                     Spawn(other, p, pos, rot, possession);
                 }
             }
@@ -89,12 +86,12 @@ namespace GoldenSparks {
             SpawnRaw(dst, id, p, pos, rot, skin, name, model);
             if (!Server.Config.TablistGlobal) TabList.Add(dst, p, id);
         }
-
+        
         /// <summary> Spawns this player to all other players, and spawns all others players to this player. </summary>
-        public static void SpawnEntities(Player p, bool bots = true) { SpawnEntities(p, p.Pos, p.Rot, bots); }
-
+        internal static void SpawnEntities(Player p, bool bots = true) { SpawnEntities(p, p.Pos, p.Rot, bots); }
+        
         /// <summary> Spawns this player to all other players, and spawns all others players to this player. </summary>
-        public static void SpawnEntities(Player p, Position pos, Orientation rot, bool bots = true) {
+        internal static void SpawnEntities(Player p, Position pos, Orientation rot, bool bots = true) {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player other in players) {
                 if (other.level != p.level || !p.CanSeeEntity(other) || p == other) continue;
@@ -106,9 +103,9 @@ namespace GoldenSparks {
             PlayerBot[] botsList = p.level.Bots.Items;
             foreach (PlayerBot b in botsList) { Spawn(p, b); }
         }
-
+        
         /// <summary> Despawns this player to all other players, and despawns all others players to this player. </summary>
-        public static void DespawnEntities(Player p, bool bots = true) {
+        internal static void DespawnEntities(Player p, bool bots = true) {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player other in players) {
                 if (p.level == other.level && p != other) Despawn(p, other);
@@ -133,7 +130,6 @@ namespace GoldenSparks {
         
         static void SpawnRaw(Player dst, byte id, Entity e, Position pos, Orientation rot,
                              string skin, string name, string model) {
-            name = LineWrapper.CleanupColors(name, dst);
             dst.Session.SendSpawnEntity(id, name, skin, pos, rot);
 
             if (dst.hasChangeModel) {
@@ -176,7 +172,7 @@ namespace GoldenSparks {
         [Obsolete("Use entity.UpdateModel")]
         public static void UpdateModel(Entity e, string model) { e.UpdateModel(model); }
 
-        public static void BroadcastModel(Entity e, string m) {
+        internal static void BroadcastModel(Entity e, string m) {
             Player[] players = PlayerInfo.Online.Items;
             Level lvl = e.Level;
             
@@ -185,7 +181,7 @@ namespace GoldenSparks {
                 if (pl.level != lvl || !pl.hasChangeModel) continue;
                 if (!pl.CanSeeEntity(e)) continue;
                 
-                byte id = (pl == e) ? SelfID : e.EntityID;
+                byte id = (pl == e) ? Entities.SelfID : e.EntityID;
                 string model = Chat.Format(m, pl, true, false);
                 
                 OnSendingModelEvent.Call(e, ref model, pl);
@@ -229,7 +225,7 @@ namespace GoldenSparks {
                 if (pl.level != lvl || !pl.Supports(CpeExt.EntityProperty)) continue;
                 if (!pl.CanSeeEntity(e)) continue;
                 
-                byte id = (pl == e) ? SelfID : e.EntityID;
+                byte id = (pl == e) ? Entities.SelfID : e.EntityID;
                 pl.Send(Packet.EntityProperty(id, prop,
                                               Orientation.PackedToDegrees(angle)));
             }
@@ -295,49 +291,17 @@ namespace GoldenSparks {
             // We need to cache the player's position before iterating.
             // Avoids the very rare issue of player's position changing mid-way through iteration,
             // which can cause this player to show minorly offset to other players.
-            foreach (Player p in players)
-                p.tempPos = p.Pos;
-            
-            foreach (Player p in players)
-                UpdatePosition(p);
             foreach (Player p in players) {
-                p.lastPos = p.tempPos; p.lastRot = p.Rot;
+                p._tempPos = p.Pos;
             }
-        }
-        
-        unsafe static void UpdatePosition(Player dst) {
-            Player[] players = PlayerInfo.Online.Items;
-            byte* src = stackalloc byte[16 * 256]; // 16 = size of absolute update, with extended positions
-            byte* ptr = src;
-            
+
             foreach (Player p in players) {
-                if (dst == p || dst.level != p.level || !dst.CanSeeEntity(p)) continue;
-                
-                Orientation rot = p.Rot; byte pitch = rot.HeadX;
-                if (Server.flipHead || p.flipHead) pitch = FlippedPitch(pitch);
-                
-                // flip head when infected, but doesn't support model
-                if (!dst.hasChangeModel) {
-                    ZSData data = ZSGame.TryGet(p);
-                    if (data != null && data.Infected) pitch = FlippedPitch(pitch);
-                }
-            
-                rot.HeadX = pitch;
-                GetPositionPacket(ref ptr, p.id, p.hasExtPositions, dst.hasExtPositions,
-                                           p.tempPos, p.lastPos, rot, p.lastRot);
+                p.Session.UpdatePlayerPositions();
             }
-            
-            int count = (int)(ptr - src);
-            if (count == 0) return;
-            
-            byte[] packet = new byte[count];
-            for (int i = 0; i < packet.Length; i++) { packet[i] = src[i]; }
-            dst.Send(packet);
-        }
-        
-        static byte FlippedPitch(byte pitch) {
-             if (pitch > 64 && pitch < 192) return pitch;
-             else return 128;
+
+            foreach (Player p in players) {
+                p._lastPos = p._tempPos; p._lastRot = p.Rot;
+            }
         }
         #endregion
     }

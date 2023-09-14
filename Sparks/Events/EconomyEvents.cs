@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,19 +18,20 @@
 using System;
 using GoldenSparks.Eco;
 
-namespace GoldenSparks.Events.EconomyEvents {
-        
+namespace GoldenSparks.Events.EconomyEvents 
+{      
     public delegate void OnMoneyChanged(Player p);         
     /// <summary> Raised whenever a player's online money changes. </summary>
-    public sealed class OnMoneyChangedEvent : IEvent<OnMoneyChanged> {
-        
+    public sealed class OnMoneyChangedEvent : IEvent<OnMoneyChanged> 
+    {
         public static void Call(Player p) {
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(p));
         }
     }
     
-    public sealed class EcoTransaction {
+    public sealed class EcoTransaction 
+    {
         public Player Source;
         public string TargetName, TargetFormatted;
         
@@ -42,8 +43,8 @@ namespace GoldenSparks.Events.EconomyEvents {
     
     public delegate void OnEcoTransaction(EcoTransaction transaction);   
     /// <summary> Raised whenever an economic transaction occurs. </summary>
-    public sealed class OnEcoTransactionEvent : IEvent<OnEcoTransaction> {
-        
+    public sealed class OnEcoTransactionEvent : IEvent<OnEcoTransaction> 
+    {
         public static void Call(EcoTransaction transaction) {
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(transaction));

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,22 +17,24 @@
  */
 using System;
 using GoldenSparks.Maths;
+using GoldenSparks.Network;
 using GoldenSparks.Tasks;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Games {
-
+namespace GoldenSparks.Games 
+{
     /// <summary> Represents a gun weapon that fires in a straight line from where player is looking. </remarks>
-    public class Gun : Weapon {
+    public class Gun : Weapon 
+    {
         public override string Name { get { return "Gun"; } }
 
-        public override void OnActivated(Vec3F32 dir, BlockID block) {
+        protected override void OnActivated(Vec3F32 dir, BlockID block) {
             AmmunitionData args = MakeArgs(dir, block);
             SchedulerTask task  = new SchedulerTask(GunCallback, args, TimeSpan.Zero, true);
             p.CriticalTasks.Add(task);
         }
-
-        public AmmunitionData MakeArgs(Vec3F32 dir, BlockID block) {
+        
+        protected AmmunitionData MakeArgs(Vec3F32 dir, BlockID block) {
             AmmunitionData args = new AmmunitionData();
             args.block  = block;
             
@@ -41,49 +43,33 @@ namespace GoldenSparks.Games {
             args.iterations = 4;
             return args;
         }
-
-        /// <summary> Called when a bullet has collided with a block. </summary>
-        /// <returns> true if this block stops the bullet, false if it should continue moving. </returns>
-        public virtual bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
-            return true;
-        }
-
-        /// <summary> Called when a bullet has collided with a player. </summary>
-        public virtual void OnHitPlayer(AmmunitionData args, Player pl) {
-            pl.HandleDeath(Block.Cobblestone, "@p &Swas shot by " + p.ColoredName);
-        }
-
-        public virtual bool TickMove(AmmunitionData args) {
-            if (args.iterations > 12) {
-                Vec3U16 pos = args.visible[0];
-                args.visible.RemoveAt(0);
-                p.level.BroadcastRevert(pos.X, pos.Y, pos.Z);
-            }
-            return true;
-        }
-
-        public virtual bool TickRevert(SchedulerTask task) {
-            AmmunitionData args = (AmmunitionData)task.State;
+        
+        protected void BufferedRevert(Vec3U16 pos, BufferedBlockSender buffer) {
+            int index;
+            BlockID block = p.level.GetBlock(pos.X, pos.Y, pos.Z, out index);
             
-            if (args.visible.Count > 0) {
-                Vec3U16 pos = args.visible[0];
-                args.visible.RemoveAt(0);
-                p.level.BroadcastRevert(pos.X, pos.Y, pos.Z);
-            }
-            return args.visible.Count > 0;
-        }
-
-        public void GunCallback(SchedulerTask task) {
-            AmmunitionData args = (AmmunitionData)task.State;
-            if (args.moving) {
-                args.moving    = TickGun(args);
-            } else {
-                task.Repeating = TickRevert(task);
-            }
+            if (index == -1) return;
+            buffer.Add(index, block);
         }
         
-        bool TickGun(AmmunitionData args) {
-            while (true) {
+        
+        protected void GunCallback(SchedulerTask task) {
+            BufferedBlockSender buffer = p.weaponBuffer;
+            buffer.level = p.level;
+            AmmunitionData args = (AmmunitionData)task.State;
+            
+            if (args.moving) {
+                args.moving    = TickGun(args, buffer);
+            } else {
+                task.Repeating = TickRevert(task, buffer);
+            }
+            
+            buffer.Flush(); // TODO bufferedblocksender across guns
+        }
+        
+        bool TickGun(AmmunitionData args, BufferedBlockSender buffer) {
+            while (true) 
+            {
                 Vec3U16 pos = args.PosAt(args.iterations);
                 args.iterations++;
 
@@ -92,21 +78,54 @@ namespace GoldenSparks.Games {
                 if (cur != Block.Air && !args.all.Contains(pos) && OnHitBlock(args, pos, cur))
                     return false;
 
-                p.level.BroadcastChange(pos.X, pos.Y, pos.Z, args.block);
+                buffer.Add(p.level.PosToInt(pos.X, pos.Y, pos.Z), args.block);
                 args.visible.Add(pos);
                 args.all.Add(pos);
                 
                 Player pl = PlayerAt(p, pos, true);
                 if (pl != null) { OnHitPlayer(args, pl); return false; }
-                if (TickMove(args)) return true;
+                if (TickMove(args, buffer)) return true;
             }
+        }
+        
+        protected virtual bool TickMove(AmmunitionData args, BufferedBlockSender buffer) {
+            if (args.iterations > 12) {
+                Vec3U16 pos = args.visible[0];
+                args.visible.RemoveAt(0);
+                BufferedRevert(pos, buffer);
+            }
+            return true;
+        }
+        
+        protected virtual bool TickRevert(SchedulerTask task, BufferedBlockSender buffer) {
+            AmmunitionData args = (AmmunitionData)task.State;
+            
+            if (args.visible.Count > 0) {
+                Vec3U16 pos = args.visible[0];
+                args.visible.RemoveAt(0);
+                BufferedRevert(pos, buffer);
+            }
+            return args.visible.Count > 0;
+        }
+        
+
+        /// <summary> Called when a bullet has collided with a block. </summary>
+        /// <returns> true if this block stops the bullet, false if it should continue moving. </returns>
+        protected virtual bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
+            return true;
+        }
+        
+        /// <summary> Called when a bullet has collided with a player. </summary>
+        protected virtual void OnHitPlayer(AmmunitionData args, Player pl) {
+            pl.HandleDeath(Block.Cobblestone, "@p &Swas shot by " + p.ColoredName);
         }
     }
     
-    public class PenetrativeGun : Gun {
+    public class PenetrativeGun : Gun 
+    {
         public override string Name { get { return "Penetrative gun"; } }
-
-        public override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
+        
+        protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
             if (p.level.physics < 2) return true;
             
             if (!p.level.Props[block].LavaKills) return true;
@@ -116,15 +135,16 @@ namespace GoldenSparks.Games {
         }
     }
     
-    public class ExplosiveGun : Gun {
+    public class ExplosiveGun : Gun 
+    {
         public override string Name { get { return "Explosive gun"; } }
-
-        public override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
+        
+        protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
             if (p.level.physics >= 3) p.level.MakeExplosion(pos.X, pos.Y, pos.Z, 1);
             return true;
         }
-
-        public override void OnHitPlayer(AmmunitionData args, Player pl) {
+        
+        protected override void OnHitPlayer(AmmunitionData args, Player pl) {
             if (pl.level.physics >= 3) {
                 pl.HandleDeath(Block.Cobblestone, "@p &Swas blown up by " + p.ColoredName, true);
             } else {
@@ -133,15 +153,17 @@ namespace GoldenSparks.Games {
         }
     }
     
-    public class LaserGun : ExplosiveGun {
+    public class LaserGun : ExplosiveGun 
+    {
         public override string Name { get { return "Laser"; } }
-
-        public override bool TickMove(AmmunitionData args) {
+        
+        protected override bool TickMove(AmmunitionData args, BufferedBlockSender buffer) {
             // laser immediately strikes target
             return false;
         }
-
-        public override bool TickRevert(SchedulerTask task) {
+        
+        protected override bool TickRevert(SchedulerTask task, BufferedBlockSender buffer) 
+        {
             AmmunitionData args = (AmmunitionData)task.State;
             
             if (args.all.Count > 0) {
@@ -149,8 +171,9 @@ namespace GoldenSparks.Games {
                 task.Delay = TimeSpan.FromMilliseconds(400);
                 args.all.Clear();
             } else {
-                foreach (Vec3U16 pos in args.visible) {
-                    p.level.BroadcastRevert(pos.X, pos.Y, pos.Z);
+                foreach (Vec3U16 pos in args.visible) 
+                {
+                    BufferedRevert(pos, buffer);
                 }
                 args.visible.Clear();
             }
@@ -158,14 +181,15 @@ namespace GoldenSparks.Games {
         }
     }
     
-    public class TeleportGun : Gun {
+    public class TeleportGun : Gun 
+    {
         public override string Name { get { return "Teleporter gun"; } }
-
-        public override void OnHitPlayer(AmmunitionData args, Player pl) {
+        
+        protected override void OnHitPlayer(AmmunitionData args, Player pl) {
             args.DoTeleport(p);
         }
-
-        public override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
+        
+        protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
             args.DoTeleport(p);
             return true;
         }

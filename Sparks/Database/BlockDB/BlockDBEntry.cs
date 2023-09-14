@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,11 @@ using System;
 using System.Runtime.InteropServices;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.DB {
-
+namespace GoldenSparks.DB 
+{
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct BlockDBEntry {
+    public struct BlockDBEntry 
+    {
         /// <summary> ID within Players table of player who made the change. </summary>
         public int PlayerID;
         
@@ -80,11 +81,11 @@ namespace GoldenSparks.DB {
         public const ushort Restored    = 1 << 7;
         public const ushort UndoOther   = 1 << 8;
         public const ushort UndoSelf    = 1 << 9;
-        public const ushort RedoSelf    = 1 << 10;        
+        public const ushort RedoSelf    = 1 << 10;
         public const ushort FixGrass    = 1 << 11;
         
         public const ushort OldExtended2 = 1 << 12;
-        public const ushort NewExtended2 = 1 << 13;        
+        public const ushort NewExtended2 = 1 << 13;
         public const ushort OldExtended  = 1 << 14;
         public const ushort NewExtended  = 1 << 15;
     }

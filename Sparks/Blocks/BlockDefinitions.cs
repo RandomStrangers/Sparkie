@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -92,7 +92,7 @@ namespace GoldenSparks {
         
         static ConfigElement[] elems;
         public static BlockDefinition[] Load(string path) {
-            BlockDefinition[] defs = new BlockDefinition[Block.ExtendedCount];
+            BlockDefinition[] defs = new BlockDefinition[Block.SUPPORTED_COUNT];
             if (!File.Exists(path)) return defs;
             if (elems == null) elems = ConfigElement.GetAll(typeof(BlockDefinition));
             
@@ -139,19 +139,26 @@ namespace GoldenSparks {
         
         public static void Save(bool global, BlockDefinition[] defs, string path) {
             if (elems == null) elems = ConfigElement.GetAll(typeof(BlockDefinition));
-            
+
+            lock (defs) SaveCore(global, defs, path);
+        }
+
+        static void SaveCore(bool global, BlockDefinition[] defs, string path) {
+            string separator = null;
+
             using (StreamWriter w = new StreamWriter(path)) {
                 w.WriteLine("[");
-                string separator = null;
-                
-                for (int i = 0; i < defs.Length; i++) {
+                var ser = new JsonConfigWriter(w, elems);
+
+                for (int i = 0; i < defs.Length; i++) 
+                {
                     BlockDefinition def = defs[i];
                     // don't want to save global blocks in the level's custom blocks list
                     if (!global && def == GlobalDefs[i]) def = null;
                     if (def == null) continue;
                     
                     w.Write(separator);
-                    Json.Serialise(w, elems, def);
+                    ser.WriteObject(def);
                     separator = ",\r\n";
                 }
                 w.WriteLine("]");
@@ -205,7 +212,6 @@ namespace GoldenSparks {
             foreach (Player pl in players) 
             {
                 if (!global && pl.level != level) continue;
-                if (!pl.hasBlockDefs || def.RawID > pl.MaxRawBlock) continue;
                 if (global && pl.level.CustomBlockDefs[block] != GlobalDefs[block]) continue;
 
                 pl.Session.SendDefineBlock(def);
@@ -225,7 +231,6 @@ namespace GoldenSparks {
             foreach (Player pl in players) 
             {
                 if (!global && pl.level != level) continue;
-                if (!pl.hasBlockDefs || def.RawID > pl.MaxRawBlock) continue;
                 if (global && pl.level.CustomBlockDefs[block] != null) continue;
 
                 pl.Session.SendUndefineBlock(def);
@@ -237,7 +242,7 @@ namespace GoldenSparks {
             foreach (Player pl in players) 
             {
                 if (!global && pl.level != level) continue;
-                if (!pl.Supports(CpeExt.InventoryOrder) || def.RawID > pl.MaxRawBlock) continue;
+                if (!pl.Supports(CpeExt.InventoryOrder) || def.RawID > pl.Session.MaxRawBlock) continue;
                 SendLevelInventoryOrder(pl);
             }
         }
@@ -259,25 +264,27 @@ namespace GoldenSparks {
         public void SetSideTex(ushort id) {
             LeftTex = id; RightTex = id; FrontTex = id; BackTex = id;
         }
-
-
-        public static void SendLevelCustomBlocks(Player pl) {
+        
+        
+        internal static void SendLevelCustomBlocks(Player pl) {
             BlockDefinition[] defs = pl.level.CustomBlockDefs;
             for (int i = 0; i < defs.Length; i++) 
             {
                 BlockDefinition def = defs[i];
-                if (def == null || def.RawID > pl.MaxRawBlock) continue;
+                if (def == null) continue;
+
                 pl.Session.SendDefineBlock(def);
             }
         }
-
-        public unsafe static void SendLevelInventoryOrder(Player pl) {
+        
+        internal unsafe static void SendLevelInventoryOrder(Player pl) {
             BlockDefinition[] defs = pl.level.CustomBlockDefs;
-            
-            int count = pl.MaxRawBlock + 1;
-            int* order_to_blocks = stackalloc int[Block.ExtendedCount];
-            int* block_to_orders = stackalloc int[Block.ExtendedCount];
-            for (int b = 0; b < Block.ExtendedCount; b++) 
+            int maxRaw = pl.Session.MaxRawBlock;
+            int count  = maxRaw + 1;
+
+            int* order_to_blocks = stackalloc int[Block.SUPPORTED_COUNT];
+            int* block_to_orders = stackalloc int[Block.SUPPORTED_COUNT];
+            for (int b = 0; b < Block.SUPPORTED_COUNT; b++) 
             {
                 order_to_blocks[b] = -1;
                 block_to_orders[b] = -1;
@@ -287,7 +294,7 @@ namespace GoldenSparks {
             for (int i = 0; i < defs.Length; i++) 
             {
                 BlockDefinition def = defs[i];
-                if (def == null || def.RawID > pl.MaxRawBlock) continue;
+                if (def == null || def.RawID > maxRaw) continue;
                 if (def.InventoryOrder == -1) continue;
                 
                 if (def.InventoryOrder != 0) {
@@ -302,7 +309,7 @@ namespace GoldenSparks {
             {
                 BlockDefinition def = defs[i];
                 int raw = def != null ? def.RawID : i;
-                if (raw > pl.MaxRawBlock || (def == null && raw >= Block.CPE_COUNT)) continue;
+                if (raw > maxRaw || (def == null && raw >= Block.CPE_COUNT)) continue;
                 
                 if (def != null && def.InventoryOrder >= 0) continue;
                 if (order_to_blocks[raw] == -1) {
@@ -316,7 +323,7 @@ namespace GoldenSparks {
             {
                 BlockDefinition def = defs[i];
                 int raw = def != null ? def.RawID : i;
-                if (raw > pl.MaxRawBlock || (def == null && raw >= Block.CPE_COUNT)) continue;
+                if (raw > maxRaw || (def == null && raw >= Block.CPE_COUNT)) continue;
                 
                 if (block_to_orders[raw] != -1) continue;
                 for (int slot = count - 1; slot >= 1; slot--) {
@@ -338,7 +345,7 @@ namespace GoldenSparks {
                 // Special case, don't want 255 getting hidden by default
                 if (raw == 255 && def.InventoryOrder == -1) continue;
                 
-                pl.Send(Packet.SetInventoryOrder((BlockID)raw, (BlockID)order, pl.hasExtBlocks));
+                pl.Send(Packet.SetInventoryOrder((BlockID)raw, (BlockID)order, pl.Session.hasExtBlocks));
             }
         }
         
@@ -347,13 +354,25 @@ namespace GoldenSparks {
             foreach (Player pl in players) 
             {
                 if (!global && pl.level != level) continue;
-                if (pl.hasBlockDefs) continue;
+                if (pl.Session.hasBlockDefs) continue;
                 
                 // If custom block is replacing core block, need to always reload for fallback
                 // But if level doesn't use custom blocks, don't need to reload for the player
                 if (block >= Block.CPE_COUNT && !pl.level.MightHaveCustomBlocks()) continue;
                 PlayerActions.ReloadMap(pl);
             }
+        }
+        
+        
+        public static BlockDefinition ParseName(string name, BlockDefinition[] defs) {
+            // air is deliberately skipped
+            for (int b = 1; b < defs.Length; b++) 
+            {
+                BlockDefinition def = defs[b];
+                if (def == null) continue;
+                if (def.Name.Replace(" ", "").CaselessEq(name)) return def;
+            }
+            return null;
         }
     }
 }

@@ -46,7 +46,7 @@ namespace GoldenSparks.Core
             if (scope != ChatScope.PM) Logger.Log(logType, msg);
         }
 
-            public static void HandleCommand(Player p, string cmd, string args, CommandData data)
+        public static void HandleCommand(Player p, string cmd, string args, CommandData data)
         {
             if (!Server.Config.CoreSecretCommands) return;
             // DO NOT REMOVE THE TWO COMMANDS BELOW, /PONY AND /RAINBOWDASHLIKESCOOLTHINGS. -EricKilla

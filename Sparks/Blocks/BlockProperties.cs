@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -226,12 +226,11 @@ namespace GoldenSparks.Blocks {
             
             if (save) Save(path, scope, scopeId);
         }
-
-        public static byte ScopeId(BlockProps[] scope) { return scope == Block.Props ? (byte)1 : (byte)2; }
+        
+        internal static byte ScopeId(BlockProps[] scope) { return scope == Block.Props ? (byte)1 : (byte)2; }
         
         public static string ScopedName(BlockProps[] scope, Player p, BlockID block) {
             return scope == Block.Props ? Block.GetName(Player.Sparks, block) : Block.GetName(p, block);
-
         }
     }
 }

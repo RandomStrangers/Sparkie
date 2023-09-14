@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -23,7 +23,6 @@ namespace GoldenSparks {
             if (text.Length >= 2 && text[0] == '@' && text[1] == '@') {
                 text = text.Remove(0, 2);
                 MessageDirect(p, Player.Sparks, text);
-
                 return true;
             }
             
@@ -32,7 +31,7 @@ namespace GoldenSparks {
                 
                 string target = p.whisperTo;
                 if (target.Length == 0) {
-                    text.Separate(out target, out text);
+                    text.Separate(' ', out target, out text);
                     
                     if (text.Length == 0) {
                         p.Message("No message entered");
@@ -93,11 +92,10 @@ namespace GoldenSparks {
         public static void MessageDirect(Player p, Player target, string message) {
             if (message.Length == 0) { p.Message("No message entered"); return; }
             Logger.Log(LogType.PrivateChat, "{0} @{1}: {2}", p.name, target.name, message);
-            if (!p.IsSparkie)
-            {
+            
+            if (!p.IsSparkie) {
                 p.Message("[<] {0}: &f{1}", p.FormatNick(target), message);
             }
-
             Chat.MessageChat(ChatScope.PM, p, "&9[>] λNICK: &f" + message, target, null);
         }
     }

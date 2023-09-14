@@ -31,7 +31,6 @@ namespace GoldenSparks.Games
     {
         public override bool AllowAutoload { get { return true; } }
         public override string GameName { get { return "Countdown"; } }
-        public override string PropsPath { get { return "properties/countdown.properties"; } }
         
         public override void Load() {
             base.Load();

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -89,7 +89,7 @@ namespace GoldenSparks.Commands.Building {
         }
         
         bool DoRestart(Player p, Vec3S32[] m, object state, BlockID block) {
-            PhysicsArgs extraInfo = (PhysicsArgs)state;
+            PhysicsArgs args = (PhysicsArgs)state;
             List<int> buffer = new List<int>();
             int index;
             
@@ -102,7 +102,7 @@ namespace GoldenSparks.Commands.Building {
                 }
             }
 
-            if (extraInfo.Raw == 0) {
+            if (args.Raw == 0) {
                 if (buffer.Count > Server.Config.PhysicsRestartNormLimit) {
                     p.Message("Cannot restart more than " + Server.Config.PhysicsRestartNormLimit + " blocks.");
                     p.Message("Tried to restart " + buffer.Count + " blocks.");
@@ -115,7 +115,7 @@ namespace GoldenSparks.Commands.Building {
             }
 
             foreach (int index1 in buffer) {
-                p.level.AddCheck(index1, true, extraInfo);
+                p.level.AddCheck(index1, true, args);
             }
             p.Message("Activated " + buffer.Count + " blocks.");
             return true;

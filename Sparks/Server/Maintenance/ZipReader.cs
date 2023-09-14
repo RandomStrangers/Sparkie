@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,9 +21,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace GoldenSparks {
-    
-    sealed class ZipReaderStream : Stream {
+namespace GoldenSparks 
+{    
+    sealed class ZipReaderStream : Stream 
+    {
         public long CompressedLen;
         public Stream stream;
         
@@ -60,15 +61,14 @@ namespace GoldenSparks {
     }
 
     /// <summary> Reads entries from a ZIP archive. </summary>
-    public sealed class ZipReader {
+    public sealed class ZipReader 
+    {
         BinaryReader reader;
         Stream stream;
         
         List<ZipEntry> entries = new List<ZipEntry>();
         int numEntries;
         long centralDirOffset, zip64EndOffset;
-        const ushort ver_norm = 20, ver_zip64 = 45;
-        const ushort zip64CentralExtra = 28, zip64LocalExtra = 20;
         
         public ZipReader(Stream stream) {
             this.stream = stream;
@@ -81,12 +81,12 @@ namespace GoldenSparks {
             file = null;
             
             uint sig = reader.ReadUInt32();
-            if (sig != ZipEntry.SigLocal) {
+            if (sig != ZipEntry.SIG_LOCAL) {
                 Logger.Log(LogType.Warning, "&WFailed to find local file entry {0}", i); return null;
             }
             
             entry = ReadLocalFileRecord();
-            file = Encoding.UTF8.GetString(entry.Filename);
+            file  = Encoding.UTF8.GetString(entry.Filename);
             
             ZipReaderStream part = new ZipReaderStream(stream);
             part.CompressedLen = entry.CompressedSize;
@@ -97,9 +97,10 @@ namespace GoldenSparks {
         
         public int FindEntries() {
             stream.Seek(centralDirOffset, SeekOrigin.Begin);
-            for (int i = 0; i < numEntries; i++) {
+            for (int i = 0; i < numEntries; i++) 
+            {
                 uint sig = reader.ReadUInt32();
-                if (sig != ZipEntry.SigCentral) {
+                if (sig != ZipEntry.SIG_CENTRAL) {
                     Logger.Log(LogType.Warning, "&WFailed to find central dir entry {0}", i); return i;
                 }
                 
@@ -115,13 +116,14 @@ namespace GoldenSparks {
             
             // At -22 for nearly all zips, but try a bit further back in case of comment
             int i, len = Math.Min(257, (int)stream.Length);
-            for (i = 22; i < len; i++) {
+            for (i = 22; i < len; i++) 
+            {
                 stream.Seek(-i, SeekOrigin.End);
                 sig = r.ReadUInt32();
-                if (sig == ZipEntry.SigEnd) break;
+                if (sig == ZipEntry.SIG_END) break;
             }
             
-            if (sig != ZipEntry.SigEnd) {
+            if (sig != ZipEntry.SIG_END) {
                 Logger.Log(LogType.Warning, "&WFailed to find end of central directory"); return;
             }
             ReadEndOfCentralDirectoryRecord();
@@ -131,14 +133,14 @@ namespace GoldenSparks {
             
             stream.Seek(-i - 20, SeekOrigin.End);
             sig = r.ReadUInt32();
-            if (sig != ZipEntry.SigZip64Loc) {
+            if (sig != ZipEntry.SIG_ZIP64_LOC) {
                 Logger.Log(LogType.Warning, "&WFailed to find ZIP64 locator"); return;
             }
             ReadZip64EndOfCentralDirectoryLocator();
             
             stream.Seek(zip64EndOffset, SeekOrigin.Begin);
             sig = r.ReadUInt32();
-            if (sig != ZipEntry.SigZip64End) {
+            if (sig != ZipEntry.SIG_ZIP64_END) {
                 Logger.Log(LogType.Warning, "&WFailed to find ZIP64 end"); return;
             }
             ReadZip64EndOfCentralDirectoryRecord();

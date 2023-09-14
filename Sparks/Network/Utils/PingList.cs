@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,50 +16,43 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Threading;
 
-namespace GoldenSparks.Network {
-    public sealed class PingList {
-        
-        public struct PingEntry {
-            public DateTime TimeSent, TimeReceived;
+namespace GoldenSparks.Network 
+{
+    public sealed class PingList 
+    {        
+        public struct PingEntry 
+        {
+            public DateTime TimeSent, TimeRecv;
             public ushort Data;
             public double Latency { get {
                     // Half, because received->reply time is actually twice time it takes to send data
-                    return (TimeReceived - TimeSent).TotalMilliseconds * 0.5;
+                    return (TimeRecv - TimeSent).TotalMilliseconds * 0.5;
                 } }
         }
         
+        // Pings are stored using a circular array 
         public PingEntry[] Entries = new PingEntry[10];
+        int pingCounter, nextPingHead;
         
         
         public ushort NextTwoWayPingData() {
-            // Find free ping slot
-            for (int i = 0; i < Entries.Length; i++) {
-                if (Entries[i].TimeSent.Ticks != 0) continue;
-                
-                ushort prev = i > 0 ? Entries[i - 1].Data : (ushort)0;
-                return SetTwoWayPing(i, prev);
-            }
+            int pingValue = Interlocked.Increment(ref pingCounter);
+            int pingHead  = (Interlocked.Increment(ref nextPingHead) - 1) % 10;
             
-            // Remove oldest ping slot
-            for (int i = 0; i < Entries.Length - 1; i++) {
-                Entries[i] = Entries[i + 1];
-            }
-            int j = Entries.Length - 1;
-            return SetTwoWayPing(j, Entries[j].Data);
-        }
-        
-        ushort SetTwoWayPing(int i, ushort prev) {
-            Entries[i].Data = (ushort)(prev + 1);
-            Entries[i].TimeSent = DateTime.UtcNow;
-            Entries[i].TimeReceived = default(DateTime);
-            return (ushort)(prev + 1);
+            Entries[pingHead].Data     = (ushort)pingValue;
+            Entries[pingHead].TimeRecv = default(DateTime);
+            Entries[pingHead].TimeSent = DateTime.UtcNow;
+
+            return (ushort)pingValue;
         }
         
         public void Update(ushort data) {
-            for (int i = 0; i < Entries.Length; i++ ) {
+            for (int i = 0; i < Entries.Length; i++) 
+            {
                 if (Entries[i].Data != data) continue;
-                Entries[i].TimeReceived = DateTime.UtcNow;
+                Entries[i].TimeRecv = DateTime.UtcNow;
                 return;
             }
         }
@@ -67,12 +60,13 @@ namespace GoldenSparks.Network {
         
         bool Valid(int i) {
             PingEntry e = Entries[i];
-            return e.TimeSent.Ticks != 0 && e.TimeReceived.Ticks != 0;
+            return e.TimeSent.Ticks != 0 && e.TimeRecv.Ticks != 0;
         }
         
         public int Measures() {
             int measures = 0;
-            for (int i = 0; i < Entries.Length; i++) {
+            for (int i = 0; i < Entries.Length; i++) 
+            {
                 if (Valid(i)) measures++;
             }
             return measures;
@@ -80,7 +74,8 @@ namespace GoldenSparks.Network {
         
         public int LowestPing() {
             double ms = 100000000;
-            for (int i = 0; i < Entries.Length; i++) {
+            for (int i = 0; i < Entries.Length; i++) 
+            {
                 if (Valid(i)) { ms = Math.Min(ms, Entries[i].Latency); }
             }
             return (int)ms;
@@ -89,7 +84,8 @@ namespace GoldenSparks.Network {
         public int AveragePing() {
             double ms = 0;
             int measures = 0;
-            for (int i = 0; i < Entries.Length; i++) {
+            for (int i = 0; i < Entries.Length; i++) 
+            {
                 if (Valid(i)) { ms += Entries[i].Latency; measures++; }
             }
             return measures == 0 ? 0 : (int)(ms / measures);
@@ -97,7 +93,8 @@ namespace GoldenSparks.Network {
         
         public int HighestPing() {
             double ms = 0;
-            for (int i = 0; i < Entries.Length; i++) {
+            for (int i = 0; i < Entries.Length; i++) 
+            {
                 if (Valid(i)) { ms = Math.Max(ms, Entries[i].Latency); }
             }
             return (int)ms;

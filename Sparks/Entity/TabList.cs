@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,29 +16,28 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using GoldenSparks.Games;
 using GoldenSparks.Events.EntityEvents;
 using GoldenSparks.Network;
 
-namespace GoldenSparks {
-
+namespace GoldenSparks 
+{
     /// <summary> Contains methods related to the management of tab list of player names. </summary>
-    public static class TabList {
-        // Want Sparks to be at top of list, banned to be bottom of list.
+    public static class TabList 
+    {
+        // Want higher ranks at top of tab list, banned at bottom of tab list
         const LevelPermission offset = LevelPermission.Sparkie;
+        
         /// <summary> Adds the given player to that player's tab list (if their client supports it). </summary>
         public static void Add(Player dst, Player p, byte id) {
             if (!dst.hasExtList) return;
             byte grpPerm = (byte)(offset - p.Rank);
-            if (!Server.Config.TablistRankSorted) grpPerm = 0;
+            if (!Server.Config.TablistRankSorted) grpPerm = 1;
             
             string name, group;
             GetEntry(p, dst, out name, out group);
             
-            name  = Colors.Escape(name); // for nicks
-            name  = LineWrapper.CleanupColors(name,  dst);
-            group = LineWrapper.CleanupColors(group, dst);
-            dst.Send(Packet.ExtAddPlayerName(id, p.truename, name, group, grpPerm, dst.hasCP437));
+            name = Colors.Escape(name); // for nicks
+            dst.Session.SendAddTabEntry(id, p.truename, name, group, grpPerm);
         }
         
         static void GetEntry(Player p, Player dst, out string name, out string group) {
@@ -60,7 +59,7 @@ namespace GoldenSparks {
             
             string name = b.color + b.name, group = "Bots";
             OnTabListEntryAddedEvent.Call(b, ref name, ref group, dst);
-            dst.Send(Packet.ExtAddPlayerName(b.id, b.name, name, group, 0, dst.hasCP437));
+            dst.Session.SendAddTabEntry(b.id, b.name, name, group, 0);
         }
         
         /// <summary> Removes the given player from player's tab list (if their client supports it). </summary>
@@ -69,13 +68,13 @@ namespace GoldenSparks {
             
             OnTabListEntryRemovedEvent.Call(entity, dst);
             byte id = dst == entity ? Entities.SelfID : entity.EntityID;
-            dst.Send(Packet.ExtRemovePlayerName(id));
+            dst.Session.SendRemoveTabEntry(id);
         }
-
-
+        
+        
         /// <summary> Updates the tab list entry for this player to all other players 
         /// (whose clients support it) who can see the player in the tab list. </summary>
-        public static void Update(Player p, bool self) {
+        internal static void Update(Player p, bool self) {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player other in players) {
                 if (p == other) {
@@ -88,10 +87,10 @@ namespace GoldenSparks {
                 if (p.CanSee(other)) Add(p, other, other.id);
             }
         }
-
+        
         /// <summary> Removes this tab list entry for this player to all other players 
         /// (whose clients support it) in the server. </summary>
-        public static void RemoveAll(Player p, bool self, bool toVisible) {
+        internal static void RemoveAll(Player p, bool self, bool toVisible) {
             if (!Server.Config.TablistGlobal) return;
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player other in players) {               

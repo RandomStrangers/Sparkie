@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,8 +17,10 @@
  */
 using GoldenSparks.DB;
 
-namespace GoldenSparks.Commands.Chatting {    
-    public class CmdTitle : EntityPropertyCmd {        
+namespace GoldenSparks.Commands.Chatting 
+{    
+    public class CmdTitle : EntityPropertyCmd 
+    {        
         public override string name { get { return "Title"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Admin; } }
@@ -33,7 +35,7 @@ namespace GoldenSparks.Commands.Chatting {
             UsePlayer(p, data, message, "title");
         }
         
-        public override void SetPlayerData(Player p, string target, string title) {
+        protected override void SetPlayerData(Player p, string target, string title) {
             PlayerOperations.SetTitle(p, target, title);
         }
         

@@ -54,7 +54,6 @@ namespace GoldenSparks.Games
             
             p.Pos = next;
             p.SetYawPitch(yaw, pitch);
-            p.cancelmove = true;
         }
         
         void HandlePlayerSpawning(Player p, ref Position pos, ref byte yaw, ref byte pitch, bool respawning) {

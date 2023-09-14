@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -59,8 +59,8 @@ namespace GoldenSparks.Drawing.Ops
                 }
             }
         }
-
-        public static void DrawLine(int x1, int y1, int z1, int maxLen,
+        
+        internal static void DrawLine(int x1, int y1, int z1, int maxLen,
                                       int x2, int y2, int z2, List<Vec3S32> buffer) {
             Line lx, ly, lz;
             int[] pixel = new int[] { x1, y1, z1 };

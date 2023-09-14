@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -39,7 +39,7 @@ namespace GoldenSparks.Blocks {
     public static class BlockBehaviour {
 
         /// <summary> Retrieves the default place block handler for the given block. </summary>
-        public static HandlePlace GetPlaceHandler(BlockID block, BlockProps[] props) {
+        internal static HandlePlace GetPlaceHandler(BlockID block, BlockProps[] props) {
             switch (block) {
                 case Block.C4:          return PlaceBehaviour.C4;
                 case Block.C4Detonator: return PlaceBehaviour.C4Det;
@@ -52,7 +52,7 @@ namespace GoldenSparks.Blocks {
         }
         
         /// <summary> Retrieves the default delete block handler for the given block. </summary>
-        public static HandleDelete GetDeleteHandler(BlockID block, BlockProps[] props) {
+        internal static HandleDelete GetDeleteHandler(BlockID block, BlockProps[] props) {
             switch (block) {
                 case Block.RocketStart:    return DeleteBehaviour.RocketStart;
                 case Block.Fireworks:      return DeleteBehaviour.Firework;
@@ -72,7 +72,7 @@ namespace GoldenSparks.Blocks {
         }
 
         /// <summary> Retrieves the default walkthrough block handler for the given block. </summary>
-        public static HandleWalkthrough GetWalkthroughHandler(BlockID block, BlockProps[] props, bool nonSolid) {
+        internal static HandleWalkthrough GetWalkthroughHandler(BlockID block, BlockProps[] props, bool nonSolid) {
             switch (block) {
                 case Block.Checkpoint:          return WalkthroughBehaviour.Checkpoint;
                 case Block.Door_AirActivatable: return WalkthroughBehaviour.Door;
@@ -86,9 +86,9 @@ namespace GoldenSparks.Blocks {
             return null;
         }
 
-
+        
         /// <summary> Retrieves the default physics block handler for the given block. </summary>
-        public static HandlePhysics GetPhysicsHandler(BlockID block, BlockProps[] props) {
+        internal static HandlePhysics GetPhysicsHandler(BlockID block, BlockProps[] props) {
             switch (block) {
                 case Block.Door_Log_air:   return DoorPhysics.Do;
                 case Block.Door_TNT_air:   return DoorPhysics.Do;
@@ -167,9 +167,9 @@ namespace GoldenSparks.Blocks {
             }
             return null;
         }
-
+        
         /// <summary> Retrieves the default physics block handler for the given block. </summary>
-        public static HandlePhysics GetPhysicsDoorsHandler(BlockID block, BlockProps[] props) {
+        internal static HandlePhysics GetPhysicsDoorsHandler(BlockID block, BlockProps[] props) {
             if (block == Block.Air)            return DoorPhysics.Do;
             if (block == Block.Door_Log_air)   return DoorPhysics.Do;
             if (block == Block.Door_TNT_air)   return DoorPhysics.Do;

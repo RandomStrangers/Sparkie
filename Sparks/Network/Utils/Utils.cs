@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -47,7 +47,8 @@ namespace GoldenSparks.Network
             
             // IPv4 mapped addresses have the format
             //  0000:0000:0000:0000:0000:FFFF:[ipv4 address]
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++) 
+            {
                 if (addr[i] != 0) return false;
             }
             return addr[10] == 0xFF && addr[11] == 0xFF;
@@ -69,7 +70,12 @@ namespace GoldenSparks.Network
     { 
         /// <summary> Retrieves the remote IP address associated with the given socket </summary>
         public static IPAddress GetIP(Socket s) {
-            return ((IPEndPoint)s.RemoteEndPoint).Address;
+            IPAddress addr = ((IPEndPoint)s.RemoteEndPoint).Address;
+            
+            // Convert IPv4 mapped addresses to IPv4 addresses for consistency
+            //  (e.g. so IPv4 mapped LAN IPs are treated as LAN IPs)
+            if (IPUtil.IsIPv4Mapped(addr)) addr = IPUtil.MapToIPV4(addr);
+            return addr;
         }
     }
 }

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -26,17 +26,64 @@ namespace GoldenSparks.Drawing.Transforms
     {        
         public override string Name { get { return "Rotate"; } }
         public bool CentreOrigin;
-        double cosX, cosY, cosZ, sinX, sinY, sinZ;
+        Shear2D shearX, shearY, shearZ;
         Vec3S32 P;
+
+        struct Shear2D {
+            public int xMulX, xMulY, yMulX, yMulY;
+            public double alpha, beta;
+        };
         
+        // https://silmon.github.io/arbitrary-image-rotation-using-shearing.html
+        // http://delta.cs.cinvestav.mx/~mcintosh/newweb/camex/node37.html
+        // https://www.ocf.berkeley.edu/~fricke/projects/israel/paeth/rotation_by_shearing.html
         public void SetAngles(double xDeg, double yDeg, double zDeg) {
-            cosX = Math.Cos(xDeg * Math.PI / 180.0);
-            cosY = Math.Cos(yDeg * Math.PI / 180.0);
-            cosZ = Math.Cos(zDeg * Math.PI / 180.0);
-            
-            sinX = Math.Sin(xDeg * Math.PI / 180.0);
-            sinY = Math.Sin(yDeg * Math.PI / 180.0);
-            sinZ = Math.Sin(zDeg * Math.PI / 180.0);            
+            CalcShear2D(xDeg, ref shearX);
+            CalcShear2D(yDeg, ref shearY);
+            CalcShear2D(zDeg, ref shearZ);         
+        }
+        
+        void CalcShear2D(double angle, ref Shear2D shear) {
+            angle %= 360.0;
+            if (angle < 0) angle += 360.0;
+
+            // trying to use shear with angles close to 180 tends to cause issues
+            //  (due to Math.Tan(angle / 2) approaching tan(90 degrees))
+            // so avoid this by reducing the angles to 0-90 degrees,
+            //  then rotating the output appropriately afterwards
+            if (angle >= 0 && angle <= 90) {
+                shear.xMulX =  1;
+                shear.yMulY =  1;
+            } else if (angle > 90 && angle <= 180) {
+                angle -= 90;
+                shear.xMulY =  1;
+                shear.yMulX = -1;
+            } else if (angle > 180 && angle <= 270) {
+                angle -= 180;
+                shear.xMulX = -1;
+                shear.yMulY = -1;
+            } else {
+                angle -= 270;
+                shear.xMulY = -1;
+                shear.yMulX =  1;
+            }
+
+            // TODO angle %= 90; instead?? and integer angles instead???
+            angle = -angle; // same output as old Rotate Transform
+
+            angle *= Math.PI / 180.0; // degrees -> radians;
+            shear.alpha = -Math.Tan(angle / 2);
+            shear.beta  = Math.Sin(angle);
+        }
+        
+        void DoShear2D(ref int x, ref int y, ref Shear2D shear) {
+            int X_ = (int)(x  + shear.alpha * (y  + 0.5)); // shear #1
+            int Y_ = (int)(y  + shear.beta  * (X_ + 0.5)); // shear #2
+            X_     = (int)(X_ + shear.alpha * (Y_ + 0.5)); // shear #3
+
+            // rotate by quadrant the angle was originally in
+            x = shear.xMulX * X_ + shear.xMulY * Y_;
+            y = shear.yMulX * X_ + shear.yMulY * Y_;
         }
         
         public override void Perform(Vec3S32[] marks, DrawOp op, Brush brush, DrawOpOutput output) {
@@ -46,27 +93,15 @@ namespace GoldenSparks.Drawing.Transforms
         }
         
         void OutputBlock(DrawOpBlock b, DrawOpOutput output) {
-            double dx = b.X - P.X, dy = b.Y - P.Y, dz = b.Z - P.Z;
-            double rotX = 0, rotY = 0, rotZ = 0;
+            int dx = b.X - P.X, dy = b.Y - P.Y, dz = b.Z - P.Z;
             
-            // Rotate X
-            rotY = cosX * dy - sinX * dz;
-            rotZ = sinX * dy + cosX * dz;
-            dy = rotY; dz = rotZ;
+            DoShear2D(ref dy, ref dz, ref shearX);
+            DoShear2D(ref dx, ref dz, ref shearY);
+            DoShear2D(ref dx, ref dy, ref shearZ);
             
-            // Rotate Y
-            rotX = cosY * dx + sinY * dz;
-            rotZ = -sinY * dx + cosY * dz;
-            dx = rotX; dz = rotZ;
-            
-            // Rotate Z
-            rotX = cosZ * dx - sinZ * dy;
-            rotY = sinZ * dx + cosZ * dy;
-            dx = rotX; dy = rotY;
-            
-            b.X = (ushort)(dx + P.X + ((dx % 1) >= 0.5 ? 1 : 0));
-            b.Y = (ushort)(dy + P.Y + ((dy % 1) >= 0.5 ? 1 : 0));
-            b.Z = (ushort)(dz + P.Z + ((dz % 1) >= 0.5 ? 1 : 0));
+            b.X = (ushort)(P.X + dx);
+            b.Y = (ushort)(P.Y + dy);
+            b.Z = (ushort)(P.Z + dz);
             output(b);
         }
     }

@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
         
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,9 +21,9 @@ using BlockID = System.UInt16;
 
 namespace GoldenSparks.Blocks.Physics {
 
-    public static class PlayerPhysics {
-
-        public static void Walkthrough(Player p, AABB bb) {
+    internal static class PlayerPhysics {
+        
+        internal static void Walkthrough(Player p, AABB bb) {
             Vec3S32 min = bb.BlockMin, max = bb.BlockMax;
             bool hitWalkthrough = false;
             
@@ -49,14 +49,14 @@ namespace GoldenSparks.Blocks.Physics {
                 
                 // Some blocks will cause death of players
                 if (!p.level.Props[block].KillerBlock) continue;
-                if (block == Block.Train && p.trainInvulnerable) continue;
+                if (block == Block.Train && p.trainInvincible) continue;
                 if (p.level.Config.KillerBlocks) p.HandleDeath(block);
             }
             
             if (!hitWalkthrough) p.lastWalkthrough = -1;
         }
-
-        public static void Fall(Player p, AABB bb, bool movingDown) {
+        
+        internal static void Fall(Player p, AABB bb, bool movingDown) {
             // Client position is slightly more precise than server's
             // If don't adjust, it's possible for player to land on edge of a block and not die    
             // Only do when not moving down, so hitting a pillar while falling doesn't trigger
@@ -90,8 +90,8 @@ namespace GoldenSparks.Blocks.Physics {
             if (bb.Min.Y > p.lastFallY) p.startFallY = -1; // flying up resets fall height
             p.startFallY = Math.Max(bb.Min.Y, p.startFallY);
         }
-
-        public static void Drown(Player p, AABB bb) {
+        
+        internal static void Drown(Player p, AABB bb) {
             // Want to check block at centre of bounding box
             bb.Max.X -= (bb.Max.X - bb.Min.X) / 2;
             bb.Max.Z -= (bb.Max.Z - bb.Min.Z) / 2;

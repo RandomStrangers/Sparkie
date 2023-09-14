@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,12 +21,43 @@ using System.Threading;
 using GoldenSparks.Commands;
 using GoldenSparks.Generator.fCraft;
 using GoldenSparks.Generator.Realistic;
-using ClassicalSharp.Generator;
+using GoldenSparks.Generator.Classic;
 
 namespace GoldenSparks.Generator 
 {
-    public delegate bool MapGenFunc(Player p, Level lvl, string seed);
+    public delegate bool MapGenFunc(Player p, Level lvl, MapGenArgs args);
+    public delegate bool MapGenArgSelector(string arg);
     public enum GenType { Simple, fCraft, Advanced };
+        
+    public class MapGenArgs
+    {
+        public string Args;
+        public int Seed;
+        public MapGenBiomeName Biome = MapGenBiomeName.Mine;
+        public bool RandomDefault    = true;
+        
+        public MapGenArgSelector ArgFilter = (Args) => false;
+        public MapGenArgSelector ArgParser = null;
+        
+        public bool ParseArgs(Player p) {
+            bool gotSeed = false;
+            foreach (string arg in Args.SplitSpaces())
+            {
+                if (arg.Length == 0) continue;
+                
+                if (ArgFilter(arg)) {
+                    if (!ArgParser(arg)) return false;
+                } else if (int.TryParse(arg, out Seed)) { 
+                    gotSeed = true;
+                } else {
+                    if (!CommandParser.GetEnum(p, arg, "Seed", ref Biome)) return false;
+                }
+            }
+            
+            if (!gotSeed) Seed = RandomDefault ? new Random().Next() : -1;
+            return true;
+        }
+    }
     
     /// <summary> Map generators initialise the blocks in a level. </summary>
     /// <remarks> e.g. flatgrass generator, mountains theme generator, etc </remarks>
@@ -41,29 +72,30 @@ namespace GoldenSparks.Generator
         public bool Generate(Player p, Level lvl, string seed) {
             lvl.Config.Theme = Theme;
             lvl.Config.Seed  = seed;
-            return GenFunc(p, lvl, seed);
+            
+            MapGenArgs args = new MapGenArgs();
+            args.Args       = seed;
+            
+            bool success = GenFunc(p, lvl, args);
+            MapGenBiome.Get(args.Biome).ApplyEnv(lvl.Config);
+            return success;
         }
         
         
         /// <summary> Creates an RNG initialised with the given seed. </summary>
         public static Random MakeRng(string seed) {
             if (seed.Length == 0) return new Random();
-            return new Random(MakeInt(seed));
-        }
-        
-        /// <summary> Generates an integer seed based on the given seed. </summary>
-        public static int MakeInt(string seed) {
-            if (seed.Length == 0) return new Random().Next();
             
             int value;
             if (!int.TryParse(seed, out value)) value = seed.GetHashCode();
-            return value;
-        }
+            return new Random(value);
+        } // TODO move to CmdMaze
 
         
         public static List<MapGen> Generators = new List<MapGen>();
         public static MapGen Find(string theme) {
-            foreach (MapGen gen in Generators) {
+            foreach (MapGen gen in Generators) 
+            {
                 if (gen.Theme.CaselessEq(theme)) return gen;
             }
             return null;
@@ -78,6 +110,9 @@ namespace GoldenSparks.Generator
             p.Message("&HAdvanced themes: &f" + FilterThemes(GenType.Advanced));
         }
         
+        
+        public const string DEFAULT_HELP = "&HSeed affects how terrain is generated. If seed is the same, the generated level will be the same.";
+            
         /// <summary> Adds a new map generator to the list of generators. </summary>
         public static void Register(string theme, GenType type, MapGenFunc func, string desc) {
             MapGen gen = new MapGen() { Theme = theme, GenFunc = func, Desc = desc, Type = type };
@@ -85,6 +120,7 @@ namespace GoldenSparks.Generator
         }
         
         static MapGen() {
+            RealisticMapGen.RegisterGenerators();
             SimpleGen.RegisterGenerators();
             fCraftMapGen.RegisterGenerators();
             AdvNoiseGen.RegisterGenerators();
@@ -113,7 +149,11 @@ namespace GoldenSparks.Generator
             try {
                 p.Message("Generating map \"{0}\"..", name);
                 lvl = new Level(name, x, y, z);
+                
+                DateTime start = DateTime.UtcNow;
                 if (!gen.Generate(p, lvl, seed)) { lvl.Dispose(); return null; }
+                Logger.Log(LogType.SystemActivity, "Generation completed in {0:F3} seconds", 
+                           (DateTime.UtcNow - start).TotalSeconds);
 
                 string msg = seed.Length > 0 ? "λNICK&S created level {0}&S with seed \"{1}\"" : "λNICK&S created level {0}";
                 Chat.MessageFrom(p, string.Format(msg, lvl.ColoredName, seed));
@@ -138,11 +178,6 @@ namespace GoldenSparks.Generator
         }
         
         static bool CheckMapVolume(Player p, int x, int y, int z) {
-#if DEV_BUILD_RS
-            if (p.IsSparkie) return true;
-#else
-            if (p.IsSparkie) return true;
-#endif
             int limit = p.group.GenVolume;
             if ((long)x * y * z <= limit) return true;
             
@@ -152,26 +187,10 @@ namespace GoldenSparks.Generator
             else text += limit + " blocks";
             p.Message(text);
             return false;
-        }
-
+        }        
+                
         /// <summary> Sets default permissions for a newly generated realm map. </summary>
-#if DEV_BUILD_RS
-        public static void SetRealmPerms(Player p, Level lvl)
-        {
-            lvl.Config.RealmOwner = p.name;
-            const LevelPermission rank = LevelPermission.Sparkie;
-            lvl.BuildAccess.Whitelist(Player.Sparks, rank, lvl, p.name);
-            lvl.VisitAccess.Whitelist(Player.Sparks, rank, lvl, p.name);
-
-            Group grp = Group.Find(Server.Config.OSPerbuildDefault);
-            if (grp == null) return;
-
-            lvl.BuildAccess.SetMin(Player.Sparks, rank, lvl, grp);
-        }
-    }
-}
-#else
-        public static void SetRealmPerms(Player p, Level lvl) {
+        internal static void SetRealmPerms(Player p, Level lvl) {
             lvl.Config.RealmOwner = p.name;
             const LevelPermission rank = LevelPermission.Sparkie;
             lvl.BuildAccess.Whitelist(Player.Sparks, rank, lvl, p.name);
@@ -184,4 +203,3 @@ namespace GoldenSparks.Generator
         }
     }
 }
-#endif

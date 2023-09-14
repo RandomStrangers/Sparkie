@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,13 +17,12 @@
  */
 using System;
 using System.Collections.Generic;
-using System.IO;
 using GoldenSparks.Commands;
 
-namespace GoldenSparks.Eco {
-    
-    public sealed class RankItem : Item {
-        
+namespace GoldenSparks.Eco 
+{   
+    public sealed class RankItem : Item 
+    {    
         public RankItem() {
             Aliases = new string[] { "rank", "ranks", "rankup" };
         }
@@ -33,24 +32,27 @@ namespace GoldenSparks.Eco {
         public override string ShopName { get { return "Rankup"; } }
         
         public List<RankEntry> Ranks = new List<RankEntry>();        
-        public class RankEntry {
+        public class RankEntry 
+        {
             public LevelPermission Perm;
             public int Price = 1000;
         }
         
-        public override void Parse(string line, string[] args) {
-            if (!args[1].CaselessEq("price")) return;
-            LevelPermission perm = Group.ParsePermOrName(args[2], LevelPermission.Sparkie);
-            if (perm == LevelPermission.Sparkie) return;
-
+        public override void Parse(string prop, string value) {
+            if (!prop.CaselessEq("price")) return;
+            string[] args = value.Split(':');
+            
+            LevelPermission perm = Group.ParsePermOrName(args[0], LevelPermission.Null);
+            if (perm == LevelPermission.Null) return;
             
             RankEntry rank = GetOrAdd(perm);
-            rank.Price = int.Parse(args[3]);
+            rank.Price = int.Parse(args[1]);
         }
         
-        public override void Serialise(StreamWriter writer) {
-            foreach (RankEntry rank in Ranks) {
-                writer.WriteLine("rank:price:" + (int)rank.Perm + ":" + rank.Price);
+        public override void Serialise(List<string> cfg) {
+            foreach (RankEntry rank in Ranks) 
+            {
+                cfg.Add("price:" + (int)rank.Perm + ":" + rank.Price);
             }
         }
         
@@ -58,7 +60,7 @@ namespace GoldenSparks.Eco {
             RankEntry rank = Find(perm);
             if (rank != null) return rank;
             
-            rank = new RankEntry(); rank.Perm = perm;
+            rank = new RankItem.RankEntry(); rank.Perm = perm;
             Ranks.Add(rank);
             Ranks.Sort((a, b) => a.Perm.CompareTo(b.Perm));
             return rank;
@@ -79,7 +81,7 @@ namespace GoldenSparks.Eco {
             }
             return null;
         }
-
+        
         public override void OnPurchase(Player p, string args) {
             if (args.Length > 0) {
                 p.Message("&WYou cannot provide a rank name, use &T/Buy rank &Wto buy the NEXT rank."); return;
@@ -96,8 +98,8 @@ namespace GoldenSparks.Eco {
             p.Message("You bought the rank " + rank.ColoredName);
             Economy.MakePurchase(p, nextRank.Price, "&3Rank: " + rank.ColoredName);
         }
-
-        public override void OnSetup(Player p, string[] args) {
+        
+        protected internal override void OnSetup(Player p, string[] args) {
             if (args[1].CaselessEq("price")) {
                 Group grp = Matcher.FindRanks(p, args[2]);
                 if (grp == null) return;
@@ -121,8 +123,8 @@ namespace GoldenSparks.Eco {
                 OnSetupHelp(p);
             }
         }
-
-        public override void OnSetupHelp(Player p) {
+        
+        protected internal override void OnSetupHelp(Player p) {
             base.OnSetupHelp(p);
             p.Message("&T/Eco rank price [rank] [amount]");
             p.Message("&HSets how many &3{0} &Hthat rank costs.", Server.Config.Currency);
@@ -130,7 +132,7 @@ namespace GoldenSparks.Eco {
             p.Message("&HMakes that rank no longer buyable");
         }
 
-        public override void OnStoreOverview(Player p) {
+        protected internal override void OnStoreOverview(Player p) {
             RankEntry next = NextRank(p);
             if (next == null) {
                 p.Message("&6Rankup &S- &Wno further ranks to buy.");
@@ -139,8 +141,8 @@ namespace GoldenSparks.Eco {
                                Group.GetColoredName(next.Perm), next.Price, Server.Config.Currency);
             }
         }
-
-        public override void OnStoreCommand(Player p) {
+        
+        protected internal override void OnStoreCommand(Player p) {
             p.Message("&T/Buy rankup");
             if (Ranks.Count == 0) {
                 p.Message("&WNo ranks have been setup be buyable. See &T/eco help rank"); return;

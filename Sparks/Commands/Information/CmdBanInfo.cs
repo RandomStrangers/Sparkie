@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,31 +18,34 @@
 using System;
 using GoldenSparks.DB;
 
-namespace GoldenSparks.Commands.Info {
-    public sealed class CmdBanInfo : Command2 {
+namespace GoldenSparks.Commands.Info 
+{
+    public sealed class CmdBanInfo : Command2 
+    {
         public override string name { get { return "BanInfo"; } }
         public override string type { get { return CommandTypes.Moderation; } }
         public override bool UseableWhenFrozen { get { return true; } }
+        public override bool MessageBlockRestricted { get { return false; } }
         
         public override void Use(Player p, string message, CommandData data) {
             if (CheckSuper(p, message, "player name")) return;
             if (message.Length == 0) message = p.name;
             
-            string plName = PlayerInfo.FindMatchesPreferOnline(p, message);
-            if (plName == null) return;
-            string nick = p.FormatNick(plName);
+            string target = PlayerInfo.FindMatchesPreferOnline(p, message);
+            if (target == null) return;
+            string nick = p.FormatNick(target);
             
-            string tempData = Server.tempBans.FindData(plName);
+            string tempData = Server.tempBans.FindData(target);
             string tempBanner = null, tempReason = null;
             DateTime tempExpiry = DateTime.MinValue;
             if (tempData != null) {
                 Ban.UnpackTempBanData(tempData, out tempReason, out tempBanner, out tempExpiry);
             }
             
-            bool permaBanned = Group.BannedRank.Players.Contains(plName);
+            bool permaBanned = Group.BannedRank.Players.Contains(target);
             bool isBanned = permaBanned || tempExpiry >= DateTime.UtcNow;
             string msg = nick;
-            string ip  = PlayerDB.FindIP(plName);
+            string ip  = PlayerDB.FindIP(target);
             bool ipBanned = ip != null && Server.bannedIP.Contains(ip);
             
             if (!ipBanned && isBanned) msg += " &Sis &cBANNED";
@@ -52,7 +55,7 @@ namespace GoldenSparks.Commands.Info {
             
             string banner, reason, prevRank;
             DateTime time;
-            Ban.GetBanData(plName, out banner, out reason, out time, out prevRank);
+            Ban.GetBanData(target, out banner, out reason, out time, out prevRank);
             if (banner != null && permaBanned) {
                 string grpName = Group.GetColoredName(prevRank);
                 msg += " &S(Former rank: " + grpName + "&S)";
@@ -62,7 +65,7 @@ namespace GoldenSparks.Commands.Info {
             if (tempExpiry >= DateTime.UtcNow) {
                 TimeSpan delta = tempExpiry - DateTime.UtcNow;
                 p.Message("Temp-banned &S by {1} &Sfor another {0}",
-                               delta.Shorten(), GetName(p, tempBanner));
+                          delta.Shorten(), p.FormatNick(tempBanner));
                 if (tempReason.Length > 0) {
                     p.Message("Reason: {0}",tempReason);
                 }
@@ -73,7 +76,7 @@ namespace GoldenSparks.Commands.Info {
             } else {
                 p.Message("No previous bans recorded for {0}&S.", nick);
             }            
-            Ban.GetUnbanData(plName, out banner, out reason, out time);
+            Ban.GetUnbanData(target, out banner, out reason, out time);
             DisplayDetails(p, banner, reason, time, permaBanned ? "Last unbanned" : "Unbanned");
         }
         
@@ -82,14 +85,8 @@ namespace GoldenSparks.Commands.Info {
             
             TimeSpan delta = DateTime.UtcNow - time;
             p.Message("{0} {1} ago by {2}",
-                          type, delta.Shorten(), GetName(p, banner));
+                          type, delta.Shorten(), p.FormatNick(banner));
             p.Message("Reason: {0}", reason);
-        }
-        
-        static string GetName(Player p, string user) {
-            // ban/unban uses truename
-            user = Server.FromRawUsername(user);
-            return p.FormatNick(user);
         }
         
         public override void Help(Player p) {

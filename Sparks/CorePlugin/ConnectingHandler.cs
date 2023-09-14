@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -18,16 +18,16 @@ using GoldenSparks.Events;
 using GoldenSparks.Network;
 
 namespace GoldenSparks.Core {
-    public static class ConnectingHandler {
-
-        public static void HandleConnecting(Player p, string mppass) {
+    internal static class ConnectingHandler {
+        
+        internal static void HandleConnecting(Player p, string mppass) {
             if (p.cancelconnecting) return;
             bool success = HandleConnectingCore(p, mppass);
             if (!success) p.cancelconnecting = true;
         }
         
         static bool HandleConnectingCore(Player p, string mppass) {
-            if (!Authenticator.Current.VerifyLogin(p, mppass)) {
+            if (!LoginAuthenticator.VerifyLogin(p, mppass)) {
                 p.Leave(null, "Login failed! Close the game and sign in again.", true); return false;
             }
             if (!CheckTempban(p)) return false;
@@ -62,7 +62,7 @@ namespace GoldenSparks.Core {
                     p.Kick(null, "Banned by " + banner + " for another " + delta + reason, true);
                     return false;
                 }
-            } catch { }
+            } catch { } // TODO log error
             return true;
         }
         
@@ -89,8 +89,10 @@ namespace GoldenSparks.Core {
         }
         
         static bool CheckBanned(Player p) {
-            if (Server.bannedIP.Contains(p.ip)) {
-                p.Kick(null, Server.Config.DefaultBanMessage, true);
+            string ipban = Server.bannedIP.Get(p.ip);
+            if (ipban != null) {
+                ipban = ipban.Length > 0 ? ipban : Server.Config.DefaultBanMessage;
+                p.Kick(null, ipban, true);
                 return false;
             }
             if (p.Rank != LevelPermission.Banned) return true;

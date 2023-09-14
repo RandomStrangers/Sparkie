@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -25,12 +25,14 @@ namespace GoldenSparks.Network
     /// <remarks> Sends block changes as either a single CPE BulkBlockUpdate packet,
     /// or 256 SetBlock packets combined as a single byte array to reduce overhead. </remarks>
     public sealed class BufferedBlockSender 
-    {  
-        int[] indices = new int[256];
-        BlockID[] blocks = new BlockID[256];
-        int count = 0;
+    {
         public Level level;
         public Player player;
+        // fields below should not be modified by code outside of BufferedBlockSender
+        public int[] indices    = new int[256];
+        public BlockID[] blocks = new BlockID[256];
+        public int count;
+        
         public BufferedBlockSender() { }
         
         /// <summary> Constructs a bulk sender that will send block changes to all players on that level </summary>
@@ -91,8 +93,10 @@ namespace GoldenSparks.Network
         
         byte[] MakePacket(Player p, ref byte[] bulk, ref byte[] normal,
                           ref byte[] classic, ref byte[] ext, ref byte[] extBulk) {
-            if (p.hasExtBlocks) {
-                if (p.hasBulkBlockUpdate && count >= 150) {
+            IGameSession s = p.Session;
+            #if TEN_BIT_BLOCKS
+            if (s.hasExtBlocks) {
+                if (s.hasBulkBlockUpdate && count >= 150) {
                     if (extBulk == null) extBulk = MakeBulkExt();
                     return extBulk;
                 } else {
@@ -100,27 +104,28 @@ namespace GoldenSparks.Network
                     return ext;
                 }
             }
-
+            #endif
             
             // Different clients support varying types of blocks
-            if (p.hasBulkBlockUpdate && p.hasBlockDefs && count >= 160) {
+            if (s.hasBulkBlockUpdate && s.hasBlockDefs && count >= 160) {
                 if (bulk == null) bulk = MakeBulk();
                 return bulk;
-            } else if (p.hasBlockDefs) {
+            } else if (s.hasBlockDefs) {
                 // supports all 255 blocks (classicube enhanced client)
                 if (normal == null) normal = MakeNormal();
                 return normal;
-            } else if (!p.hasCustomBlocks && p.ProtocolVersion == Server.VERSION_0030) {
-                // support original 45 blocks (classic client)
-                if (classic == null) classic = MakeLimited(p.fallback);
+            } else if (!s.hasCustomBlocks && s.ProtocolVersion == Server.VERSION_0030) {
+                // supports original 45 blocks (classic client)
+                if (classic == null) classic = MakeLimited(s.fallback);
                 return classic;
             } else {
                 // other support combination (CPE only, preclassic, etc)
                 //  don't bother trying to optimise for this case
-                return MakeLimited(p.fallback);
+                return s.MakeBulkBlockchange(this);
             }
         }
 
+        #if TEN_BIT_BLOCKS
         byte[] MakeBulkExt() {
             byte[] data = new byte[2 + 256 * 5 + (256 / 4)];
             data[0] = Opcode.CpeBulkBlockUpdate;
@@ -168,9 +173,10 @@ namespace GoldenSparks.Network
             }
             return data;
         }
+        #endif
 
-        
-        byte[] MakeBulk() {
+
+        internal byte[] MakeBulk() {
             byte[] data = new byte[2 + 256 * 5];
             data[0] = Opcode.CpeBulkBlockUpdate;
             data[1] = (byte)(count - 1);
@@ -182,14 +188,17 @@ namespace GoldenSparks.Network
             }
             for (int i = 0, j = 2 + 256 * sizeof(int); i < count; i++) 
             {
+                #if TEN_BIT_BLOCKS
                 BlockID block = blocks[i];
                 data[j++] = block <= 511 ? (BlockRaw)block : level.GetFallback(block);
-
+                #else
+                data[j++] = (BlockRaw)blocks[i];
+                #endif
             }
             return data;
         }
         
-        byte[] MakeNormal() {
+        internal byte[] MakeNormal() {
             byte[] data = new byte[count * 8];
             for (int i = 0, j = 0; i < count; i++) 
             {
@@ -202,14 +211,17 @@ namespace GoldenSparks.Network
                 data[j++] = (byte)(x >> 8); data[j++] = (byte)x;
                 data[j++] = (byte)(y >> 8); data[j++] = (byte)y;
                 data[j++] = (byte)(z >> 8); data[j++] = (byte)z;
+                #if TEN_BIT_BLOCKS
                 BlockID block = blocks[i];
                 data[j++] = block <= 511 ? (BlockRaw)block : level.GetFallback(block);
-
+                #else
+                data[j++] = (BlockRaw)blocks[i];
+                #endif
             }
             return data;
         }
-        
-        byte[] MakeLimited(byte[] fallback) {
+
+        internal byte[] MakeLimited(byte[] fallback) {
             byte[] data = new byte[count * 8];
             for (int i = 0, j = 0; i < count; i++) 
             {

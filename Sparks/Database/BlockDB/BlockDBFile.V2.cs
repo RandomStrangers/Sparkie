@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,11 @@ using System;
 using System.IO;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.DB {
-    
-    public unsafe sealed class BlockDBFile_V2 : BlockDBFile {
-        const int BlockSize = BulkEntries;
+namespace GoldenSparks.DB 
+{
+    public unsafe sealed class BlockDBFile_V2 : BlockDBFile 
+    {
+        const int BlockSize = BlockDBFile.BulkEntries;
         
         /* TODO: Last chunk in file may only be partially filled. need to prepend these entries when compressing more. */
         public override void WriteEntries(Stream s, FastList<BlockDBEntry> entries) {
@@ -36,11 +37,11 @@ namespace GoldenSparks.DB {
         public override long CountEntries(Stream s) {
             byte[] data = new byte[8];
             s.Position = 16;
-            ReadFully(s, data, 0, data.Length);
+            BlockDBFile.ReadFully(s, data, 0, data.Length);
             
             uint lo = (uint)ReadInt32(data, 0);
             uint hi = (uint)ReadInt32(data, 4);
-            return (long)(lo | ((ulong)hi << 32));
+            return (long)((ulong)lo | ((ulong)hi << 32));
         }
         
         public unsafe override int ReadForward(Stream s, byte[] bulk, BlockDBEntry* entriesPtr) {
@@ -52,11 +53,11 @@ namespace GoldenSparks.DB {
             
             int bytes = (int)Math.Min(remaining, BlockSize);
             int offset = bulk.Length - BlockSize;
-
+            
             // NOTE: bulk and entriesPtr point to same thing
             // But we read into the end of the bulk array, thus the entriesPtr pointing
             // to start of array never ends up overlapping with the data being read
-            ReadFully(s, bulk, offset, bytes);
+            BlockDBFile.ReadFully(s, bulk, offset, bytes);
             return DecompressChunk(bulk, offset, entriesPtr);
         }
         
@@ -68,7 +69,7 @@ namespace GoldenSparks.DB {
                 
                 pos -= bytes;
                 s.Position = pos;
-                ReadFully(s, bulk, offset, bytes);
+                BlockDBFile.ReadFully(s, bulk, offset, bytes);
                 s.Position = pos; // set correct position for next backward read
                 return DecompressChunk(bulk, offset, entriesPtr);
             }

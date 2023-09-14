@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,9 +22,10 @@ using System.IO;
 namespace GoldenSparks {
     
     public class PlayerIgnores {
-        public List<string> Names = new List<string>(), IRCNicks = new List<string>(), IRCNicks1 = new List<string>(), IRCNicks2 = new List<string>(), GlobalIRCNicks = new List<string>();
+        public List<string> Names = new List<string>(), IRCNicks = new List<string>(), 
+            IRCNicks1 = new List<string>(), IRCNicks2 = new List<string>(), GlobalIRCNicks = new List<string>();
         public bool All, IRC, IRC1, IRC2, GlobalIRC, Titles, Nicks, EightBall, DrawOutput, WorldChanges;
-        
+
         public void Load(Player p) {
             string path = "ranks/ignore/" + p.name + ".txt";
             if (!File.Exists(path)) return;
@@ -45,10 +46,13 @@ namespace GoldenSparks {
                     if (line == "&8ball") { EightBall = true; continue; }
                     if (line == "&drawoutput") { DrawOutput = true; continue; }
                     if (line == "&worldchanges") { WorldChanges = true; continue; }
-                    
-                    if (line.StartsWith("&irc_")) {
+
+                    if (line.StartsWith("&irc_"))
+                    {
                         IRCNicks.Add(line.Substring("&irc_".Length));
-                    } else {
+                    }
+                    else
+                    {
                         Names.Add(line);
                     }
                     if (line.StartsWith("&irc1_"))
@@ -80,8 +84,8 @@ namespace GoldenSparks {
                 Logger.LogError("Error loading ignores for " + p.name, ex);
             }
             
-            bool special = All || IRC || IRC1 || IRC2 || GlobalIRC || Titles || Nicks || EightBall || DrawOutput || WorldChanges;
-            if (special || Names.Count > 0 || IRCNicks.Count > 0 || IRCNicks1.Count >0 || IRCNicks2.Count > 0 || GlobalIRCNicks.Count > 0){
+            bool special = All || IRC || Titles || Nicks || EightBall || DrawOutput || WorldChanges;
+            if (special || Names.Count > 0 || IRCNicks.Count > 0) {
                 p.Message("&cType &a/ignore list &cto see who you are still ignoring");
             }
         }
@@ -98,9 +102,6 @@ namespace GoldenSparks {
                     if (IRC1) w.WriteLine("&irc1");
                     if (IRC2) w.WriteLine("&irc2");
                     if (GlobalIRC) w.WriteLine("&globalirc");
-
-
-
                     if (Titles) w.WriteLine("&titles");
                     if (Nicks) w.WriteLine("&nicks");
                     
@@ -112,9 +113,6 @@ namespace GoldenSparks {
                     foreach (string nick in IRCNicks1) { w.WriteLine("&irc1_" + nick); }
                     foreach (string nick in IRCNicks2) { w.WriteLine("&irc2_" + nick); }
                     foreach (string nick in GlobalIRCNicks) { w.WriteLine("&globalirc_" + nick); }
-
-
-
                     foreach (string name in Names) { w.WriteLine(name); }
                 }
             } catch (IOException ex) {
@@ -146,6 +144,7 @@ namespace GoldenSparks {
                 p.Message("&cCurrently ignoring the following GlobalIRC nicks:");
                 p.Message(GlobalIRCNicks.Join());
             }
+
 
             if (All) p.Message("&cIgnoring all chat");
             if (IRC) p.Message("&cIgnoring IRC chat");

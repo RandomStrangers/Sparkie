@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,7 +17,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.Maths;
 using GoldenSparks.SQL;
 
@@ -72,9 +71,8 @@ namespace GoldenSparks.Blocks.Extended {
             
             Command cmd = Command.Find(cmdName);
             if (cmd == null) return true;
-            bool mbUseable = !cmd.MessageBlockRestricted && !cmd.type.CaselessContains("mod");
             
-            if (p.CanUse(cmd) && (allCmds || mbUseable)) return true;
+            if (p.CanUse(cmd) && (allCmds || !cmd.MessageBlockRestricted)) return true;
             p.Message("You cannot use &T/{0} &Sin a messageblock.", cmd.name);
             return false;
         }
@@ -115,13 +113,13 @@ namespace GoldenSparks.Blocks.Extended {
             List<Vec3U16> coords = new List<Vec3U16>();
             if (!ExistsInDB(map)) return coords;
                         
-            Database.ReadRows("Messages" + map, "X,Y,Z", coords, Portal.ReadCoords);
+            Database.ReadRows("Messages" + map, "X,Y,Z",
+                                record => coords.Add(Portal.ParseCoords(record)));
             return coords;
         }
         
         /// <summary> Deletes all message blocks for the given map. </summary>
         public static void DeleteAll(string map) {
-            if (!ExistsInDB(map)) return;
             Database.DeleteTable("Messages" + map);
         }
         
@@ -162,15 +160,13 @@ namespace GoldenSparks.Blocks.Extended {
             contents = Colors.Escape(contents);
             contents = contents.UnicodeToCp437();
             
-            Database.CreateTable("Messages" + map, LevelDB.createMessages);            
-            int count = Database.CountRows("Messages" + map,
-                                           "WHERE X=@0 AND Y=@1 AND Z=@2", x, y, z);
+            Database.CreateTable("Messages" + map, LevelDB.createMessages);
+            object[] args = new object[] { x, y, z,  contents };
             
-            if (count == 0) {
-                Database.AddRow("Messages" + map, "X, Y, Z, Message", x, y, z, contents);
-            } else {
-                Database.UpdateRows("Messages" + map, "Message=@3",
-                                    "WHERE X=@0 AND Y=@1 AND Z=@2", x, y, z, contents);
+            int changed = Database.UpdateRows("Messages" + map, "Message=@3",
+                                             "WHERE X=@0 AND Y=@1 AND Z=@2", args);
+            if (changed == 0) {
+                Database.AddRow("Messages" + map, "X,Y,Z, Message", args);
             }
             
             Level lvl = LevelInfo.FindExact(map);

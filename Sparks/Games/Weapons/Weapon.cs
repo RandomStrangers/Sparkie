@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,14 +20,15 @@ using System.Collections.Generic;
 using GoldenSparks.Commands;
 using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Maths;
+using GoldenSparks.Network;
 using GoldenSparks.Tasks;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Games {
-
+namespace GoldenSparks.Games 
+{
     /// <summary> Represents a weapon which can interact with blocks or players until it dies. </summary>
-    public abstract class Weapon {
-
+    public abstract class Weapon 
+    {
         public abstract string Name { get; }
         static bool hookedEvents;
         
@@ -41,15 +42,17 @@ namespace GoldenSparks.Games {
                 OnBlockChangingEvent.Register(BlockChangingCallback, Priority.Low);
                 hookedEvents = true;
             }
+        	
+        	if (p.weaponBuffer == null) p.weaponBuffer = new BufferedBlockSender();
             
             this.p   = p;
             p.ClearBlockchange();
             p.weapon = this;
             
             if (p.Supports(CpeExt.PlayerClick)) {
-                p.Message(Name + " engaged, click to fire at will");
+                OnEnabled(p, true);
             } else {                
-                p.Message(Name + " engaged, fire at will");
+                OnEnabled(p, false);
                 p.aiming = true;
                 aimer = new AimBox();
                 aimer.Hook(p);
@@ -58,13 +61,24 @@ namespace GoldenSparks.Games {
 
         public virtual void Disable() {
             p.aiming = false;
-            p.Message(Name + " disabled");
+            OnDisabled(p);
             p.weapon = null;
+        }      
+        
+        /// <summary> Called when the given player engages/equips this weapon </summary>
+        protected virtual void OnEnabled(Player p, bool clickToActivate) {
+            p.Message("{0} engaged, {1}fire at will", Name, clickToActivate ? "click to " : "");
         }
-
+        
+        /// <summary> Called when given player disengages/releases this weapon </summary>
+        protected virtual void OnDisabled(Player p) {
+            p.Message(Name + " disabled");    
+        }
+        
+        
         /// <summary> Called when the player fires this weapon. </summary>
         /// <remarks> Activated by clicking through either PlayerClick or on a glass box around the player. </remarks>
-        public abstract void OnActivated(Vec3F32 dir, BlockID block);
+        protected abstract void OnActivated(Vec3F32 dir, BlockID block);
 
         
         static void BlockChangingCallback(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel) {
@@ -100,10 +114,11 @@ namespace GoldenSparks.Games {
             Vec3F32 dir = DirUtils.GetDirVectorExt(yaw, pitch);
             weapon.OnActivated(dir, held);
         }
-
-        public static Player PlayerAt(Player p, Vec3U16 pos, bool skipSelf) {
+        
+        protected static Player PlayerAt(Player p, Vec3U16 pos, bool skipSelf) {
             Player[] players = PlayerInfo.Online.Items;
-            foreach (Player pl in players) {
+            foreach (Player pl in players) 
+            {
                 if (pl.level != p.level) continue;
                 if (p == pl && skipSelf) continue;
                 
@@ -119,17 +134,20 @@ namespace GoldenSparks.Games {
         
         public static WeaponType ParseType(string type) {
             if (type.Length == 0) return WeaponType.Normal;
-            if (type.CaselessEq("destroy")) return WeaponType.Destroy;
-            if (type.CaselessEq("tp") || type.CaselessEq("teleport")) return WeaponType.Teleport;
-            if (type.CaselessEq("explode")) return WeaponType.Explode;
-            if (type.CaselessEq("laser"))   return WeaponType.Laser;
+            
+            if (type.CaselessEq("destroy"))  return WeaponType.Destroy;
+            if (type.CaselessEq("tp"))       return WeaponType.Teleport;
+            if (type.CaselessEq("teleport")) return WeaponType.Teleport;
+            if (type.CaselessEq("explode"))  return WeaponType.Explode;
+            if (type.CaselessEq("laser"))    return WeaponType.Laser;
             return WeaponType.Invalid;
         }
     }
     
     public enum WeaponType { Invalid, Normal, Destroy, Teleport, Explode, Laser };
     
-    public class AmmunitionData {
+    public class AmmunitionData 
+    {
         public BlockID block;
         public Vec3U16 start;
         public Vec3F32 dir;
@@ -158,10 +176,10 @@ namespace GoldenSparks.Games {
             }
         }
     }
-
+    
     /// <summary> Manages the glass box around the player. Adjusts based on where player is looking. </summary>
-    public sealed class AimBox {
-        
+    internal sealed class AimBox 
+    {        
         Player player;
         List<Vec3U16> lastGlass = new List<Vec3U16>();
         List<Vec3U16> curGlass  = new List<Vec3U16>();
@@ -197,7 +215,8 @@ namespace GoldenSparks.Games {
             Check(p.level, x + dx, y, z + dz);
 
             // Revert all glass blocks now not in the ray from the player's direction
-            for (int i = 0; i < lastGlass.Count; i++) {
+            for (int i = 0; i < lastGlass.Count; i++) 
+            {
                 Vec3U16 pos = lastGlass[i];
                 if (curGlass.Contains(pos)) continue;
                 
@@ -207,7 +226,8 @@ namespace GoldenSparks.Games {
             }
 
             // Place the new glass blocks that are in the ray from the player's direction
-            foreach (Vec3U16 pos in curGlass) {
+            foreach (Vec3U16 pos in curGlass) 
+            {
                 if (lastGlass.Contains(pos)) continue;
                 lastGlass.Add(pos);
                 p.SendBlockchange(pos.X, pos.Y, pos.Z, Block.Glass);

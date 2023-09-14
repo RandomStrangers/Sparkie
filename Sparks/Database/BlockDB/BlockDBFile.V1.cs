@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,10 @@ using System;
 using System.IO;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.DB {
-    
-    public unsafe sealed class BlockDBFile_V1 : BlockDBFile {
-        
+namespace GoldenSparks.DB 
+{ 
+    public unsafe sealed class BlockDBFile_V1 : BlockDBFile 
+    {        
         public override void WriteEntries(Stream s, FastList<BlockDBEntry> entries) {
             byte[] bulk = new byte[BulkEntries * EntrySize];
             for (int i = 0; i < entries.Count; i += BulkEntries) {
@@ -55,7 +55,7 @@ namespace GoldenSparks.DB {
         }
 
         public override long CountEntries(Stream s) {
-            return (s.Length / EntrySize) - HeaderEntries;
+            return (s.Length / BlockDBFile.EntrySize) - BlockDBFile.HeaderEntries;
         }
         
         // Inlined WriteI32/WriteU16 for better performance
@@ -86,7 +86,7 @@ namespace GoldenSparks.DB {
             int count = (int)Math.Min(remaining, BulkEntries);
             
             if (count > 0) {
-                ReadFully(s, bulk, 0, count * EntrySize);
+                BlockDBFile.ReadFully(s, bulk, 0, count * EntrySize);
             }
             return count;
         }
@@ -99,7 +99,7 @@ namespace GoldenSparks.DB {
             if (count > 0) {
                 pos -= count * EntrySize;
                 s.Position = pos;
-                ReadFully(s, bulk, 0, count * EntrySize);
+                BlockDBFile.ReadFully(s, bulk, 0, count * EntrySize);
                 s.Position = pos; // set correct position for next backward read
             }
             return count;

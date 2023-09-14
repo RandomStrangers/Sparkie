@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,18 +20,17 @@ using System.Collections.Generic;
 using GoldenSparks.Network;
 using GoldenSparks.Tasks;
 
-namespace GoldenSparks {
-    public sealed partial class Server {
-        public static bool cancelcommand;
-
-
+namespace GoldenSparks 
+{
+    public sealed partial class Server 
+    {
+        public static bool cancelcommand;        
         public delegate void OnSparksCommand(string cmd, string message);
         public static event OnSparksCommand SparksCommand;
         public delegate void MessageEventHandler(string message);
         public delegate void VoidHandler();
         
         public static event MessageEventHandler OnURLChange;
-        public static event MessageEventHandler OnURL2Change;
         public static event VoidHandler OnSettingsUpdate;
         public static ServerConfig Config = new ServerConfig();
         public static DateTime StartTime;
@@ -41,37 +40,31 @@ namespace GoldenSparks {
         public static PlayerMetaList Notes = new PlayerMetaList("text/notes.txt");
         
         /// <summary> *** DO NOT USE THIS! *** Use VersionString, as this field is a constant and is inlined if used. </summary>
-        public const string InternalVersion = "1.0.5";
+        public const string InternalVersion = "1.0.5.1";
         public static string Version { get { return InternalVersion; } }
 
-
         public static string SoftwareName = "&6S&ep&6a&er&6k&ei&6e&e'&6s &eC&6o&er&6e&e";
-
         static string fullName;
         public static string SoftwareNameVersioned {
             // By default, if SoftwareName gets externally changed, that is reflected in SoftwareNameVersioned too
             get { return fullName ?? SoftwareName + " " + Version; }
             set { fullName = value; }
         }
-        // URL for connecting to the server
-        public static string URL = String.Empty;
+
         public static INetListen Listener = new TcpListen();
-        public static Scheduler Heartbeats = new Scheduler("GS_HeartbeatsScheduler");
 
         //Other
         public static bool SetupFinished, CLIMode;
         
-        public static PlayerList bannedIP, whiteList, invalidIds;
+        public static PlayerList whiteList, invalidIds;
         public static PlayerList ignored, hidden, agreed, vip, noEmotes, lockdown;
         public static PlayerExtList models, skins, reach, rotations, modelScales;
-        public static PlayerExtList frozen, muted, tempBans, tempRanks;
+        public static PlayerExtList bannedIP, frozen, muted, tempBans, tempRanks;
         
-        public static readonly List<string> Devs = new List<string>() { "Hetal", "UclCommander", "GoldenSparks", "sethbatman05" };
+        public static readonly List<string> Devs = new List<string>() { "Hetal", "UclCommander", "GoldenSparks","sethbatman05" };
         public static readonly List<string> Opstats = new List<string>() { "ban", "tempban", "xban", "banip", "kick", "warn", "mute", "freeze", "setrank" };
 
         public static Level mainLevel;
-        [Obsolete("Use LevelInfo.Loaded.Items")]
-        public static List<Level> levels;
 
         public static PlayerList reviewlist = new PlayerList();
         static string[] announcements = new string[0];
@@ -83,10 +76,11 @@ namespace GoldenSparks {
         public static int YesVotes, NoVotes;
         public static bool voting;
         public const int MAX_PLAYERS = 1024;
-        
+
         public static Scheduler MainScheduler = new Scheduler("GS_MainScheduler");
         public static Scheduler Background = new Scheduler("GS_BackgroundScheduler");
         public static Scheduler Critical = new Scheduler("GS_CriticalScheduler");
+        public static Scheduler Heartbeats = new Scheduler("GS_HeartbeatsScheduler");
         public static Server s = new Server();
 
         public const byte VERSION_0016 = 3; // classic 0.0.16
@@ -94,9 +88,7 @@ namespace GoldenSparks {
         public const byte VERSION_0019 = 5; // classic 0.0.19
         public const byte VERSION_0020 = 6; // classic 0.0.20 / 0.0.21 / 0.0.23
         public const byte VERSION_0030 = 7; // classic 0.30 (final)
-        public const byte VERSION_0000 = 8; // classic 0.0.00 (Doesn't really exist, here for fun, if a player connects using this
-                                            // then we have a real problem
-
+        
         public static bool chatmod, flipHead;
         public static bool shuttingDown;
     }

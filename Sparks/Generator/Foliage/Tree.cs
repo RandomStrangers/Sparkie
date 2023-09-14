@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,17 +18,19 @@
 using System;
 using System.Collections.Generic;
 using GoldenSparks.Drawing.Brushes;
+using GoldenSparks.Generator.fCraft;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Generator.Foliage {
-
+namespace GoldenSparks.Generator.Foliage 
+{
     public delegate void TreeOutput(ushort x, ushort y, ushort z, BlockID block);
     
     public delegate Tree TreeConstructor();
     
-    public abstract class Tree {
-        public int height, size;
-        public Random rnd;
+    public abstract class Tree 
+    {
+        protected internal int height, size;
+        protected Random rnd;
         
 
         /// <summary> Minimum allowed size (usually means height) for this tree. </summary>
@@ -60,21 +62,23 @@ namespace GoldenSparks.Generator.Foliage {
                 if (block == Block.Log || block == Block.Green) return true;
             }
             return false;
-        }
+        } // TODO move to generic helper function
         
         
         public static Dictionary<string, TreeConstructor> TreeTypes = 
             new Dictionary<string, TreeConstructor>() {
-            { "Fern", () => new NormalTree() }, { "Cactus", () => new CactusTree() },
+            { "Fern", () => new NormalTree() },   { "Cactus", () => new CactusTree() },
             { "Notch", () => new ClassicTree() }, { "Swamp", () => new SwampTree() },
             { "Bamboo", () => new BambooTree() }, { "Palm", () => new PalmTree() },
-            { "Oak", () => new OakTree() }, { "Ash", () => new AshTree() },            
-            { "Round", () => new RoundTree() }, { "Cone", () => new ConeTree() }, 
-            { "Rainforest", () => new RainforestTree() }, { "Mangrove", () => new MangroveTree() },      
+            { "Oak", () => new OakTree() },       { "Ash", () => new AshTree() },            
+            { "Round", () => new RoundTree() },   { "Cone", () => new ConeTree() }, 
+            { "Rainforest", () => new RainforestTree() }, { "Mangrove", () => new MangroveTree() },
+            { "fCraft", () => new fCraftTree() }
         };
         
         public static Tree Find(string name) {
-            foreach (var entry in TreeTypes) {
+            foreach (var entry in TreeTypes) 
+            {
                 if (entry.Key.CaselessEq(name)) return entry.Value();
             }
             return null;

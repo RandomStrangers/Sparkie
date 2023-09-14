@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,18 +17,17 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using GoldenSparks.Levels.IO;
 using GoldenSparks.Maths;
 using GoldenSparks.SQL;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.DB {
-    
+namespace GoldenSparks.DB 
+{
     /// <summary> Exports a BlockDB table to the new binary format. </summary>
-    public sealed class BlockDBTableDumper {
-        
+    public sealed class BlockDBTableDumper 
+    {       
         string mapName;
         Dictionary<string, int> nameCache = new Dictionary<string, int>();
         Stream stream;
@@ -45,7 +44,7 @@ namespace GoldenSparks.DB {
             mapName = table.Substring("Block".Length);
             
             try {
-                Database.ReadRows(table, "*", null, DumpRow);
+                Database.ReadRows(table, "*", DumpRow);
                 WriteBuffer(true);
                 AppendCbdbFile();
                 SaveCbdbFile();
@@ -58,8 +57,8 @@ namespace GoldenSparks.DB {
             Database.DeleteTable(table);
         }
         
-        object DumpRow(IDataRecord record, object arg) {
-            if (errorOccurred) return arg;
+        void DumpRow(ISqlRecord record) {
+            if (errorOccurred) return;
             
             try {
                 if (stream == null) {
@@ -87,7 +86,6 @@ namespace GoldenSparks.DB {
                 Logger.LogError(ex);
                 errorOccurred = true;
             }
-            return arg;
         }
         
         void WriteBuffer(bool force) {
@@ -124,10 +122,10 @@ namespace GoldenSparks.DB {
         }
         
         
-        void UpdateBlock(IDataRecord record) {
-            entry.OldRaw = Block.Invalid;
-            entry.NewRaw = record.GetByte(5);
-            byte blockFlags = record.GetByte(6);
+        void UpdateBlock(ISqlRecord record) {
+            entry.OldRaw    = Block.Invalid;
+            entry.NewRaw    = (byte)record.GetInt32(5);
+            byte blockFlags = (byte)record.GetInt32(6);
             entry.Flags = BlockDBFlags.ManualPlace;
             
             if ((blockFlags & 1) != 0) { // deleted block
@@ -138,14 +136,14 @@ namespace GoldenSparks.DB {
             }
         }
         
-        void UpdateCoords(IDataRecord record) {
+        void UpdateCoords(ISqlRecord record) {
             int x = record.GetInt32(2);
             int y = record.GetInt32(3);
             int z = record.GetInt32(4);
             entry.Index = x + dims.X * (z + dims.Z * y);
         }
         
-        void UpdatePlayerID(IDataRecord record) {
+        void UpdatePlayerID(ISqlRecord record) {
             int id;
             string user = record.GetString(0);
             if (!nameCache.TryGetValue(user, out id)) {
@@ -159,17 +157,8 @@ namespace GoldenSparks.DB {
             entry.PlayerID = id;
         }
         
-        void UpdateTimestamp(IDataRecord record) {
-            // date is in format yyyy-MM-dd hh:mm:ss
-            string date = Database.Backend.RawGetDateTime(record, 1);
-            int year =  (date[0] - '0') * 1000 + (date[1] - '0') * 100 + (date[2] - '0') * 10 + (date[3] - '0');
-            int month = (date[5] - '0') * 10   + (date[6] - '0');
-            int day =   (date[8] - '0') * 10   + (date[9] - '0');
-            int hour =  (date[11] - '0') * 10  + (date[12] - '0');
-            int min =   (date[14] - '0') * 10  + (date[15] - '0');
-            int sec =   (date[17] - '0') * 10  + (date[18] - '0');
-            
-            DateTime time = new DateTime(year, month, day, hour, min, sec);
+        void UpdateTimestamp(ISqlRecord record) {
+            DateTime time   = record.GetDateTime(1).ToUniversalTime();
             entry.TimeDelta = (int)time.Subtract(BlockDB.Epoch).TotalSeconds;
         }
     }

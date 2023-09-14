@@ -111,7 +111,7 @@ namespace GoldenSparks.Games {
         
         void HandleSentMap(Player p, Level prevLevel, Level level) {
             if (level != Map) return;
-            MessageMapInfo(p);
+            //MessageMapInfo(p);
             if (TeamOf(p) == null) AutoAssignTeam(p);
         }
         
@@ -159,9 +159,9 @@ namespace GoldenSparks.Games {
         void AddTntCheck(int b, Player p) {
             PhysicsArgs args = default(PhysicsArgs);
             args.Type1 = PhysicsArgs.Custom;
-            args.Value1 = (byte)p.SessionID;
-            args.Value2 = (byte)(p.SessionID >> 8);
-            args.Data = (byte)(p.SessionID >> 16);
+           // args.Value1 = (byte)p.SessionID;
+            //args.Value2 = (byte)(p.SessionID >> 8);
+           // args.Data = (byte)(p.SessionID >> 16);
             Map.AddCheck(b, false, args);
         }
         
@@ -190,7 +190,7 @@ namespace GoldenSparks.Games {
             
             TWData data = Get(p);
             if (data.KillStreak >= cfg.StreakTwoAmount && cfg.Streaks) power++;
-            TntPhysics.MakeExplosion(Map, x, y, z, power - 2, true, this);
+            TntPhysics.MakeExplosion(Map, x, y, z, power - 2, true, null);
             
             List<Player> inRange = new List<Player>();
             Player[] all = allPlayers.Items;
@@ -211,7 +211,7 @@ namespace GoldenSparks.Games {
             int id = args.Value1 | args.Value2 << 8 | (args.Data & 0xF) << 16;
             Player[] players = PlayerInfo.Online.Items;
             for (int i = 0; i < players.Length; i++) {
-                if (players[i].SessionID == id) return players[i];
+                //if (players[i].SessionID == id) return players[i];
             }
             return null;
         }

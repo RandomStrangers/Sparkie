@@ -30,7 +30,6 @@ namespace GoldenSparks.Games {
     public sealed class TWConfig : RoundsGameConfig {
         public override bool AllowAutoload { get { return false; } }
         public override string GameName { get { return "TNT Wars"; } }
-        public override string PropsPath { get { return "properties/tntwars.properties"; } }
         
         [ConfigEnum("Mode", null, TWGameMode.TDM, typeof(TWGameMode))]
         public TWGameMode Mode = TWGameMode.TDM;

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,17 +18,20 @@
 using System;
 using GoldenSparks.Eco;
 
-namespace GoldenSparks.Commands.Eco { 
-    public sealed class CmdBalance : Command2 {        
+namespace GoldenSparks.Commands.Eco 
+{
+    public sealed class CmdBalance : Command2 
+    {
         public override string name { get { return "Balance"; } }
         public override string shortcut { get { return "Money"; } }
         public override string type { get { return CommandTypes.Economy; } }
-        public override CommandEnable Enabled { get { return CommandEnable.Economy; } }
         
         public override void Use(Player p, string message, CommandData data) {
             if (CheckSuper(p, message, "player name")) return;
             if (message.Length == 0) message = p.name;
             if (!Formatter.ValidPlayerName(p, message)) return;
+            
+            if (!Economy.CheckIsEnabled(p, this)) return;
             
             int matches = 1;
             Player who  = PlayerInfo.FindMatches(p, message, out matches);

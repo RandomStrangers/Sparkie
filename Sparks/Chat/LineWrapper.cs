@@ -1,11 +1,11 @@
 /*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-http://www.opensource.org/licenses/ecl2.php
-http://www.gnu.org/licenses/gpl-3.0.html
+https://opensource.org/license/ecl-2-0/
+https://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -42,6 +42,10 @@ namespace GoldenSparks {
         }
         
         static string MakeLine(char[] line, int length, bool emotePad) {
+            // necessary to remove useless trailing color codes, 
+            //  as crashes original minecraft classic otherwise
+            length = TrimTrailingInvisible(line, length);
+
             if (emotePad) line[length++] = '\'';
             return new string(line, 0, length);
         }
@@ -55,9 +59,15 @@ namespace GoldenSparks {
             // TODO: This probably needs to account for colour codes
             return (c == '-' || c == '/' || c == '\\') && line[i - 1] != ' ';
         }
+
+        static bool StartsWithColor(char[] message, int messageLen, int offset) {
+            return message[offset] == '&' 
+                && (offset + 1) < messageLen
+                && Colors.Lookup(message[offset + 1]) != '\0';
+        }
         
         // TODO: Add outputLine argument, instead of returning string list
-        public static List<string> Wordwrap(string message, bool supportsEmotes) {
+        public static List<string> Wordwrap(char[] message, int messageLen, bool supportsEmotes) {
             List<string> lines   = new List<string>();
             const int limit      = NetUtils.StringSize; // max characters on one line
             const int maxLineLen = limit + 1; // +1 because need to know if length of line overshot limit
@@ -66,7 +76,7 @@ namespace GoldenSparks {
             bool firstLine = true;
             char lastColor = 'f';
             
-            for (int offset = 0; offset < message.Length; ) {
+            for (int offset = 0; offset < messageLen; ) {
                 int length = 0;
                 // "Line1", "> Line2", "> Line3"
                 if (!firstLine) {
@@ -74,15 +84,15 @@ namespace GoldenSparks {
                     length += 2;
                     
                     // Make sure split up lines have the right colour
-                    if (lastColor != 'f') {
+                    if (lastColor != 'f' && !StartsWithColor(message, messageLen, offset)) {
                         line[2] = '&'; line[3] = lastColor;
                         length += 2;
                     }
                 } else if (!supportsEmotes) {
-                    // If message starts with emote then prepend &f
-                    // (otherwise original minecraft classic trims it)
+                    // If message starts with emote or space then prepend &f
+                    // (otherwise original minecraft classic client trims it)
                     char first = message[0];
-                    if (first < ' ' || first > '~') {
+                    if (first <= ' ' || first > '~') {
                         line[0] = '&'; line[1] = 'f';
                         length += 2;
                     }
@@ -92,7 +102,7 @@ namespace GoldenSparks {
                 // Also trim leading spaces on subsequent lines
                 // (note that first line is NOT trimmed for spaces)
                 bool foundStart = firstLine;
-                for (; length < maxLineLen && offset < message.Length;) {
+                for (; length < maxLineLen && offset < messageLen;) {
                     char c = message[offset++];
                     
                     if (c != ' ' || foundStart) {
@@ -145,23 +155,22 @@ namespace GoldenSparks {
             return lines;
         }
 
-        public static string CleanupColors(string value, Player p) {
-            // Although ClassiCube in classic mode supports invalid colours,
-            //  the original vanilla client crashes with invalid colour codes
-            // Since it's impossible to identify which client is being used,
-            //  just remove the ampersands to be on the safe side
-            //  when text colours extension is not supported
-            return CleanupColors(value, p.hasTextColors, p.hasTextColors);
-        }
-        
         /// <summary> Removes redundant colour codes and fixes some colour codes to behave correctly for older clients </summary>
-        /// <param name="fullAmpersands"> if false, ampersands not followed by valid colour code are removed </param>
-        /// <param name="customCols"> if false, converts custom colour codes into fallback colour code </param>
-        public static string CleanupColors(string value, bool fullAmpersands, bool customCols) {
+        /// <param name="fullAmpersands"> if false, ampersands not followed by valid colour code are converted to percents </param>
+        /// <param name="customColors"> if false, converts custom colour codes into fallback colour codes </param>
+        public static string CleanupColors(string value, bool fullAmpersands, bool customColors) {
             if (value.IndexOf('&') == -1) return value;
-            StringBuilder sb = new StringBuilder(value.Length);
-            int lastIdx  = -1;
-            char lastCol = 'f', col;
+            
+            int len;
+            char[] chars = CleanupColors(value, out len, fullAmpersands, customColors);
+            return new string(chars, 0, len);
+        }
+
+        public static char[] CleanupColors(string value, out int bufferLen,
+                                           bool fullAmpersands, bool customColors) {
+            char[] chars = new char[value.Length];
+            int lastIdx  = -1, len = 0;
+            char lastColor  = 'f', col;
             bool combinable = false;
             
             for (int i = 0; i < value.Length; i++) {
@@ -169,40 +178,59 @@ namespace GoldenSparks {
                 // Definitely not a colour code
                 if (c != '&') {
                     if (c != ' ') combinable = false;
-                    sb.Append(c); continue;
+                    chars[len++] = c; 
+                    continue;
                 }
                 
                 // Maybe still not a colour code
                 if (i == value.Length - 1 || (col = Colors.Lookup(value[i + 1])) == '\0') {
                     // Treat the & like a normal character
                     //  For clients not supporting standalone '&', show '%' instead
-                    combinable = false;
-                    sb.Append(fullAmpersands ? '&' : '%');
+                    combinable   = false;
+                    chars[len++] = fullAmpersands ? '&' : '%';
                     continue;
                 }
-                if (!customCols) col = Colors.Get(col).Fallback;
+                if (!customColors) col = Colors.Get(col).Fallback;
                 
                 // Don't append duplicate colour codes
-                if (lastCol != col) {
-                    // Remove first colour code in "&a&b or "&a   &b"
-                    if (combinable) sb.Remove(lastIdx, 2);
+                if (lastColor != col) {
+                    // If no gap or only whitepsace since prior color code,
+                    //  then just replace the prior color code with this one
+                    if (combinable) {
+                        //  e.g. "&a&bTest"   -> "&bTest"
+                        //  e.g. "&a  &bTest" -> "&b  Test"
+                        // (it's particularly useful to replace prior color codes
+                        //  since original classic trims leading whitespace)
+                        chars[lastIdx + 1] = col;
+                    } else {
+                        // can't simplify, so just append this color code
+                        lastIdx      = len;
+                        chars[len++] = '&';
+                        chars[len++] = col;
+                    }
                     
-                    sb.Append('&').Append(col);
-                    lastIdx = sb.Length - 2;
-                    lastCol = col;
+                    lastColor  = col;
                     combinable = true;
                 }
                 i++; // skip over color code
             }
-            
-            // Trim trailing color codes
-            while (sb.Length >= 2) {
-                if (sb[sb.Length - 2] != '&') break;
-                if (Colors.Lookup(sb[sb.Length - 1]) == '\0') break;
-                // got a color code at the end, remove
-                sb.Remove(sb.Length - 2, 2);
+
+            bufferLen = TrimTrailingInvisible(chars, len);
+            return chars;
+        }
+
+        // Trims trailing color codes and whitespace
+        static int TrimTrailingInvisible(char[] chars, int len) {
+            while (len >= 2)
+            {
+                char c = chars[len - 1];
+                if (c == ' ') { len--; continue; }
+
+                if (chars[len - 2] != '&')    break;
+                if (Colors.Lookup(c) == '\0') break;
+                len -= 2; // remove color code
             }
-            return sb.ToString();
+            return len;
         }
     }
 }

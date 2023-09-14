@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -91,6 +91,7 @@ namespace GoldenSparks
         public const string CustomParticles = "CustomParticles";
         public const string CustomModels = "CustomModels";
         public const string PluginMessages = "PluginMessages";
+        public const string ExtEntityTeleport = "ExtEntityTeleport";
     }
     
     public sealed class CpeExtension 
@@ -149,9 +150,12 @@ namespace GoldenSparks
             new CpeExtension(CpeExt.CustomParticles,     "Allows defining and spawning custom particles"),
             new CpeExtension(CpeExt.CustomModels,        "Allows defining custom models for entities", 2),
             new CpeExtension(CpeExt.PluginMessages,      "Allows sending and receiving plugin messages from clients"),
+            new CpeExtension(CpeExt.ExtEntityTeleport,   "Allows sending more precisely controlled teleports"),
+            #if TEN_BIT_BLOCKS
             new CpeExtension(CpeExt.ExtBlocks,           "Allows using block IDs over 255 in block definitions"),
+            #endif
         };
-        public static CpeExt[] Empty = new CpeExt[0];
+        internal static CpeExt[] Empty = new CpeExt[0];
         
         /// <summary> Retrieves a list of all supported and enabled CPE extensions </summary>
         public static CpeExt[] GetAllEnabled() {

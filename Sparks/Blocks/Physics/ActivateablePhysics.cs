@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -80,9 +80,9 @@ namespace GoldenSparks.Blocks.Physics {
                 lvl.AddUpdate(index, oDoor, true);
             }
         }
-
-
-        public static PhysicsArgs GetDoorArgs(BlockID block, out BlockID physForm) {
+        
+        
+        internal static PhysicsArgs GetDoorArgs(BlockID block, out BlockID physForm) {
             PhysicsArgs args = default(PhysicsArgs);
             args.Type1 = PhysicsArgs.Custom; args.Value1 = 16 - 1;
             args.Type2 = PhysicsArgs.Revert; args.Value2 = (BlockRaw)block;
@@ -98,17 +98,17 @@ namespace GoldenSparks.Blocks.Physics {
             }
             return args;
         }
-
-        public static PhysicsArgs GetTDoorArgs(BlockID block) {
+        
+        internal static PhysicsArgs GetTDoorArgs(BlockID block) {
             PhysicsArgs args = default(PhysicsArgs);
             args.Type1 = PhysicsArgs.Custom; args.Value1 = 16;
             args.Type2 = PhysicsArgs.Revert; args.Value2 = (BlockRaw)block;
             args.ExtBlock = (byte)(block >> Block.ExtendedShift);
             return args;
         }
-
-
-        public static void CheckNeighbours(Level lvl, ushort x, ushort y, ushort z) {
+        
+        
+        internal static void CheckNeighbours(Level lvl, ushort x, ushort y, ushort z) {
             CheckAt(lvl, (ushort)(x + 1), y, z);
             CheckAt(lvl, (ushort)(x - 1), y, z);
             CheckAt(lvl, x, y, (ushort)(z + 1));
@@ -116,9 +116,9 @@ namespace GoldenSparks.Blocks.Physics {
             CheckAt(lvl, x, (ushort)(y + 1), z);
             // NOTE: omission of y-1 to match original behaviour
         }
-
+        
         // TODO: Stop checking block type and just always call lvl.AddCheck
-        public static void CheckAt(Level lvl, ushort x, ushort y, ushort z) {
+        internal static void CheckAt(Level lvl, ushort x, ushort y, ushort z) {
             int index;
             BlockID block = lvl.GetBlock(x, y, z, out index);
 

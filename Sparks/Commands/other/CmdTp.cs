@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -68,10 +68,10 @@ namespace GoldenSparks.Commands.Misc {
             Position pos    = bot != null ? bot.Pos : target.Pos;
             Orientation rot = bot != null ? bot.Rot : target.Rot;
             p.BlockUntilLoad(10);  //Wait for player to spawn in new map
-            p.SendPos(Entities.SelfID, pos, rot);
+            p.SendPosition(pos, rot);
         }
         
-        public static bool GetTeleportCoords(Player p, Entity ori, string[] args, bool precise, 
+        internal static bool GetTeleportCoords(Player p, Entity ori, string[] args, bool precise, 
                                                out Position pos, out byte yaw, out byte pitch) {
             Vec3S32 P;
             pos = p.Pos; yaw = ori.Rot.RotY; pitch = ori.Rot.HeadX;
@@ -105,7 +105,7 @@ namespace GoldenSparks.Commands.Misc {
             if (!GetTeleportCoords(p, p, args, precise, out pos, out yaw, out pitch)) return;
 
             SavePreTeleportState(p);
-            p.SendPos(Entities.SelfID, pos, new Orientation(yaw, pitch));
+            p.SendPosition(pos, new Orientation(yaw, pitch));
         }
         
         static void SavePreTeleportState(Player p) {

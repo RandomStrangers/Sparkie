@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,14 +17,13 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.DB {
-    
+namespace GoldenSparks.DB 
+{
     /// <summary> Converts names to integer ids and back </summary>
-    public static class NameConverter {
-        
+    public static class NameConverter 
+    {       
         // NOTE: this restriction is due to BlockDBCacheEntry
         public const int MaxPlayerID = 0x00FFFFFF;
         
@@ -38,11 +37,6 @@ namespace GoldenSparks.DB {
             return name != null ? name : "ID#" + id;
         }
         
-        static object ListIds(IDataRecord record, object arg) {
-            ((List<int>)arg).Add(record.GetInt32(0));
-            return arg;
-        }
-        
         /// <summary> Finds all the IDs associated with the given name. </summary>
         public static int[] FindIds(string name) {
             List<int> ids = new List<int>();
@@ -50,7 +44,9 @@ namespace GoldenSparks.DB {
             int i = Server.invalidIds.IndexOf(name);
             if (i >= 0) ids.Add(MaxPlayerID - i);
             
-            Database.ReadRows("Players", "ID", ids, ListIds, "WHERE Name=@0", name);
+            Database.ReadRows("Players", "ID", 
+                                record => ids.Add(record.GetInt32(0)), 
+                                "WHERE Name=@0", name);
             return ids.ToArray();
         }
         

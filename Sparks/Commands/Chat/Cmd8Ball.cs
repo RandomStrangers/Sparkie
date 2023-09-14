@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,12 +20,15 @@ using System.Text;
 using GoldenSparks.Tasks;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.Commands.Chatting {
-    public sealed class Cmd8Ball : Command2 {
+namespace GoldenSparks.Commands.Chatting 
+{
+    public sealed class Cmd8Ball : Command2 
+    {
         public override string name { get { return "8ball"; } }
         public override string shortcut { get { return ""; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool SuperUseable { get { return false; } }
+        public override bool UseableWhenFrozen { get { return true; } }
 
         static DateTime nextUse;
         static TimeSpan delay = TimeSpan.FromSeconds(2);

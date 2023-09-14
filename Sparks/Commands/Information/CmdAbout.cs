@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,14 +17,15 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.DB;
 using GoldenSparks.Maths;
 using GoldenSparks.SQL;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Commands.Info {
-    public sealed class CmdAbout : Command2 {
+namespace GoldenSparks.Commands.Info 
+{
+    public sealed class CmdAbout : Command2 
+    {
         public override string name { get { return "About"; } }
         public override string shortcut { get { return "b"; } }
         public override string type { get { return CommandTypes.Information; } }
@@ -86,8 +87,9 @@ namespace GoldenSparks.Commands.Info {
             BlockDBEntry entry = default(BlockDBEntry);
             entry.OldRaw = Block.Invalid;
             
-            foreach (string[] row in entries) {
-                DateTime time = row[1].ParseDBDate();
+            foreach (string[] row in entries)
+            {
+                DateTime time  = Database.ParseDBDate(row[1]).ToUniversalTime();
                 TimeSpan delta = time - BlockDB.Epoch;
                 entry.TimeDelta = (int)delta.TotalSeconds;
                 entry.Flags = BlockDBFlags.ManualPlace;
@@ -109,8 +111,7 @@ namespace GoldenSparks.Commands.Info {
         }
         
         static void OutputEntry(Player p, ref bool foundAny, Dictionary<int, string> names, BlockDBEntry entry) {
-            DateTime now = DateTime.UtcNow;
-            string name = null;
+            string name;
             if (!names.TryGetValue(entry.PlayerID, out name)) {
                 name = NameConverter.FindName(entry.PlayerID);
                 names[entry.PlayerID] = name;

@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     Copyright 2011 MCForge
     
     Dual-licensed under the Educational Community License, Version 2.0 and
@@ -7,8 +7,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -24,9 +24,9 @@ using GoldenSparks.Events;
 using GoldenSparks.Tasks;
 
 namespace GoldenSparks.Core {
-    public static class ModActionHandler {
-
-        public static void HandleModAction(ModAction action) {
+    internal static class ModActionHandler {
+        
+        internal static void HandleModAction(ModAction action) {
             switch (action.Type) {
                     case ModActionType.Frozen: DoFreeze(action); break;
                     case ModActionType.Unfrozen: DoUnfreeze(action); break;
@@ -111,9 +111,10 @@ namespace GoldenSparks.Core {
             LogAction(e, who, "&8banned");
             
             if (e.Duration.Ticks != 0) {
-                string banner = e.Actor.truename;
                 DateTime end = DateTime.UtcNow.Add(e.Duration);
-                Server.tempBans.Update(e.Target, Ban.PackTempBanData(e.Reason, banner, end));
+                string data  = Ban.PackTempBanData(e.Reason, e.Actor.name, end);
+                
+                Server.tempBans.Update(e.Target, data);
                 Server.tempBans.Save();
 
                 if (who != null) who.Kick("Banned for " + e.Duration.Shorten(true) + "." + e.ReasonSuffixed);
@@ -164,14 +165,16 @@ namespace GoldenSparks.Core {
         
         static void DoBanIP(ModAction e) {
             LogIPAction(e, "&8IP banned");
-            Logger.Log(LogType.UserActivity, "IP-BANNED: {0} by {1}.", e.Target, e.Actor.name);
-            Server.bannedIP.Add(e.Target);
+            Logger.Log(LogType.UserActivity, "IP-BANNED: {0} by {1}.{2}", 
+                       e.Target, e.Actor.name, e.ReasonSuffixed);
+            Server.bannedIP.Update(e.Target, e.Reason);
             Server.bannedIP.Save();
         }
         
         static void DoUnbanIP(ModAction e) {
             LogIPAction(e, "&8IP unbanned");
-            Logger.Log(LogType.UserActivity, "IP-UNBANNED: {0} by {1}.", e.Target, e.Actor.name);
+            Logger.Log(LogType.UserActivity, "IP-UNBANNED: {0} by {1}.", 
+                       e.Target, e.Actor.name);
             Server.bannedIP.Remove(e.Target);
             Server.bannedIP.Save();
         }

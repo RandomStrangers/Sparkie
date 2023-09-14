@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,30 +18,26 @@
 using System;
 using System.IO;
 using GoldenSparks.Commands;
-using GoldenSparks.Games;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks {
-    
-    public static class SrvProperties {
-        
+namespace GoldenSparks 
+{
+    public static class SrvProperties 
+    {
         public static void Load() {
             old = new OldPerms();
-            if (PropertiesFile.Read(Paths.ServerPropsFile, ref old, LineProcessor))
-                Server.SettingsUpdate();
+            PropertiesFile.Read(Paths.ServerPropsFile, ref old, LineProcessor);
             
-            CountdownGame.Config.Load();
-            ZSGame.Config.Load();
-            LSGame.Config.Load();
-            CTFGame.Config.Load();
-            TWGame.Config.Load();
-            
-            Database.Backend = Server.Config.UseMySQL ? MySQLBackend.Instance : SQLiteBackend.Instance;
-            
+            ApplyChanges();
+            Save();
+        }
+        
+        public static void ApplyChanges() {
             if (!Directory.Exists(Server.Config.BackupDirectory))
                 Server.Config.BackupDirectory = "levels/backups";
             
-            Save();
+            Server.SettingsUpdate();
+            Database.UpdateActiveBackend();
             Server.SetMainLevel(Server.Config.MainLevel);
         }
         
@@ -78,8 +74,8 @@ namespace GoldenSparks {
             public int mapGenLimit = -1, mapGenLimitAdmin = -1;
             public int afkKickMins = -1; public LevelPermission afkKickMax = LevelPermission.Banned;
         }
-
-        public static void FixupOldPerms() {
+        
+        internal static void FixupOldPerms() {
             SetOldReview();
             if (old.mapGenLimit != -1) SetOldGenVolume();
             if (old.mapGenLimitAdmin != -1) SetOldGenVolumeAdmin();
@@ -146,16 +142,20 @@ namespace GoldenSparks {
         }
         
         static void SaveProps(StreamWriter w) {
-            w.WriteLine("#   Edit the settings below to modify how your server operates. This is an explanation of what each setting does.");
+            w.WriteLine("# Edit the settings below to modify how your server operates.");
+            w.WriteLine("#");
+            w.WriteLine("# Explanation of Server settings:");
             w.WriteLine("#   server-name                   = The name which displays on classicube.net");
             w.WriteLine("#   motd                          = The message which displays when a player connects");
-            w.WriteLine("#   port                          = The port to operate from");
-            w.WriteLine("#   verify-names                  = Verify the validity of names");
+            w.WriteLine("#   port                          = The port to list for connections on");
             w.WriteLine("#   public                        = Set to true to appear in the public server list");
-            w.WriteLine("#   max-players                   = The maximum number of connections");
+            w.WriteLine("#   max-players                   = The maximum number of players allowed");
             w.WriteLine("#   max-guests                    = The maximum number of guests allowed");
-            w.WriteLine("#   max-maps                      = The maximum number of maps loaded at once");
+            w.WriteLine("#   verify-names                  = Verify the validity of names");
+            w.WriteLine("#   server-owner                  = The username of the owner of the server");
+            w.WriteLine("# Explanation of Level settings:");
             w.WriteLine("#   world-chat                    = Set to true to enable world chat");
+            w.WriteLine("# Explanation of IRC settings:");
             w.WriteLine("#   irc                           = Set to true to enable the IRC bot");
             w.WriteLine("#   irc-nick                      = The name of the IRC bot");
             w.WriteLine("#   irc-server                    = The server to connect to");
@@ -164,68 +164,35 @@ namespace GoldenSparks {
             w.WriteLine("#   irc-port                      = The port to use to connect");
             w.WriteLine("#   irc-identify                  = (true/false)    Do you want the IRC bot to Identify itself with nickserv. Note: You will need to register it's name with nickserv manually.");
             w.WriteLine("#   irc-password                  = The password you want to use if you're identifying with nickserv");
-            w.WriteLine("#   irc1                           = Set to true to enable the IRC bot1");
-            w.WriteLine("#   irc-nick1                      = The name of the IRC bot1");
-            w.WriteLine("#   irc-server1                    = The server to connect to");
-            w.WriteLine("#   irc-channel1                   = The channel to join");
-            w.WriteLine("#   irc-opchannel1                 = The channel to join (posts OpChat)");
-            w.WriteLine("#   irc-port1                      = The port to use to connect");
-            w.WriteLine("#   irc-identify1                  = (true/false)    Do you want the IRC bot1 to Identify itself with nickserv1. Note: You will need to register it's name with nickserv1 manually.");
-            w.WriteLine("#   irc-password1                  = The password you want to use if you're identifying with nickserv1");
-            w.WriteLine("#   irc2                           = Set to true to enable the IRC bot2");
-            w.WriteLine("#   irc-nick2                      = The name of the IRC bot2");
-            w.WriteLine("#   irc-server2                    = The server to connect to");
-            w.WriteLine("#   irc-channel2                   = The channel to join");
-            w.WriteLine("#   irc-opchannel2                 = The channel to join (posts OpChat)");
-            w.WriteLine("#   irc-port2                      = The port to use to connect");
-            w.WriteLine("#   irc-identify2                  = (true/false)    Do you want the IRC bot2 to Identify itself with nickserv2. Note: You will need to register it's name with nickserv2 manually.");
-            w.WriteLine("#   irc-password2                  = The password you want to use if you're identifying with nickserv2");
-            //Global IRC settings
-            w.WriteLine("#   global-irc                     = Set to true to enable the Global IRC bot");
-            w.WriteLine("#   global-irc-nick                = The name of the Global IRC bot");
-            w.WriteLine("#   global-irc-server              = The server to connect to");
-            w.WriteLine("#   global-irc-channel             = The channel to join");
-            w.WriteLine("#   global-irc-opchannel           = The channel to join (posts OpChat)");
-            w.WriteLine("#   global-irc-port                = The port to use to connect");
-            w.WriteLine("#   global-irc-identify            = (true/false)    Do you want the Global IRC bot to Identify itself with nickserv. Note: You will need to register it's name with nickserv manually.");
-            w.WriteLine("#   global-irc-password            = The password you want to use if you're identifying with nickserv");
-            w.WriteLine("#   anti-tunnels                  = Stops people digging below max-depth");
-            w.WriteLine("#   max-depth                     = The maximum allowed depth to dig down");
+            w.WriteLine("# Explanation of Backup settings:");
             w.WriteLine("#   backup-time                   = The number of seconds between automatic backups");
-            w.WriteLine("#   overload                      = The higher this is, the longer the physics is allowed to lag.  Default 1500");
-            w.WriteLine("#   use-whitelist                 = Switch to allow use of a whitelist to override IP bans for certain players.  Default false.");
-            w.WriteLine("#   premium-only                  = Only allow premium players (paid for minecraft) to access the server. Default false.");
-            w.WriteLine("#   force-cuboid                  = Run cuboid until the limit is hit, instead of canceling the whole operation.  Default false.");
-            w.WriteLine("#   profanity-filter              = Replace certain bad words in the chat.  Default false.");
-            w.WriteLine("#   notify-on-join-leave          = Show a balloon popup in tray notification area when a player joins/leaves the server.  Default false.");
-            w.WriteLine("#   allow-tp-to-higher-ranks      = Allows the teleportation to players of higher ranks");
-            w.WriteLine("#   agree-to-rules-on-entry       = Forces all new players to the server to agree to the rules before they can build or use commands.");
-            w.WriteLine("#   adminchat-perm                = The rank required to view adminchat. Default rank is superop.");
-            w.WriteLine("#   admins-join-silent            = Players who have adminchat permission join the game silently. Default true");
-            w.WriteLine("#   server-owner                  = The minecraft name, of the owner of the server.");
-            w.WriteLine("#   total-undo                    = Track changes made by the last X people logged on for undo purposes. Folder is rotated when full, so when set to 200, will actually track around 400.");
-            w.WriteLine("#   guest-limit-notify            = Show -Too Many Guests- message in chat when maxGuests has been reached. Default false");
-            w.WriteLine("#   guest-join-notify             = Shows when guests and lower ranks join server in chat and IRC. Default true");
-            w.WriteLine("#   guest-leave-notify            = Shows when guests and lower ranks leave server in chat and IRC. Default true");
-            w.WriteLine("#   announcement-interval         = The delay in between server announcements in minutes. Default 5");
-            w.WriteLine();
+            w.WriteLine("# Explanation of Database settings:");
             w.WriteLine("#   UseMySQL                      = Use MySQL (true) or use SQLite (false)");
             w.WriteLine("#   Host                          = The host name for the database (usually 127.0.0.1)");
             w.WriteLine("#   SQLPort                       = Port number to be used for MySQL.  Unless you manually changed the port, leave this alone.  Default 3306.");
             w.WriteLine("#   Username                      = The username you used to create the database (usually root)");
             w.WriteLine("#   Password                      = The password set while making the database");
             w.WriteLine("#   DatabaseName                  = The name of the database stored (Default = MCZall)");
-            w.WriteLine();
+            w.WriteLine("# Explanation of Color settings:");
             w.WriteLine("#   defaultColor                  = The color code of the default messages (Default = &e)");
+            w.WriteLine("# Explanation of Other settings:");
+            w.WriteLine("#   use-whitelist                 = Switch to allow use of a whitelist to override IP bans for certain players.  Default false.");
+            w.WriteLine("#   profanity-filter              = Replace certain bad words in the chat.  Default false.");
+            w.WriteLine("#   notify-on-join-leave          = Show a balloon popup in tray notification area when a player joins/leaves the server.  Default false.");
+            w.WriteLine("#   allow-tp-to-higher-ranks      = Allows the teleportation to players of higher ranks");
+            w.WriteLine("#   agree-to-rules-on-entry       = Forces all new players to the server to agree to the rules before they can build or use commands.");
+            w.WriteLine("#   admins-join-silent            = Players who have adminchat permission join the game silently. Default true");
+            w.WriteLine("#   guest-limit-notify            = Show -Too Many Guests- message in chat when maxGuests has been reached. Default false");
+            w.WriteLine("#   guest-join-notify             = Shows when guests and lower ranks join server in chat and IRC. Default true");
+            w.WriteLine("#   guest-leave-notify            = Shows when guests and lower ranks leave server in chat and IRC. Default true");
+            w.WriteLine("#   announcement-interval         = The delay in between server announcements in minutes. Default 5");
             w.WriteLine();
             w.WriteLine("#   kick-on-hackrank              = Set to true if hackrank should kick players");
             w.WriteLine("#   hackrank-kick-time            = Number of seconds until player is kicked");
-            w.WriteLine("#   custom-rank-welcome-messages  = Decides if different welcome messages for each rank is enabled. Default true.");
-            w.WriteLine("#   ignore-ops                    = Decides whether or not an operator can be ignored. Default false.");
-            w.WriteLine();
+            w.WriteLine("# Explanation of Security settings:");
             w.WriteLine("#   admin-verification            = Determines whether admins have to verify on entry to the server.  Default true.");
             w.WriteLine("#   verify-admin-perm             = The minimum rank required for admin verification to occur.");
-            w.WriteLine();
+            w.WriteLine("# Explanation of Spam Control settings:");
             w.WriteLine("#   mute-on-spam                  = If enabled it mutes a player for spamming.  Default false.");
             w.WriteLine("#   spam-messages                 = The amount of messages that have to be sent \"consecutively\" to be muted.");
             w.WriteLine("#   spam-mute-time                = The amount of seconds a player is muted for spam.");
@@ -236,7 +203,6 @@ namespace GoldenSparks {
             w.WriteLine("#   spam-messages                 = 5");
             w.WriteLine("#   spam-mute-time                = 60");
             w.WriteLine("#   spam-counter-reset-time       = 2");
-            w.WriteLine("#   bufferblocks                  = Should buffer blocks by default for maps?");
             w.WriteLine();
             
             ConfigElement.Serialise(Server.serverConfig, w, Server.Config);

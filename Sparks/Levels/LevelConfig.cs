@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -186,7 +186,7 @@ namespace GoldenSparks
         }
         
         /// <summary> Calculates the default value for the given env property </summary>
-        public int DefaultEnvProp(EnvProp i, int height) {
+        public static int DefaultEnvProp(EnvProp i, int height) {
             if (i == EnvProp.SidesBlock)     return Block.Bedrock;
             if (i == EnvProp.EdgeBlock)      return Block.Water;
             if (i == EnvProp.EdgeLevel)      return height / 2;
@@ -214,9 +214,8 @@ namespace GoldenSparks
 
         [ConfigPerm("PerBuild", "Permissions", LevelPermission.Guest)]
         public LevelPermission BuildMin = LevelPermission.Guest;
-
-        [ConfigPerm("PerBuildMax", "Permissions", LevelPermission.Nobody)]
-        public LevelPermission BuildMax = LevelPermission.Nobody;
+        [ConfigPerm("PerBuildMax", "Permissions", LevelPermission.Owner)]
+        public LevelPermission BuildMax = LevelPermission.Owner;
         
         // Other blacklists/whitelists
         [ConfigStringList("BuildWhitelist", "Permissions")]
@@ -254,9 +253,8 @@ namespace GoldenSparks
         public string RealmOwner = "";
         [ConfigPerm("PerVisit", "Permissions", LevelPermission.Guest)]
         public LevelPermission VisitMin = LevelPermission.Guest;
-        [ConfigPerm("PerVisitMax", "Permissions", LevelPermission.Nobody)]
-        public LevelPermission VisitMax = LevelPermission.Nobody;
-
+        [ConfigPerm("PerVisitMax", "Permissions", LevelPermission.Owner)]
+        public LevelPermission VisitMax = LevelPermission.Owner;
         
         // Other blacklists/whitelists
         [ConfigStringList("VisitWhitelist", "Permissions")]
@@ -308,7 +306,7 @@ namespace GoldenSparks
         [ConfigString("Authors", "Game", "", true)]
         public string Authors = "";
         [ConfigBool("Pillaring", "Game", false)]
-        public bool Pillaring = !ZSGame.Config.NoPillaring;
+       // public bool Pillaring = !ZSGame.Instance.Config.NoPillaring;
         
         [ConfigEnum("BuildType", "Game", BuildType.Normal, typeof(BuildType))]
         public BuildType BuildType = BuildType.Normal;

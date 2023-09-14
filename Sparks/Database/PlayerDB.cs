@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,59 +17,53 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.DB {
-    
+namespace GoldenSparks.DB 
+{
     /// <summary> Stores per-player persistent data. </summary>
-    public static class PlayerDB {
-        
+    public static class PlayerDB 
+    {        
         static string LoginPath(string name)  { return "text/login/"  + name.ToLower() + ".txt"; }
         static string LogoutPath(string name) { return "text/logout/" + name.ToLower() + ".txt"; }
-        
-        static char[] trimChars = new char[] {'='};
-        public static void LoadNick(Player p) {
-            if (!File.Exists("players/" + p.name + "DB.txt")) return;
-            
-            string[] lines = File.ReadAllLines("players/" + p.name + "DB.txt");
-            foreach (string line in lines) {
-                if (line.IsCommentLine()) continue;
-                string[] parts = line.Split(trimChars, 2);
-                if (parts.Length < 2) continue;
-                string key = parts[0].Trim(), value = parts[1].Trim();
 
-                if (key.CaselessEq("nick"))
-                    p.DisplayName = value;
+        const string NICK_PREFIX = "Nick = ";
+        public static string LoadNick(string name) {
+            string path = "players/" + name + "DB.txt";
+            if (!File.Exists(path)) return null;
+
+            foreach (string line in File.ReadAllLines(path)) 
+            {
+                if (!line.CaselessStarts(NICK_PREFIX)) continue;
+
+                return line.Substring(NICK_PREFIX.Length).Trim();
             }
-            p.SetPrefix();
+            return null;
         }
 
         public static void SetNick(string name, string nick) {
             EnsureDirectoriesExist();
             using (StreamWriter sw = new StreamWriter("players/" + name + "DB.txt", false))
-                sw.WriteLine("Nick = " + nick);
+                sw.WriteLine(NICK_PREFIX + nick);
         }
         
         
-        public static string GetLoginMessage(Player p) {
-            string path = LoginPath(p.name);
+        public static string GetLoginMessage(string name) {
+            string path = LoginPath(name);
             if (File.Exists(path)) return File.ReadAllText(path);
             
             // Filesystem is case sensitive (older files used correct casing of name)
-            path = "text/login/" + p.name + ".txt";
-            return File.Exists(path) ? File.ReadAllText(path) : "connected";
+            path = "text/login/" + name + ".txt";
+            return File.Exists(path) ? File.ReadAllText(path) : "";
         }
 
-        public static string GetLogoutMessage(Player p) {
-            if (p.name == null) return "disconnected";
-
-            string path = LogoutPath(p.name);
+        public static string GetLogoutMessage(string name) {
+            string path = LogoutPath(name);
             if (File.Exists(path)) return File.ReadAllText(path);
             
-            path = "text/logout/" + p.name + ".txt";
-            return File.Exists(path) ? File.ReadAllText(path) : "disconnected";
+            path = "text/logout/" + name + ".txt";
+            return File.Exists(path) ? File.ReadAllText(path) : "";
         }
         
         static void SetMessage(string path, string msg) {
@@ -92,10 +86,7 @@ namespace GoldenSparks.DB {
         
         /// <summary> Returns the fields of the row whose Name field caselessly equals the given name </summary>
         public static PlayerData FindData(string name) {
-            string suffix = Database.Backend.CaselessWhereSuffix;
-            object raw = Database.ReadRows("Players", "*", null, PlayerData.Read,
-                                           "WHERE Name=@0" + suffix, name);
-            return (PlayerData)raw;
+            return FindExact(name, "*", PlayerData.Parse);
         }
 
         /// <summary> Returns the Name field of the row whose Name field caselessly equals the given name </summary>
@@ -111,7 +102,7 @@ namespace GoldenSparks.DB {
         }
         
         public static string FindOfflineIPMatches(Player p, string name, out string ip) {
-            string[] match = MatchValues(p, name, "Name,IP");
+            string[] match = PlayerDB.MatchValues(p, name, "Name,IP");
             ip   = match == null ? null : match[1];
             return match == null ? null : match[0];
         }
@@ -129,8 +120,7 @@ namespace GoldenSparks.DB {
         
         
         public static string MatchNames(Player p, string name) {
-            List<string> names = new List<string>();
-            MatchMulti(name, "Name", names, Database.ReadList);
+            List<string> names = MatchMulti(name, "Name", r => r.GetText(0));
             
             int matches;
             return Matcher.Find(p, name, out matches, names,
@@ -138,33 +128,56 @@ namespace GoldenSparks.DB {
         }
         
         public static string[] MatchValues(Player p, string name, string columns) {
-            List<string[]> name_values = new List<string[]>();
-            MatchMulti(name, columns, name_values, Database.ReadFields);
-            
+            List<string[]> name_values = MatchMulti(name, columns, Database.ParseFields);
+
             int matches;
             return Matcher.Find(p, name, out matches, name_values,
                                 null, n => n[0], "players", 20);
-        }       
-                
-        static object ReadStats(IDataRecord record, object arg) {
-            PlayerData stats = PlayerData.Parse(record);
-            ((List<PlayerData>)arg).Add(stats); return arg;
-        }
+        }  
         
         public static PlayerData Match(Player p, string name) {
-            List<PlayerData> stats = new List<PlayerData>();
-            MatchMulti(name, "*", stats, ReadStats);
+            List<PlayerData> stats = MatchMulti(name, "*", PlayerData.Parse);
             
             int matches;
             return Matcher.Find(p, name, out matches, stats,
                                 null, stat => stat.Name, "players", 20);
         }
         
-        static void MatchMulti(string name, string columns, object arg, ReaderCallback callback) {
+        
+        delegate T RecordParser<T>(ISqlRecord record); 
+        static List<T> MatchMulti<T>(string name, string columns, RecordParser<T> parseRecord) where T : class {
+            List<T> list = FindPartial(name, columns, parseRecord);
+            if (list.Count < 25) return list;
+            
+            // As per the LIMIT in FindPartial, the SQL backend stops after finding 25 matches
+            // However, this means that e.g. in the case of 30 partial matches and
+            //    then 1 exact match, the exact WON'T be part of the returned list
+            // So explicitly check for this case
+            T exact = FindExact(name, columns, parseRecord);
+            if (exact == null) return list;
+            
+            list.Clear();
+            list.Add(exact);
+            return list;
+        }
+        
+        static List<T> FindPartial<T>(string name, string columns, RecordParser<T> parseRecord) {
             string suffix = Database.Backend.CaselessLikeSuffix;
-            Database.ReadRows("Players", columns, arg, callback,
-                              "WHERE Name LIKE @0 ESCAPE '#' LIMIT 101" + suffix,
+            List<T> list  = new List<T>();
+            
+            Database.ReadRows("Players", columns, r => list.Add(parseRecord(r)),
+                              "WHERE Name LIKE @0 ESCAPE '#' LIMIT 25" + suffix,
                               "%" + name.Replace("_", "#_") + "%");
+            return list;
+        }
+        
+        static T FindExact<T>(string name, string columns, RecordParser<T> parseRecord) where T : class {
+            string suffix = Database.Backend.CaselessWhereSuffix;
+            T exact = null;
+            
+            Database.ReadRows("Players", columns, r => exact = parseRecord(r),
+                              "WHERE Name=@0 " + suffix + " LIMIT 1", name);
+            return exact;
         }
         
         
@@ -172,7 +185,7 @@ namespace GoldenSparks.DB {
             if (!Directory.Exists("text/login"))
                 Directory.CreateDirectory("text/login");
             if (!Directory.Exists("text/logout"))
-            	Directory.CreateDirectory("text/logout");
+                Directory.CreateDirectory("text/logout");
             if (!Directory.Exists("players"))
                 Directory.CreateDirectory("players");
         }

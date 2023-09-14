@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,11 +18,11 @@
 using System;
 using System.IO;
 
-namespace GoldenSparks {
-    
+namespace GoldenSparks 
+{   
     /// <summary> Provides utility methods for atomic File I/O operations. </summary>
-    public static class AtomicIO {
-        
+    public static class AtomicIO 
+    {        
         /// <summary> Attempts to delete a file from disc, if it exists </summary>
         /// <returns> true if file was successfully deleted, false if file did not exist to begin with </returns>
         /// <remarks> See File.Delete for exceptions that can be thrown </remarks>

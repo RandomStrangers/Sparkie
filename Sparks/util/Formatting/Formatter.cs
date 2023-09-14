@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -27,8 +27,7 @@ namespace GoldenSparks
     public static class Formatter 
     { 
         public static void PrintCommandInfo(Player p, Command cmd) {
-            ItemPerms perms = CommandPerms.Find(cmd.name) ?? new ItemPerms(cmd.defaultRank);
-            p.Message("Usable by: " + perms.Describe());
+            p.Message("Usable by: " + cmd.Permissions.Describe());
             PrintAliases(p, cmd);
             
             List<CommandExtraPerms> extraPerms = CommandExtraPerms.FindAll(cmd.name);
@@ -104,16 +103,31 @@ namespace GoldenSparks
         }
         
         static char[] separators = { '/', '\\', ':' };
+        static char[] invalid    = { '<', '>', '|', '"', '*', '?' };
         /// <summary> Checks that the input is a valid filename (non-empty and no directory separator) </summary>
         /// <remarks> If the input is invalid, messages the player the reason why </remarks>
         public static bool ValidFilename(Player p, string name) {
             if (string.IsNullOrEmpty(name)) {
-                p.Message("&WFilename cannot be empty"); return false;
+                p.Message("&WFilename cannot be empty"); 
+                return false;
             }
             
-            if (name.IndexOfAny(separators) == -1) return true;
-            p.Message("&W\"{0}\" includes a directory separator (/, : or \\), which is not allowed", name);
-            return false;
+            if (name.IndexOfAny(separators) >= 0) {
+                p.Message("&W\"{0}\" includes a directory separator (/, : or \\), which is not allowed", name);
+                return false;
+            }
+
+            if (name.IndexOfAny(invalid) >= 0) {
+                p.Message("&W\"{0}\" includes a prohibited character (<, >, |, \", *, or ?)", name);
+                return false;
+            }
+
+            if (name.ContainsAllIn(".")) {
+                p.Message("&W\"{0}\" cannot consist entirely of dot characters", name);
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -75,7 +75,7 @@ namespace GoldenSparks.Commands.World {
             return block;
         }
         
-        public static void Detail(Player p, BlockProps[] scope, BlockID block) {
+        internal static void Detail(Player p, BlockProps[] scope, BlockID block) {
             BlockProps props = scope[block];
             string name = BlockProps.ScopedName(scope, p, block);
             p.Message("&TProperties of {0}:", name);
@@ -132,8 +132,8 @@ namespace GoldenSparks.Commands.World {
             string cmd      = "BlockProps " + args[0] + " list";
             string modifier = args.Length > 2 ? args[2] : "";
             
-            MultiPageOutput.Output(p, filtered, b => BlockProps.ScopedName(scope, p, b),
-                                   cmd, "modified blocks", modifier, false);
+            Paginator.Output(p, filtered, b => BlockProps.ScopedName(scope, p, b),
+                             cmd, "modified blocks", modifier);
         }
         
         void CopyProps(Player p, BlockProps[] scope, BlockID block, string[] args) {

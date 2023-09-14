@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,10 +20,10 @@ using System.Collections.Generic;
 using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.DB {
-    
-    public static class DBUpgrader {
-        
+namespace GoldenSparks.DB 
+{
+    public static class DBUpgrader 
+    {     
         public static bool Upgrading = false;
         public static string[] CompactMessages = new string[] {
             " If you are using SQLite, It is recommended that you compact the database by either:",
@@ -59,10 +59,10 @@ namespace GoldenSparks.DB {
             p.Leave("Upgrading BlockDB (" + Progress + "). Check back later!");
             p.cancelconnecting = true;
         }
-
-
-        public static int current, count;
-        public static string Progress { get { return current + " / " + count; } }
+        
+        
+        internal static int current, count;
+        internal static string Progress { get { return current + " / " + count; } }
         
         public static void Upgrade() {
             List<string> tables = Database.Backend.AllTables();

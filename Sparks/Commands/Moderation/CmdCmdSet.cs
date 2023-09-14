@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -24,17 +24,18 @@ namespace GoldenSparks.Commands.Moderation {
             if (args.Length < 2) { Help(p); return; }
             
             string cmdName = args[0], cmdArgs = "";
-            Search(ref cmdName, ref cmdArgs);
-            Command cmd = Find(cmdName);
+            Command.Search(ref cmdName, ref cmdArgs);
+            Command cmd = Command.Find(cmdName);
             
             if (cmd == null) { p.Message("Could not find command entered"); return; }
+            
             if (!p.CanUse(cmd)) {
-                p.Message("Your rank cannot use this command."); return;
+                cmd.Permissions.MessageCannotUse(p);
+                p.Message("Therefore you cannot change the permissions of &T/{0}", cmd.name); return;
             }
             
             if (args.Length == 2) {
-                CommandPerms perms = CommandPerms.Find(cmd.name);
-                SetPerms(p, args, data, perms, "command");
+                SetPerms(p, args, data, cmd.Permissions, "command");
             } else {
                 int num = 0;
                 if (!CommandParser.GetInt(p, args[2], "Extra permission number", ref num)) return;

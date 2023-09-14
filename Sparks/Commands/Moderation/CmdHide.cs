@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -48,8 +48,8 @@ namespace GoldenSparks.Commands.Moderation {
                 silent = true;
             }
             
-            Command adminchat = Find("AdminChat");
-            Command opchat = Find("OpChat");
+            Command adminchat = Command.Find("AdminChat");
+            Command opchat = Command.Find("OpChat");
             Entities.GlobalDespawn(p, false);
             
             p.hidden = !p.hidden;
@@ -58,7 +58,7 @@ namespace GoldenSparks.Commands.Moderation {
                 AnnounceOps(p, "To Ops -λNICK&S- is now &finvisible");               
                 
                 if (!silent) {
-                    string leaveMsg = "&c- λFULL &S" + PlayerDB.GetLogoutMessage(p);
+                    string leaveMsg = "&c- λFULL &S" + PlayerInfo.GetLogoutMessage(p);
                     Chat.MessageFrom(ChatScope.All, p, leaveMsg, null, null, true);
                 }
                 
@@ -70,7 +70,7 @@ namespace GoldenSparks.Commands.Moderation {
                 p.hideRank = LevelPermission.Banned;
                 
                 if (!silent) {
-                    string joinMsg = "&a+ λFULL &S" + PlayerDB.GetLoginMessage(p);
+                    string joinMsg = "&a+ λFULL &S" + PlayerInfo.GetLoginMessage(p);
                     Chat.MessageFrom(ChatScope.All, p, joinMsg, null, null, true);
                 }
                 

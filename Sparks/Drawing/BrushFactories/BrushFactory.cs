@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -34,18 +34,25 @@ namespace GoldenSparks.Drawing.Brushes
         public virtual bool Validate(BrushArgs args) { return Construct(args) != null; }
         
         public static List<BrushFactory> Brushes = new List<BrushFactory>() {
-            new SolidBrushFactory(), new CheckeredBrushFactory(),
-            new StripedBrushFactory(), new PasteBrushFactory(),
-            new ReplaceBrushFactory(), new ReplaceNotBrushFactory(),
-            new RainbowBrushFactory(), new BWRainbowBrushFactory(),
-            new RandomBrushFactory(), new CloudyBrushFactory(),
+            new SolidBrushFactory(),    new CheckeredBrushFactory(),
+            new StripedBrushFactory(),  new PasteBrushFactory(),
+            new ReplaceBrushFactory(),  new ReplaceNotBrushFactory(),
+            new RainbowBrushFactory(),  new BWRainbowBrushFactory(),
+            new RandomBrushFactory(),   new CloudyBrushFactory(),
+            new GradientBrushFactory(), new ReplaceBrushBrushFactory(),
+            new ReplaceNotBrushBrushFactory(), new GridBrushFactory(),
         };
         
         public static BrushFactory Find(string name) {
-            foreach (BrushFactory entry in Brushes) {
+            foreach (BrushFactory entry in Brushes) 
+            {
                 if (entry.Name.CaselessEq(name)) return entry;
             }
             return null;
+        }
+        
+        public static void List(Player p) {
+            p.Message("&HAvailable brushes: &f" + Brushes.Join(b => b.Name));
         }
     }
     

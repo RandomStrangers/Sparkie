@@ -138,7 +138,9 @@ namespace GoldenSparks.Config {
                 if (offset >= Value.Length) break;
                 c = Cur; offset++;
                 if (c == '/' || c == '\\' || c == '"') { s.Append(c); continue; }
-                
+                if (c == 'n') { s.Append('\n'); continue; }
+                // TODO any other escape codes to add support for
+
                 if (c != 'u') break;
                 if (offset + 4 > Value.Length) break;
                 
@@ -160,10 +162,15 @@ namespace GoldenSparks.Config {
         static bool IsNumber(char c) {
             return c == '-' || c == '.' || (c >= '0' && c <= '9');
         }
-        
+
+        static bool IsNumberPart(char c) {
+            // same as IsNumber, but also accepts exponential notation (e.g. "3.40E+38")
+            return c == '-' || c == '.' || (c >= '0' && c <= '9') || c == 'E' || c == '+';
+        }
+
         string ParseNumber() {
             int start = offset - 1;
-            for (; offset < Value.Length && IsNumber(Cur); offset++);
+            for (; offset < Value.Length && IsNumberPart(Cur); offset++);
             return Value.Substring(start, offset - start);
         }
     }
@@ -218,9 +225,9 @@ namespace GoldenSparks.Config {
         internal void WriteObjectKey(string name) {
             Write("    "); WriteString(name); Write(": ");
         }
-
-
-        public virtual void WriteValue(object value) {
+        
+        
+        protected virtual void WriteValue(object value) {
             // TODO this is awful code
             if (value == null) {
                 WriteNull();
@@ -239,8 +246,8 @@ namespace GoldenSparks.Config {
                 throw new InvalidOperationException("Unknown datatype: " + value.GetType());
             }
         }
-
-        public virtual void SerialiseObject(object value) {
+        
+        protected virtual void SerialiseObject(object value) {
             string separator = null;
             JsonObject obj   = (JsonObject)value;
             
@@ -256,9 +263,9 @@ namespace GoldenSparks.Config {
     public class JsonConfigWriter : JsonWriter {
         ConfigElement[] elems;    
         public JsonConfigWriter(TextWriter dst, ConfigElement[] cfg) : base(dst) { elems = cfg; }
-
+        
         // Only ever write an object
-        public override void WriteValue(object value) { WriteObject(value); }
+        protected override void WriteValue(object value) { WriteObject(value); }
         
         void WriteConfigValue(ConfigAttribute a, string value) {
             if (String.IsNullOrEmpty(value)) {
@@ -269,8 +276,8 @@ namespace GoldenSparks.Config {
                 WriteString(value);
             }
         }
-
-        public override void SerialiseObject(object value) {
+        
+        protected override void SerialiseObject(object value) {
             string separator = null;
             
             for (int i = 0; i < elems.Length; i++) {
@@ -289,16 +296,8 @@ namespace GoldenSparks.Config {
     }
     
     public static class Json {
-        
-        [Obsolete("Use JsonReader instead")]
-        public static object Parse(string s, out bool success) {
-            JsonReader reader = new JsonReader(s);
-            object obj = reader.Parse();
-            success    = !reader.Failed;
-            return obj;
-        }
-        
-        [Obsolete("Use JsonWriter instead")]
+
+        [Obsolete("Use JsonWriter instead", true)]
         public static void Serialise(TextWriter dst, ConfigElement[] elems, object instance) {
             JsonConfigWriter w = new JsonConfigWriter(dst, elems);
             w.WriteObject(instance);

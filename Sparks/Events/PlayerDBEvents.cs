@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,15 +17,16 @@
  */
 using System;
 
-namespace GoldenSparks.Events.PlayerDBEvents {
-    
+namespace GoldenSparks.Events.PlayerDBEvents 
+{    
     public delegate void OnInfoSave(Player p, ref bool cancel);
     /// <summary> Called whenever the server saves player's stats to the database. </summary>
-    public sealed class OnInfoSaveEvent : IEvent<OnInfoSave> {
-        
+    public sealed class OnInfoSaveEvent : IEvent<OnInfoSave> 
+    {       
         public static void Call(Player p, ref bool cancel) {
             IEvent<OnInfoSave>[] items = handlers.Items;
-            for (int i = 0; i < items.Length; i++) {
+            for (int i = 0; i < items.Length; i++) 
+            {
                 try { items[i].method(p, ref cancel); } 
                 catch (Exception ex) { LogHandlerException(ex, items[i]); }
             }
@@ -34,8 +35,8 @@ namespace GoldenSparks.Events.PlayerDBEvents {
         
     public delegate void OnInfoSwap(string src, string dst);
     /// <summary> Called when the information of two players is being swapped. </summary>
-    public sealed class OnInfoSwapEvent : IEvent<OnInfoSwap> {
-        
+    public sealed class OnInfoSwapEvent : IEvent<OnInfoSwap> 
+    {        
         public static void Call(string src, string dst) {
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(src, dst));

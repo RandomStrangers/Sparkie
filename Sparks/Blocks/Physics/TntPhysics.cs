@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,11 +20,13 @@ using System.Collections.Generic;
 using GoldenSparks.Games;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Blocks.Physics {
-    
-    public static class TntPhysics {
-
-        public static void ToggleFuse(Level lvl, ushort x, ushort y, ushort z) {
+namespace GoldenSparks.Blocks.Physics 
+{
+    public delegate bool TNTImmuneFilter(ushort x, ushort y, ushort z);
+	
+    public static class TntPhysics 
+    {      
+        internal static void ToggleFuse(Level lvl, ushort x, ushort y, ushort z) {
             if (lvl.GetBlock(x, y, z) == Block.StillLava) {
                 lvl.Blockchange(x, y, z, Block.Air);
             } else {
@@ -77,7 +79,7 @@ namespace GoldenSparks.Blocks.Physics {
         }
         
         public static void MakeExplosion(Level lvl, ushort x, ushort y, ushort z, int size,
-                                         bool force = false, TWGame game = null) {
+                                         bool force = false, TNTImmuneFilter filter = null) {
             Random rand = new Random();
             if ((lvl.physics < 2 || lvl.physics == 5) && !force) return;
             
@@ -87,9 +89,9 @@ namespace GoldenSparks.Blocks.Physics {
                 lvl.AddUpdate(index, Block.TNT_Explosion, default(PhysicsArgs), true);
             }
 
-            Explode(lvl, x, y, z, size + 1, rand, -1, game);
-            Explode(lvl, x, y, z, size + 2, rand, 7, game);
-            Explode(lvl, x, y, z, size + 3, rand, 3, game);
+            Explode(lvl, x, y, z, size + 1, rand, -1, filter);
+            Explode(lvl, x, y, z, size + 2, rand,  7, filter);
+            Explode(lvl, x, y, z, size + 3, rand,  3, filter);
         }
         
         static bool IsFuse(BlockID b, int dx, int dy, int dz) {
@@ -97,7 +99,7 @@ namespace GoldenSparks.Blocks.Physics {
         }
         
         static void Explode(Level lvl, ushort x, ushort y, ushort z,
-                            int size, Random rand, int prob, TWGame game) {
+                            int size, Random rand, int prob, TNTImmuneFilter filter) {
             for (int xx = (x - size); xx <= (x + size ); ++xx)
                 for (int yy = (y - size); yy <= (y + size); ++yy)
                     for (int zz = (z - size); zz <= (z + size); ++zz)
@@ -108,9 +110,8 @@ namespace GoldenSparks.Blocks.Physics {
                 
                 bool doDestroy = prob < 0 || rand.Next(1, 10) < prob;
                 if (doDestroy && Block.Convert(b) != Block.TNT) {
-                    if (game != null && b != Block.Air && !IsFuse(b, xx - x, yy - y, zz - z)) {
-                        if (game.InZone((ushort)xx, (ushort)yy, (ushort)zz, game.tntImmuneZones))
-                            continue;
+                    if (filter != null && b != Block.Air && !IsFuse(b, xx - x, yy - y, zz - z)) {
+                        if (filter((ushort)xx, (ushort)yy, (ushort)zz)) continue;
                     }
                     
                     int mode = rand.Next(1, 11);

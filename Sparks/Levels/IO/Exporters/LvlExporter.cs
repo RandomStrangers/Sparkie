@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,11 +16,9 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using GoldenSparks.Util;
 
 namespace GoldenSparks.Levels.IO {
 
@@ -107,21 +105,16 @@ namespace GoldenSparks.Levels.IO {
         }
         
         static void WritePhysicsSection(Level lvl, Stream gs, byte[] buffer) {
-            // Count the number of physics checks with extra info
-            int used = 0, count = lvl.ListCheck.Count;
+            int count = lvl.ListCheck.Count;
             Check[] checks = lvl.ListCheck.Items;
-            for (int i = 0; i < count; i++) {
-                if (checks[i].data.Raw == 0) continue;
-                used++;
-            }
-            if (used == 0) return;
+            if (count == 0) return;
             
             gs.WriteByte(0xFC); // 'Ph'ysics 'C'hecks
-            NetUtils.WriteI32(used, buffer, 0);
+            NetUtils.WriteI32(count, buffer, 0);
             gs.Write(buffer, 0, sizeof(int));
             
             // NOTE: We have to be extremely careful here to make sure
-            //   that exactly 'used' entries are actually written.
+            //   that exactly 'count' entries are actually written.
             // (this otherwise breaks zones getting imported from the map)
             
             // Locking physics tick ensures that the physics thread can't
@@ -134,10 +127,9 @@ namespace GoldenSparks.Levels.IO {
                 int* ptrInt = (int*)ptr;
                 const int bulkCount = bufferSize / 8;
             
-                for (int i = 0; i < count; i++) {
+                for (int i = 0; i < count; i++) 
+                {
                     Check C = checks[i];
-                    // Does this check have extra physics data
-                    if (C.data.Raw == 0) continue;
                     *ptrInt = C.Index; ptrInt++;
                     *ptrInt = (int)C.data.Raw; ptrInt++;
                     entries++;

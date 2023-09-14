@@ -27,7 +27,6 @@ namespace GoldenSparks.Games {
 
         public override bool AllowAutoload { get { return false; } }
         public override string GameName { get { return "Lava Survival"; } }
-        public override string PropsPath { get { return "properties/lavasurvival.properties"; } }
     }
     
     public sealed class LSMapConfig : RoundsGameMapConfig {

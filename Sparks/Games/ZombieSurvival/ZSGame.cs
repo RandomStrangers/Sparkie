@@ -236,7 +236,7 @@ namespace GoldenSparks.Games {
             }
         }
 
-        public override void AdjustPrefix(Player p, ref string prefix) {
+       /* public override void AdjustPrefix(Player p, ref string prefix) {
             if (!Running) return;
             int winStreak = Get(p).CurrentRoundsSurvived;
             
@@ -244,7 +244,7 @@ namespace GoldenSparks.Games {
             else if (winStreak == 2) prefix += "&7*" + p.color;
             else if (winStreak == 3) prefix += "&6*" + p.color;
             else if (winStreak > 0)  prefix += "&6"  + winStreak + p.color;
-        }
+        }*/
         
         public void GoInvisible(Player p, int duration) {
             ZSData data    = Get(p);

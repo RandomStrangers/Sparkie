@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,40 +17,42 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Text;
 
-namespace GoldenSparks.SQL {
-    
-    /// <summary> Simple abstraction for a database management system. </summary>
-    public abstract class IDatabaseBackend {
-        
-        /// <summary> Whether this backend enforces the character length in VARCHAR columns. </summary>
-        public abstract bool EnforcesTextLength { get; }        
-        /// <summary> Whether this backend supports multiple database schemas. </summary>
+namespace GoldenSparks.SQL 
+{    
+    /// <summary> Abstracts a SQL based database management system </summary>
+    public abstract class IDatabaseBackend 
+    {        
+        /// <summary> Whether this backend enforces the character length in VARCHAR columns </summary>
+        public abstract bool EnforcesTextLength { get; }
+        /// <summary> Whether this backend enforces integer limits based on column types </summary>
+        public abstract bool EnforcesIntegerLimits { get; } 
+        /// <summary> Whether this backend supports multiple database schemas </summary>
         public abstract bool MultipleSchema { get; }
+        public abstract string EngineName { get; }
 
-        public abstract IDbConnection CreateConnection();
-        public abstract IDbCommand CreateCommand(string sql, IDbConnection conn);
-        public abstract IDbDataParameter CreateParameter();
-        
+        public abstract ISqlConnection CreateConnection();
+
         /// <summary> Suffix required after a WHERE clause for caseless string comparison. </summary>
         public string CaselessWhereSuffix { get; protected set; }
         /// <summary> Suffix required after a LIKE clause for caseless string comparison. </summary>        
         public string CaselessLikeSuffix { get; protected set; }
 
         
+        /// <summary> Downloads and/or moves required DLLs </summary>
+        public abstract void LoadDependencies();
         /// <summary> Creates the schema for this database (if required). </summary>
         public abstract void CreateDatabase();
         
-        public abstract string RawGetDateTime(IDataRecord record, int col);
-
-        public virtual void ParseCreate(ref string cmd) { }
-
-        public static List<string> GetStrings(string sql, params object[] args) {
+        protected internal virtual void ParseCreate(ref string cmd) { }
+        
+        protected static List<string> GetStrings(string sql, params object[] args) {
             List<string> values = new List<string>();
-            Database.Iterate(sql, values, Database.ReadList, args);
+            Database.Iterate(sql, 
+                            record => values.Add(record.GetText(0)), 
+                            args);
             return values;
         }
         
@@ -77,12 +79,12 @@ namespace GoldenSparks.SQL {
             sql.AppendLine(");");
             return sql.ToString();
         }
-
-        public abstract void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns);
+        
+        protected abstract void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns);
         
         /// <summary> Returns SQL for completely removing the given table. </summary>
         public virtual string DeleteTableSql(string table) {
-            return "DROP TABLE `" + table + "`";
+            return "DROP TABLE if exists `" + table + "`";
         }
         
         /// <summary> Prints/dumps the table schema of the given table. </summary>
@@ -122,27 +124,94 @@ namespace GoldenSparks.SQL {
         }
 
         /// <summary> Returns SQL for adding a row to the given table. </summary>
-        public virtual string AddRowSql(string table, string columns, object[] args) {
-            return InsertSql("INSERT INTO", table, columns, args);
+        public virtual string AddRowSql(string table, string columns, int numArgs) {
+            return InsertSql("INSERT INTO", table, columns, numArgs);
         }
         
         /// <summary> Returns SQL for adding or replacing a row (same primary key) in the given table. </summary>
-        public abstract string AddOrReplaceRowSql(string table, string columns, object[] args);
+        public abstract string AddOrReplaceRowSql(string table, string columns, int numArgs);
       
         
-        protected string InsertSql(string cmd, string table, string columns, object[] args) {
+        protected string InsertSql(string cmd, string table, string columns, int numArgs) {
             StringBuilder sql = new StringBuilder(cmd);
             sql.Append(" `").Append(table).Append("` ");
             sql.Append('(').Append(columns).Append(')');
             
-            string[] names = SqlQuery.GetNames(args.Length);
+            string[] names = GetNames(numArgs);
             sql.Append(" VALUES (");
-            for (int i = 0; i < args.Length; i++) {
+            for (int i = 0; i < numArgs; i++) 
+            {
                 sql.Append(names[i]);
-                if (i < args.Length - 1) sql.Append(", ");
+                if (i < numArgs - 1) sql.Append(", ");
                 else sql.Append(")");
             }
             return sql.ToString();
         }
+        
+        
+        #region Raw SQL functions
+        
+        /// <summary> Executes an SQL command and returns the number of affected rows. </summary>
+        public int Execute(string sql, object[] parameters, bool createDB) {
+            int rows = 0;
+        	
+            using (ISqlConnection conn = CreateConnection()) {
+                conn.Open();
+                if (!createDB && MultipleSchema)
+                    conn.ChangeDatabase(Server.Config.MySQLDatabaseName);
+                
+                using (ISqlCommand cmd = conn.CreateCommand(sql)) {
+                    FillParams(cmd, parameters);
+                    rows = cmd.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+            return rows;
+        }
+
+        /// <summary> Excecutes an SQL query, invoking a callback on the returned rows one by one. </summary>        
+        public int Iterate(string sql, object[] parameters, ReaderCallback callback) {
+            int rows = 0;
+        	
+            using (ISqlConnection conn = CreateConnection()) {
+                conn.Open();
+                if (MultipleSchema)
+                    conn.ChangeDatabase(Server.Config.MySQLDatabaseName);
+                
+                using (ISqlCommand cmd = conn.CreateCommand(sql)) {
+                    FillParams(cmd, parameters);
+                    using (ISqlReader reader = cmd.ExecuteReader()) {
+                        while (reader.Read()) { callback(reader); rows++; }
+                    }
+                }
+                conn.Close();
+            }
+            return rows;
+        }
+        
+        
+        /// <summary> Sets the SQL command's parameter values to the given arguments </summary>
+        public static void FillParams(ISqlCommand cmd, object[] parameters) {
+            if (parameters == null || parameters.Length == 0) return;
+            
+            string[] names = GetNames(parameters.Length);
+            for (int i = 0; i < parameters.Length; i++) 
+            {
+                cmd.AddParameter(names[i], parameters[i]);
+            }
+        }
+        
+        volatile static string[] ids;
+        internal static string[] GetNames(int count) {
+            // Avoid allocation overhead from string concat every query by caching
+            string[] names = ids;
+            if (names == null || count > names.Length) {
+                names = new string[count];
+                for (int i = 0; i < names.Length; i++) { names[i] = "@" + i; }
+                ids = names;
+            }
+            return names;
+        }
+        #endregion
     }
 }

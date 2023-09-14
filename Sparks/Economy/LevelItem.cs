@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,15 +17,13 @@
  */
 using System;
 using System.Collections.Generic;
-using System.IO;
 using GoldenSparks.Commands;
-using GoldenSparks.Commands.World;
 using GoldenSparks.Generator;
 
-namespace GoldenSparks.Eco {
-    
-    public sealed class LevelItem : Item {
-        
+namespace GoldenSparks.Eco 
+{    
+    public sealed class LevelItem : Item 
+    {    
         public LevelItem() {
             Aliases = new string[] { "level", "levels", "map", "maps" };
         }
@@ -33,45 +31,47 @@ namespace GoldenSparks.Eco {
         public override string Name { get { return "Level"; } }
         
         public List<LevelPreset> Presets = new List<LevelPreset>();
-        public class LevelPreset {
+        public class LevelPreset 
+        {
             public int price;
             public string name;
             public string x, y, z;
             public string type;
         }
         
-        public override void Parse(string line, string[] args) {
-            if (!args[1].CaselessEq("levels")) return;
+        public override void Parse(string prop, string value) {
+            if (!prop.CaselessEq("levels")) return;
+            string[] args = value.Split(':');
             
-            LevelPreset preset = FindPreset(args[2]);
+            LevelPreset preset = FindPreset(args[0]);
             if (preset == null) {
                 preset = new LevelPreset();
-                preset.name = args[2];
+                preset.name = args[0];
                 Presets.Add(preset);
             }
             
-            switch (args[3]) {
-                    case "price": preset.price = int.Parse(args[4]); break;
-                    case "x": preset.x = args[4]; break;
-                    case "y": preset.y = args[4]; break;
-                    case "z": preset.z = args[4]; break;
-                    case "type": preset.type = args[4]; break;
+            switch (args[1]) {
+                case "price": preset.price = int.Parse(args[2]); break;
+                case "x": preset.x = args[2]; break;
+                case "y": preset.y = args[2]; break;
+                case "z": preset.z = args[2]; break;
+                case "type": preset.type = args[2]; break;
             }
         }
         
-        public override void Serialise(StreamWriter writer) {
-            foreach (LevelPreset preset in Presets) {
-                writer.WriteLine();
-                string prefix = "level:levels:" + preset.name;
+        public override void Serialise(List<string> cfg) {
+            foreach (LevelPreset preset in Presets) 
+            {
+                string prefix = "levels:" + preset.name;
                 
-                writer.WriteLine(prefix + ":price:" + preset.price);
-                writer.WriteLine(prefix + ":x:" + preset.x);
-                writer.WriteLine(prefix + ":y:" + preset.y);
-                writer.WriteLine(prefix + ":z:" + preset.z);
-                writer.WriteLine(prefix + ":type:" + preset.type);
+                cfg.Add(prefix + ":price:" + preset.price);
+                cfg.Add(prefix + ":x:" + preset.x);
+                cfg.Add(prefix + ":y:" + preset.y);
+                cfg.Add(prefix + ":z:" + preset.z);
+                cfg.Add(prefix + ":type:" + preset.type);
             }
         }
-
+        
         public override void OnPurchase(Player p, string raw) {
             string[] args = raw.SplitSpaces();
             if (raw.Length == 0) { OnStoreCommand(p); return; }
@@ -110,8 +110,8 @@ namespace GoldenSparks.Eco {
             }
             Economy.MakePurchase(p, preset.price, "%3Map: %f" + preset.name);
         }
-
-        public override void OnSetup(Player p, string[] args) {
+        
+        protected internal override void OnSetup(Player p, string[] args) {
             LevelPreset preset = FindPreset(args[2]);
             string cmd = args[1];
             
@@ -188,20 +188,20 @@ namespace GoldenSparks.Eco {
                 p.Message("Supported properties to edit: name, title, x, y, z, type, price");
             }
         }
-
-        public override void OnSetupHelp(Player p) {
+        
+        protected internal override void OnSetupHelp(Player p) {
             base.OnSetupHelp(p);
             p.Message("&T/Eco level add [name] [x] [y] [z] [theme] [price]");
             p.Message("&T/Eco level remove [name]");
             p.Message("&T/Eco level edit [name] [name/x/y/z/type/price] [value]");
             p.Message("&HAdds, removes, or edits a level preset.");
         }
-
-        public override void OnStoreOverview(Player p) {
+        
+        protected internal override void OnStoreOverview(Player p) {
             p.Message("&6Maps &S- see &T/Store maps");
         }
-
-        public override void OnStoreCommand(Player p) {
+        
+        protected internal override void OnStoreCommand(Player p) {
             p.Message("&aAvailable maps to buy:");
             if (Presets.Count == 0) {
                 p.Message("&6-None-"); return;

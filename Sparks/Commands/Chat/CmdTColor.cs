@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCLawl Team - Written by Valek (Modified for use with GoldenSparks)
+    Copyright 2010 MCLawl Team - Written by Valek (Modified for use with MCForge)
  
    Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -15,10 +15,10 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-using GoldenSparks.DB;
-
-namespace GoldenSparks.Commands.Chatting {
-    public class CmdTColor : EntityPropertyCmd {
+namespace GoldenSparks.Commands.Chatting 
+{
+    public class CmdTColor : EntityPropertyCmd 
+    {
         public override string name { get { return "TColor"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Admin; } }
@@ -32,7 +32,7 @@ namespace GoldenSparks.Commands.Chatting {
             UsePlayer(p, data, message, "title color"); 
         }
         
-        public override void SetPlayerData(Player p, string target, string colName) {
+        protected override void SetPlayerData(Player p, string target, string colName) {
             PlayerOperations.SetTitleColor(p, target, colName);
         }
 

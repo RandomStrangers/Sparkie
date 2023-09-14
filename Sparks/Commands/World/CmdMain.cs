@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -15,6 +15,8 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
+using GoldenSparks.Games;
+
 namespace GoldenSparks.Commands.World {
     public sealed class CmdMain : Command2 {      
         public override string name { get { return "Main"; } }
@@ -24,7 +26,7 @@ namespace GoldenSparks.Commands.World {
             get { return new[] { new CommandPerm(LevelPermission.Admin, "can change the main level") }; }
         }
         public override CommandAlias[] Aliases {
-            get { return new[] { new CommandAlias("WMain"), new CommandAlias("WorldMain"), new CommandAlias("Hub") }; }
+            get { return new[] { new CommandAlias("WMain"), new CommandAlias("WorldMain") }; }
         }
 
         public override void Use(Player p, string message, CommandData data) {
@@ -32,6 +34,7 @@ namespace GoldenSparks.Commands.World {
                 if (p.IsSuper) {
                     p.Message("Main level is {0}", Server.mainLevel.ColoredName);
                 } else if (p.level == Server.mainLevel) {
+                    if (!IGame.CheckAllowed(p, "use &T/Main")) return;
                     PlayerActions.Respawn(p);
                 } else {
                     PlayerActions.ChangeMap(p, Server.mainLevel);
@@ -46,8 +49,11 @@ namespace GoldenSparks.Commands.World {
                 if (!LevelInfo.Check(p, data.Rank, map, "set main to this map")) return;
                 
                 Server.SetMainLevel(map);
+                Server.Config.MainLevel = map; 
                 SrvProperties.Save();
-                p.Message("Set main level to {0}", Server.mainLevel.ColoredName);
+                
+                p.Message("Set main level to {0}", 
+                          LevelInfo.GetConfig(map).Color + map);
             }
         }
         

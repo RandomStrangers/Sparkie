@@ -3398,6 +3398,7 @@ namespace GoldenSparks.Gui
             this.eco_lblCurrency.Size = new System.Drawing.Size(52, 13);
             this.eco_lblCurrency.TabIndex = 11;
             this.eco_lblCurrency.Text = "Currency:";
+            /*
             // 
             // pageGames
             // 
@@ -4880,7 +4881,7 @@ namespace GoldenSparks.Gui
             this.tw_lstUsed.Name = "tw_lstUsed";
             this.tw_lstUsed.Size = new System.Drawing.Size(158, 147);
             this.tw_lstUsed.TabIndex = 0;
-            this.tw_lstUsed.SelectedIndexChanged += new System.EventHandler(this.twMapUse_SelectedIndexChanged);
+            this.tw_lstUsed.SelectedIndexChanged += new System.EventHandler(this.twMapUse_SelectedIndexChanged);*/
             // 
             // pageCommands
             // 

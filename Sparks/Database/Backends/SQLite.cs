@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,40 +17,48 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Text;
+using GoldenSparks.Platform;
 
-namespace GoldenSparks.SQL {
-
-    public sealed class SQLiteBackend : IDatabaseBackend {
+namespace GoldenSparks.SQL 
+{
+    public sealed class SQLiteBackend : IDatabaseBackend 
+    {
         public static IDatabaseBackend Instance = new SQLiteBackend();
         public SQLiteBackend() {
             CaselessWhereSuffix = " COLLATE NOCASE";
-            CaselessLikeSuffix = " COLLATE NOCASE";
+            CaselessLikeSuffix  = " COLLATE NOCASE";
         }
         
         public override bool EnforcesTextLength { get { return false; } }
+        public override bool EnforcesIntegerLimits { get { return false; } }
         public override bool MultipleSchema { get { return false; } }
-
-        public override IDbConnection CreateConnection() {
+        public override string EngineName { get { return "SQLite"; } }
+        
+        public override ISqlConnection CreateConnection() {
             return new MCGSQLiteConnection();
         }
 
-        public override IDbCommand CreateCommand(string sql, IDbConnection conn) {
-            return new SQLiteCommand(sql, (SQLiteConnection)conn);
+
+        public override void LoadDependencies() {
+            // on macOS/Linux, use the system provided sqlite3 native library
+            if (!IOperatingSystem.DetectOS().IsWindows) return;
+
+            Server.CheckFile("sqlite3_x32.dll");
+            Server.CheckFile("sqlite3_x64.dll");
+
+            // sqlite3.dll is the .DLL that GoldenSparks will actually load on Windows
+            try {
+                string dll = IntPtr.Size == 8 ? "sqlite3_x64.dll" : "sqlite3_x32.dll";
+                if (File.Exists(dll)) File.Copy(dll, "sqlite3.dll", true);
+            } catch (Exception ex) {
+                // e.g. can happen when multiple server instances running
+                Logger.LogError("Error moving SQLite dll", ex);
+            }
         }
 
-        public override IDbDataParameter CreateParameter() {
-            return new SQLiteParameter();
-        }
-        
-        
         public override void CreateDatabase() { }
-        
-        public override string RawGetDateTime(IDataRecord record, int col) {
-            return record.GetString(col); // reader.GetDateTime is extremely slow so avoid it
-        }
         
         public override bool TableExists(string table) {
             return Database.CountRows("sqlite_master",
@@ -62,16 +70,11 @@ namespace GoldenSparks.SQL {
             List<string> tables = GetStrings(sql);
             
             // exclude sqlite built-in database tables
-            for (int i = tables.Count - 1; i >= 0; i--) {
+            for (int i = tables.Count - 1; i >= 0; i--) 
+            {
                 if (tables[i].StartsWith("sqlite_")) tables.RemoveAt(i);
             }
             return tables;
-        }
-        
-        static object IterateColumnNames(IDataRecord record, object arg) {
-            List<string> columns = (List<string>)arg;
-            columns.Add(record.GetText("name"));
-            return arg;
         }
         
         public override List<string> ColumnNames(string table) {
@@ -79,15 +82,15 @@ namespace GoldenSparks.SQL {
             List<string> columns = new List<string>();
             
             Database.Iterate("PRAGMA table_info(`" + table + "`)",
-                             columns, IterateColumnNames, null);
+                             record => columns.Add(record.GetText("name")), null);
             return columns;
         }
         
         public override string RenameTableSql(string srcTable, string dstTable) {
             return "ALTER TABLE `" + srcTable + "` RENAME TO `" + dstTable + "`";
         }
-
-        public override void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns) {
+        
+        protected override void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns) {
             string priKey = null;
             for (int i = 0; i < columns.Length; i++) {
                 ColumnDesc col = columns[i];
@@ -127,13 +130,14 @@ namespace GoldenSparks.SQL {
             return "ALTER TABLE `" + table + "` ADD COLUMN " + col.Column + " " + col.FormatType();
         }
         
-        public override string AddOrReplaceRowSql(string table, string columns, object[] args) {
-            return InsertSql("INSERT OR REPLACE INTO", table, columns, args);
+        public override string AddOrReplaceRowSql(string table, string columns, int numArgs) {
+            return InsertSql("INSERT OR REPLACE INTO", table, columns, numArgs);
         }
     }
     
-    public sealed class MCGSQLiteConnection : SQLiteConnection {
-        public override bool ConnectionPooling { get { return Server.Config.DatabasePooling; } }
-        public override string DBPath { get { return "GoldenSparks.db"; } }
+    sealed class MCGSQLiteConnection : SQLiteConnection 
+    {
+        protected override bool ConnectionPooling { get { return Server.Config.DatabasePooling; } }
+        protected override string DBPath { get { return "GoldenSparks.db"; } }
     }
 }

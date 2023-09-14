@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,14 +17,18 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.Commands.Chatting {
-    public sealed class CmdInbox : Command2 {
+namespace GoldenSparks.Commands.Chatting 
+{
+    public sealed class CmdInbox : Command2
+    {
         public override string name { get { return "Inbox"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool SuperUseable { get { return false; } }
+        public override bool UseableWhenFrozen { get { return true; } }
+        public override CommandParallelism Parallelism { get { return CommandParallelism.NoAndWarn; } }
+        
         const int i_text = 0, i_sent = 1, i_from = 2;
         
         public override void Use(Player p, string message, CommandData data) {
@@ -40,13 +44,16 @@ namespace GoldenSparks.Commands.Chatting {
 
             string[] args = message.SplitSpaces(2);
             if (message.Length == 0) {
-                foreach (string[] entry in entries) { Output(p, entry); }
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    Output(p, i + 1, entries[i]);
+                }
             } else if (IsDeleteCommand(args[0])) {
                 if (args.Length == 1) {
                     p.Message("You need to provide either \"all\" or a number."); return;
                 } else if (args[1].CaselessEq("all")) {
-                    Database.DeleteRows("Inbox" + p.name);
-                    p.Message("Deleted all messages.");
+                    int count = Database.DeleteRows("Inbox" + p.name, "");
+                    p.Message("Deleted all {0} messages.", count);
                 } else {
                     DeleteByID(p, args[1], entries);
                 }
@@ -76,17 +83,17 @@ namespace GoldenSparks.Commands.Chatting {
             if (num > entries.Count) {
                 p.Message("Message #{0} does not exist.", num);
             } else {
-                Output(p, entries[num - 1]);
+                Output(p, num, entries[num - 1]);
             }
         }
         
-        static void Output(Player p, string[] entry) {
-            DateTime time = entry[i_sent].ParseDBDate();
+        static void Output(Player p, int num, string[] entry) {
+            DateTime time  = Database.ParseDBDate(entry[i_sent]);
             TimeSpan delta = DateTime.Now - time;
-            string sender = p.FormatNick(entry[i_from]);
+            string sender  = p.FormatNick(entry[i_from]);
             
-            p.Message("From {0} &a{1} ago:", sender, delta.Shorten());
-            p.Message(entry[i_text]);
+            p.Message("{0}) From {1} &a{2} ago:", num, sender, delta.Shorten());
+            p.Message("  {0}", entry[i_text]);
         }
         
         public override void Help(Player p) {

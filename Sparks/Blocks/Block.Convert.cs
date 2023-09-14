@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,26 +16,28 @@
     permissions and limitations under the Licenses.
 */
 using System;
+using GoldenSparks.Blocks;
+using GoldenSparks.Network;
 using BlockID = System.UInt16;
-using BlockRaw = System.Byte;
 
-namespace GoldenSparks {
-    public static partial class Block {
-
-        public static string[] coreNames = new string[Block.Count];
+namespace GoldenSparks 
+{
+    public static partial class Block 
+    {
+        static string[] coreNames = new string[Block.CORE_COUNT];
         public static bool Undefined(BlockID block) { return IsPhysicsType(block) && coreNames[block].CaselessEq("unknown"); }
-
+        
         public static bool ExistsGlobal(BlockID b) { return ExistsFor(Player.Sparks, b); }
-
-
         
         public static bool ExistsFor(Player p, BlockID b) {
-            if (b < Block.Count) return !Undefined(b);
+            if (b < Block.CORE_COUNT) return !Undefined(b);
             
             if (!p.IsSuper) return p.level.GetBlockDef(b) != null;
             return BlockDefinition.GlobalDefs[b] != null;
         }
         
+        /// <summary> Gets the name for the block with the given block ID </summary>
+        /// <remarks> Block names can differ depending on the player's level </remarks>
         public static string GetName(Player p, BlockID block) {
             if (IsPhysicsType(block)) return coreNames[block];
             
@@ -47,9 +49,9 @@ namespace GoldenSparks {
             }
             if (def != null) return def.Name.Replace(" ", "");
             
-            return block < Block.Extended ? coreNames[block] : ToRaw(block).ToString();
+            return block < CPE_COUNT ? coreNames[block] : ToRaw(block).ToString();
         }
-        
+
         public static BlockID Parse(Player p, string input) {
             BlockDefinition[] defs = p.IsSuper ? BlockDefinition.GlobalDefs : p.level.CustomBlockDefs;
             BlockID block;
@@ -57,44 +59,38 @@ namespace GoldenSparks {
             if (BlockID.TryParse(input, out block)) {
                 if (block < Block.CPE_COUNT || (block <= Block.MaxRaw && defs[FromRaw(block)] != null)) {
                     return FromRaw(block);
-                }
+                } // TODO redo to use ExistsFor?
             }
             
-            block = GetBlockByName(input, defs);
-            if (block != Block.Invalid) return block;
+            BlockDefinition def = BlockDefinition.ParseName(input, defs);
+            if (def != null) return def.GetBlock();
             
             byte coreID;
             bool success = Aliases.TryGetValue(input.ToLower(), out coreID);
             return success ? coreID : Invalid;
         }
         
-        static BlockID GetBlockByName(string msg, BlockDefinition[] defs) {
-            for (int i = 1; i < defs.Length; i++) {
-                BlockDefinition def = defs[i];
-                if (def == null) continue;
-                if (def.Name.Replace(" ", "").CaselessEq(msg)) return def.GetBlock();
-            }
-            return Block.Invalid;
+        public static string GetColoredName(Player p, BlockID block) {
+            BlockPerms perms = BlockPerms.Find(block);
+            return Group.GetColor(perms.MinRank) + Block.GetName(p, block);
         }
         
         
-        /// <summary> Converts a block &lt; CPE_COUNT into a suitable
-        /// block supported by the given player's client </summary>
-        public static byte ConvertLimited(byte block, Player p) {
-        	if (p.hasCustomBlocks) return block;
-
+        /// <summary> Converts a block &lt;= CPE_MAX_BLOCK into a suitable
+        /// block compatible for the given classic protocol version </summary>
+        public static byte ConvertClassic(byte block, byte protocolVersion) {
             // protocol version 7 only supports up to Obsidian block
-            if (p.ProtocolVersion >= Server.VERSION_0030) {
+            if (protocolVersion >= Server.VERSION_0030) {
                 return block <= Obsidian ? block : v7_fallback[block - CobblestoneSlab];
             }
             
             // protocol version 6 only supports up to Gold block
-            if (p.ProtocolVersion >= Server.VERSION_0020) {
+            if (protocolVersion >= Server.VERSION_0020) {
                 return block <= Gold ? block : v6_fallback[block - Iron];
             }
             
             // protocol version 5 only supports up to Glass block
-            if (p.ProtocolVersion >= Server.VERSION_0019) {
+            if (protocolVersion >= Server.VERSION_0019) {
                 return block <= Glass ? block : v5_fallback[block - Red];
             }
 
@@ -149,6 +145,10 @@ namespace GoldenSparks {
                Sand,    Sand,     Leaves, Stone,      Cobblestone, Stone, Wood, Stone
         };
         
+        
+        /// <summary> Converts physics block IDs to their visual block IDs </summary>
+        /// <remarks> If block ID is not converted, returns input block ID </remarks>
+        /// <example> Op_Glass becomes Glass, Door_Log becomes Log </example>
         public static BlockID Convert(BlockID block) {
             switch (block) {
                 case FlagBase: return Mushroom;

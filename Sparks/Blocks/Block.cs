@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,9 +21,10 @@ using GoldenSparks.Blocks;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks {
-    public static partial class Block {
-
+namespace GoldenSparks 
+{
+    public static partial class Block 
+    {
         public static bool Walkthrough(BlockID block) {
             return block == Air || block == Sapling || block == Block.Snow
                 || block == Fire || block == Rope
@@ -159,7 +160,8 @@ namespace GoldenSparks {
         
         public static void SetBlocks() {
             BlockProps[] props = Props;
-            for (int b = 0; b < props.Length; b++) {
+            for (int b = 0; b < props.Length; b++) 
+            {
                 props[b] = MakeDefaultProps((BlockID)b);
             }
             
@@ -174,28 +176,27 @@ namespace GoldenSparks {
                 BlockProps.Load("default", Props, 1, false);
             }
             
-            BlockPerms.Load();
             UpdateLoadedLevels();
         }
         
         public static void UpdateLoadedLevels() {
             Level[] loaded = LevelInfo.Loaded.Items;
-            foreach (Level lvl in loaded) {
+            foreach (Level lvl in loaded) 
+            {
                 lvl.UpdateBlockProps();
                 lvl.UpdateAllBlockHandlers();
             }
         }
         
+        /// <summary> Converts a raw/client block ID to a server block ID </summary>
         public static BlockID FromRaw(BlockID raw) {
             return raw < CPE_COUNT ? raw : (BlockID)(raw + Block.Extended);
         }
         
+        /// <summary> Converts a server block ID to a raw/client block ID </summary>
+        /// <remarks> Undefined behaviour for physics block IDs </remarks>
         public static BlockID ToRaw(BlockID raw) {
             return raw < CPE_COUNT ? raw : (BlockID)(raw - Block.Extended);
-        }
-        
-        public static BlockID FromRaw(byte raw, bool extended) {
-            return (BlockID)(raw | (extended ? Block.Extended : Block.Air));
         }
         
         public static BlockID MapOldRaw(BlockID raw) {

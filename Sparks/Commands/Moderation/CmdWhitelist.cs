@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCLawl Team - Written by Valek (Modified for use with GoldenSparks)
+    Copyright 2010 MCLawl Team - Written by Valek (Modified for use with MCForge)
  
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -23,12 +23,22 @@ namespace GoldenSparks.Commands.Moderation {
         public override string shortcut { get { return "w"; } }
         public override string type { get { return CommandTypes.Moderation; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
+        public override CommandPerm[] ExtraPerms {
+            get { return new[] { new CommandPerm(LevelPermission.Admin, "can enable/disable whitelisted only mode") }; }
+        }
 
         public override void Use(Player p, string message, CommandData data) {
-            if (!Server.Config.WhitelistedOnly) { p.Message("Whitelist is not enabled."); return; }
-            if (message.Length == 0) { List(p, ""); return; }
             string[] args = message.SplitSpaces();
-            string cmd = args[0];
+            string cmd    = args[0];
+            
+            if (cmd.CaselessEq("enable")) {
+                SetMode(true,  "&aON"); return;
+            } else if (cmd.CaselessEq("disable")) {
+                SetMode(false, "&cOFF"); return;
+            }
+
+            if (!Server.Config.WhitelistedOnly) { p.Message("Whitelist is not enabled."); return; }
+            if (message.Length == 0) { List(p, ""); return; }         
             
             if (cmd.CaselessEq("add")) {
                 if (args.Length < 2) { Help(p); return; }
@@ -44,6 +54,14 @@ namespace GoldenSparks.Commands.Moderation {
             } else {
                 Help(p);
             }
+        }
+
+        static void SetMode(bool enabled, string desc) {
+            Server.Config.WhitelistedOnly = enabled;
+            SrvProperties.Save();
+
+            Chat.MessageAll("Whitelisted only mode " + desc);
+            Logger.Log(LogType.SystemActivity, "Whitelisted only mode is now " + desc);
         }
         
         static void Add(Player p, string name) {
@@ -76,9 +94,11 @@ namespace GoldenSparks.Commands.Moderation {
 
         public override void Help(Player p) {
             p.Message("&T/Whitelist add/del [player]");
-            p.Message("&HAdds or removes [player] from the whitelist.");
+            p.Message("&HAdds or removes [player] from the whitelist");
             p.Message("&T/Whitelist list");
-            p.Message("&HLists all players who are on the whitelist.");
+            p.Message("&HLists all players who are on the whitelist");
+            p.Message("&T/Whitelist enable/disable");
+            p.Message("&HSets whether only whitelisted players can join the server");
         }
     }
 }

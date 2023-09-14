@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -15,16 +15,17 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
+#if !MCG_STANDALONE
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Text;
 using MySql.Data.MySqlClient;
 
-namespace GoldenSparks.SQL {
-
-    public sealed class MySQLBackend : IDatabaseBackend {
+namespace GoldenSparks.SQL 
+{
+    public sealed class MySQLBackend : IDatabaseBackend 
+    {
         public static IDatabaseBackend Instance = new MySQLBackend();
         public MySQLBackend() {
             // MySQL uses case insensitive collation by default
@@ -33,35 +34,30 @@ namespace GoldenSparks.SQL {
         }
         
         public override bool EnforcesTextLength { get { return true; } }
+        public override bool EnforcesIntegerLimits { get { return true; } }
         public override bool MultipleSchema { get { return true; } }
-
-        public override IDbConnection CreateConnection() {
+        public override string EngineName { get { return "MySQL"; } }
+        
+        public override ISqlConnection CreateConnection() {
             const string format = "Data Source={0};Port={1};User ID={2};Password={3};Pooling={4};Treat Tiny As Boolean=false;";
             string str = string.Format(format, Server.Config.MySQLHost, Server.Config.MySQLPort,
                                        Server.Config.MySQLUsername, Server.Config.MySQLPassword, Server.Config.DatabasePooling);
-            return new MySqlConnection(str);
-        }
 
-        public override IDbCommand CreateCommand(string sql, IDbConnection conn) {
-            return new MySqlCommand(sql, (MySqlConnection)conn);
-        }
-
-        public override IDbDataParameter CreateParameter() {
-            return new MySqlParameter();
+            MySqlConnection conn = new MySqlConnection(str);
+            return new MySQLConnection(conn);
         }
 
         
+        public override void LoadDependencies() {
+            Server.CheckFile("MySql.Data.dll");
+        }
+
         public override void CreateDatabase() {
             string sql = "CREATE DATABASE if not exists `" + Server.Config.MySQLDatabaseName + "`";
             Database.Do(sql, true, null, null);
         }
         
-        public override string RawGetDateTime(IDataRecord record, int col) {
-            DateTime date = record.GetDateTime(col);
-            return date.ToString(Database.DateFormat);
-        }
-
-        public override void ParseCreate(ref string cmd) {
+        protected internal override void ParseCreate(ref string cmd) {
             // MySQL does not support the format used by the SQLite backend for the primary key
             const string priKey = " PRIMARY KEY AUTOINCREMENT";
             int priIndex = cmd.ToUpper().IndexOf(priKey);
@@ -83,14 +79,16 @@ namespace GoldenSparks.SQL {
         }
         
 
-        static object IterateExists(IDataRecord record, object arg) { return ""; }
         public override bool TableExists(string table) {
             // "SHOW TABLES LIKE '[table]'" SQL statement is insufficient
             //  because "table" might include characters such as _, %, etc
             string column = "Tables_in_" + Server.Config.MySQLDatabaseName;
+            bool found    = false;
 
-            return Database.Iterate("SHOW TABLES WHERE " + column + " = @0",
-                                    null, IterateExists, table) != null;
+            Database.Iterate("SHOW TABLES WHERE " + column + " = @0",
+                            record => found = true, 
+                            table);
+            return found;
         }
         
         public override List<string> AllTables() {
@@ -105,8 +103,8 @@ namespace GoldenSparks.SQL {
         public override string RenameTableSql(string srcTable, string dstTable) {
             return "RENAME TABLE `" + srcTable + "` TO `" + dstTable + "`";
         }
-
-        public override void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns) {
+        
+        protected override void CreateTableColumns(StringBuilder sql, ColumnDesc[] columns) {
             string priKey = null;
             for (int i = 0; i < columns.Length; i++) {
                 ColumnDesc col = columns[i];
@@ -124,11 +122,12 @@ namespace GoldenSparks.SQL {
                 sql.AppendLine();
             }
         }
-
+        
         public override void PrintSchema(string table, TextWriter w) {
             w.WriteLine("CREATE TABLE IF NOT EXISTS `{0}` (", table);
             List<string[]> fields = new List<string[]>();
-            Database.Iterate("DESCRIBE `" + table + "`", fields, Database.ReadFields);
+            Database.Iterate("DESCRIBE `" + table + "`", 
+                            record => fields.Add(Database.ParseFields(record)));
             
             const int i_name = 0, i_type = 1, i_null = 2, i_key = 3, i_def = 4, i_extra = 5;
             string pri = "";
@@ -155,8 +154,118 @@ namespace GoldenSparks.SQL {
             return sql;
         }
         
-        public override string AddOrReplaceRowSql(string table, string columns, object[] args) {
-            return InsertSql("REPLACE INTO", table, columns, args);
+        public override string AddOrReplaceRowSql(string table, string columns, int numArgs) {
+            return InsertSql("REPLACE INTO", table, columns, numArgs);
+        }
+    }
+
+    sealed class MySQLConnection : ISqlConnection 
+    {
+        public readonly MySqlConnection conn;        
+        public MySQLConnection(MySqlConnection conn) { this.conn = conn; }
+
+        public override ISqlTransaction BeginTransaction() {
+            MySqlTransaction trn = conn.BeginTransaction();
+            return new MySQLTransaction(trn);
+        }
+
+        public override ISqlCommand CreateCommand(string sql) {
+            MySqlCommand cmd = new MySqlCommand(sql, conn);
+            return new MySQLCommand(cmd);
+        }
+
+        public override void Open() { conn.Open(); }
+        public override void ChangeDatabase(string name) { conn.ChangeDatabase(name); }
+        public override void Close() { conn.Close(); }
+        public override void Dispose() { conn.Dispose(); }
+    }
+
+    sealed class MySQLCommand : ISqlCommand
+    {        
+        readonly MySqlCommand cmd;
+        public MySQLCommand(MySqlCommand cmd) { this.cmd = cmd; }
+
+        public override void ClearParameters() { 
+            cmd.Parameters.Clear(); 
+        }
+        public override void AddParameter(string name, object value) {
+            cmd.Parameters.AddWithValue(name, value);
+        }
+
+        public override void Dispose() { cmd.Dispose(); }
+        public override void Prepare() { cmd.Prepare(); }
+        public override int ExecuteNonQuery() { return cmd.ExecuteNonQuery(); }
+
+        public override ISqlReader ExecuteReader() { 
+            MySqlDataReader rdr = cmd.ExecuteReader();
+            return new MySQLReader(rdr);
+        }
+    }
+
+    sealed class MySQLTransaction : ISqlTransaction
+    {
+        readonly MySqlTransaction trn;
+        public MySQLTransaction(MySqlTransaction trn) { this.trn = trn; }        
+
+        public override void Commit()   { trn.Commit(); }
+        public override void Rollback() { trn.Rollback(); }
+        public override void Dispose()  { trn.Dispose(); }
+    }
+
+    sealed class MySQLReader : ISqlReader
+    {
+        readonly MySqlDataReader rdr;
+        public MySQLReader(MySqlDataReader rdr) { this.rdr = rdr; }
+
+        public override int RowsAffected { get { return rdr.RecordsAffected; } }
+        public override void Close()   { rdr.Close(); }
+        public override void Dispose() { rdr.Dispose(); }
+        public bool NextResult() { return rdr.NextResult(); } // TODO do we need to call this?
+        public override bool Read()    { return rdr.Read(); }
+
+
+        public override int FieldCount { get  { return rdr.FieldCount; } }
+        public override string GetName(int i) { return rdr.GetName(i); }
+        public override int GetOrdinal(string name) { return rdr.GetOrdinal(name); }
+
+        public override bool GetBoolean(int i)  { return rdr.GetBoolean(i); }
+        public override byte[] GetBytes(int i)  { return (byte[])GetValue(i); }
+        public override int GetInt32(int i)     { return rdr.GetInt32(i); }
+        public override long GetInt64(int i)    { return rdr.GetInt64(i); }
+        public override double GetDouble(int i) { return rdr.GetDouble(i); }
+        public override string GetString(int i) { return rdr.GetString(i); }
+        public override DateTime GetDateTime(int i) { return rdr.GetDateTime(i); }
+        public override bool IsDBNull(int i)    { return rdr.IsDBNull(i); }
+        public override object GetValue(int i) { return rdr.GetValue(i); }
+
+
+        string RawGetDateTime(int col) {
+            DateTime date = GetDateTime(col);
+            return date.ToString(Database.DateFormat);
+        }
+
+        public override string GetStringValue(int col) {
+            if (IsDBNull(col)) return "";
+            Type type = rdr.GetFieldType(col);
+
+            if (type == typeof(string))   return GetString(col);
+            if (type == typeof(DateTime)) return RawGetDateTime(col);
+
+            return GetValue(col).ToString();
+        } 
+
+        public override string DumpValue(int col) {
+            if (IsDBNull(col)) return "NULL";
+            Type colType = rdr.GetFieldType(col);
+
+            // TODO doubles not exact? probably doesn't matter
+            if (colType == typeof(string) || colType == typeof(byte[])) {
+                return Quote(GetString(col));
+            } else if (colType == typeof(DateTime)) {
+                return Quote(RawGetDateTime(col));
+            }
+            return GetString(col);
         }
     }
 }
+#endif

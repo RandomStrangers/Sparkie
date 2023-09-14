@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,13 +18,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace GoldenSparks.DB {
-    
+namespace GoldenSparks.DB 
+{
     public delegate void OfflineStatPrinter(Player p, PlayerData who);
     
     /// <summary> Prints stats for an offline player in /info. </summary>
-    public static class OfflineStat {
-
+    public static class OfflineStat 
+    {
         /// <summary> List of stats that can be output to /info. </summary>
         public static List<OfflineStatPrinter> Stats = new List<OfflineStatPrinter>() {
             CoreLine,
@@ -43,8 +43,11 @@ namespace GoldenSparks.DB {
             Group group   = Group.GroupIn(data.Name);
             string color  = data.Color.Length == 0 ? group.Color : data.Color;
             string prefix = data.Title.Length == 0 ? "" : color + "[" + data.TitleColor + data.Title + color + "] ";
-            
-            string fullName = prefix + color + Server.ToRawUsername(data.Name);
+
+            string nick = PlayerDB.LoadNick(data.Name);
+            string name = nick ?? Server.ToRawUsername(data.Name);
+
+            string fullName = prefix + color + name;
             OnlineStat.CommonCoreLine(p, fullName, data.Name, group, data.Messages);
         }
         

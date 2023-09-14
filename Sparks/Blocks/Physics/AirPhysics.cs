@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -33,8 +33,12 @@ namespace GoldenSparks.Blocks.Physics {
             ActivateablePhysics.CheckAt(lvl, x, (ushort)(y - 1), z); 
 
             //Edge of map water
-            if (lvl.Config.EdgeWater && (y < lvl.Config.EdgeLevel && y >= (lvl.Config.EdgeLevel + lvl.Config.SidesOffset))) {
-                if (x == 0 || x == lvl.Width - 1 || z == 0 || z == lvl.Length - 1) {
+            if (lvl.Config.EdgeWater && (x == 0 || x == lvl.Width - 1 || z == 0 || z == lvl.Length - 1)) {
+                int edgeLevel   = lvl.GetEdgeLevel();
+                int sidesOffset = lvl.Config.SidesOffset;
+                if (sidesOffset == EnvConfig.ENV_USE_DEFAULT) sidesOffset = -2; // EnvConfig.DefaultEnvProp(EnvProp.SidesOffset, lvl.Height);
+
+                if (y < edgeLevel && y >= (edgeLevel + sidesOffset)) {
                     BlockID horizon = lvl.Config.HorizonBlock;
                     lvl.AddUpdate(C.Index, horizon == Block.Invalid ? Block.Water : horizon);
                 }

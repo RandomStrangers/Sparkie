@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,32 +19,26 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using GoldenSparks.Blocks;
 using GoldenSparks.Bots;
-using GoldenSparks.Commands;
 using GoldenSparks.DB;
 using GoldenSparks.Events.LevelEvents;
-using GoldenSparks.Events.PlayerEvents;
-using GoldenSparks.Games;
-using GoldenSparks.Generator;
 using GoldenSparks.Levels.IO;
 using GoldenSparks.Util;
 using BlockID = System.UInt16;
 using BlockRaw = System.Byte;
 
 namespace GoldenSparks 
-{
-    public enum LevelPermission
+{    public enum LevelPermission
     {
         Banned = -20, Guest = 0, Builder = 30,
         AdvBuilder = 50, Operator = 80,
-        Admin = 100, Nobody = 120, Owner = 120, // So newer MCGalaxy commands/plugins
-                                                // can still work with this
-
-        Sparkie = 150
+        Admin = 100, Nobody = 120, Owner = 120,
+        Sparkie = 127, Null = 150
 
     }
-    
+
     public enum BuildType { Normal, ModifyOnly, NoModify };
 
     public sealed partial class Level : IDisposable 
@@ -57,9 +51,9 @@ namespace GoldenSparks
             this.blocks = blocks;
             Init(name, width, height, length);
         }
-        public Level() { }
-
-        public void Init(string name, ushort width, ushort height, ushort length) {
+    	internal Level() { }
+    	
+        internal void Init(string name, ushort width, ushort height, ushort length) {
             if (width  < 1) width  = 1;
             if (height < 1) height = 1;
             if (length < 1) length = 1;
@@ -102,12 +96,12 @@ namespace GoldenSparks
             ClearPhysicsLists();
             UndoBuffer.Clear();
             BlockDB.Cache.Clear();
-            Zones.Clear();
-            
             blockqueue.ClearAll();
+
             lock (saveLock) {
-                blocks = null;
+                blocks       = null;
                 CustomBlocks = null;
+                Zones.Clear();
             }
         }
         
@@ -120,9 +114,8 @@ namespace GoldenSparks
         }
         
         public bool CanJoin(Player p) {
-
-            if (p.IsSparkie) return true;
-
+            if (p.IsSparkie || this == Server.mainLevel) return true;
+            
             bool skip = p.summonedMap != null && p.summonedMap.CaselessEq(name);
             LevelPermission plRank = skip ? LevelPermission.Sparkie : p.Rank;
             if (!VisitAccess.CheckDetailed(p, plRank)) return false;
@@ -135,11 +128,14 @@ namespace GoldenSparks
         
         void Cleanup() {
             Physicsint = 0;
+            Thread t;
+
             try {
+                t = physThread;
                 // Wake up physics thread from Thread.Sleep
-                physThread.Interrupt();
+                if (t != null) t.Interrupt();
                 // Wait up to 1 second for physics thread to finish
-                physThread.Join(1000);
+                if (t != null) t.Join(1000);
             } catch {
                 // No physics thread at all
             }
@@ -162,7 +158,7 @@ namespace GoldenSparks
             bool cancel = false;
             OnLevelUnloadEvent.Call(this, ref cancel);
             if (cancel) {
-                Logger.Log(LogType.SystemActivity, "Unload canceled by Plugin! (Map: {0})", name);
+                Logger.Log(LogType.SystemActivity, "Unloading of {0} canceled by a plugin", name);
                 return false;
             }
             MovePlayersToMain();
@@ -262,10 +258,7 @@ namespace GoldenSparks
         /// <returns> The name of the backup, or null if no backup was saved. </returns>
         public string Backup(bool force = false, string backup = "") {
             if (ChangedSinceBackup || force) {
-                string backupPath = LevelInfo.BackupBasePath(name);
-                if (!Directory.Exists(backupPath)) Directory.CreateDirectory(backupPath);
-                int next = LevelInfo.LatestBackup(name) + 1;
-                if (backup.Length == 0) backup = next.ToString();
+                if (backup.Length == 0) backup = LevelInfo.NextBackup(name);
 
                 if (!LevelActions.Backup(name, backup)) {
                     Logger.Log(LogType.Warning, "FAILED TO INCREMENTAL BACKUP :" + name);
@@ -290,7 +283,7 @@ namespace GoldenSparks
             }
             
             try {
-                Level lvl = IMapImporter.Read(path, name, true);
+                Level lvl = IMapImporter.Decode(path, name, true);
                 LoadMetadata(lvl);
                 BotsFile.Load(lvl);
 
@@ -317,7 +310,6 @@ namespace GoldenSparks
                     lvl.SetPhysics(lvl.Config.Physics);
                 } else {
                     Logger.Log(LogType.GoldenSparksMessage, ".properties file for level {0} was not found.", lvl.MapName);
-
                 }
             } catch (Exception e) {
                 Logger.LogError(e);
@@ -395,7 +387,8 @@ namespace GoldenSparks
         }
         
         void LoadDefaultProps() {
-            for (int b = 0; b < Props.Length; b++) {
+            for (int b = 0; b < Props.Length; b++) 
+            {
                 Props[b] = BlockProps.MakeDefault(Props, this, (BlockID)b);
             }
         }
@@ -413,13 +406,14 @@ namespace GoldenSparks
         }
         
         public void UpdateAllBlockHandlers() {
-            for (int i = 0; i < Props.Length; i++) {
+            for (int i = 0; i < Props.Length; i++) 
+            {
                 UpdateBlockHandlers((BlockID)i);
             }
         }
         
         public void UpdateBlockHandlers(BlockID block) {
-            bool nonSolid = !Blocks.CollideType.IsSolid(CollideType(block));
+            bool nonSolid = !GoldenSparks.Blocks.CollideType.IsSolid(CollideType(block));
             DeleteHandlers[block]       = BlockBehaviour.GetDeleteHandler(block, Props);
             PlaceHandlers[block]        = BlockBehaviour.GetPlaceHandler(block, Props);
             WalkthroughHandlers[block]  = BlockBehaviour.GetWalkthroughHandler(block, Props, nonSolid);
@@ -432,6 +426,12 @@ namespace GoldenSparks
             CustomBlockDefs[block] = def;
             UpdateBlockHandlers(block);
             blockAABBs[block] = Block.BlockAABB(block, this);
+        }
+        
+        public int GetEdgeLevel() {
+            int edgeLevel = Config.EdgeLevel;
+            if (edgeLevel == EnvConfig.ENV_USE_DEFAULT) edgeLevel = Height / 2;//EnvConfig.DefaultEnvProp(EnvProp.EdgeLevel, Height);
+            return edgeLevel;
         }
     }
 }

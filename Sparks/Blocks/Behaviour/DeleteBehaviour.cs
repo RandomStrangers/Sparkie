@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,10 +22,10 @@ using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Blocks {
+    
+    internal static class DeleteBehaviour {
 
-    public static class DeleteBehaviour {
-
-        public static ChangeResult RocketStart(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        internal static ChangeResult RocketStart(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (p.level.physics < 2 || p.level.physics == 5) return ChangeResult.Unchanged;
             
             int dx = 0, dy = 0, dz = 0;
@@ -46,8 +46,8 @@ namespace GoldenSparks.Blocks {
             }
             return ChangeResult.Unchanged;
         }
-
-        public static ChangeResult Firework(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult Firework(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (p.level.physics == 0 || p.level.physics == 5) return ChangeResult.Unchanged;
             
             Random rand = new Random();
@@ -69,18 +69,18 @@ namespace GoldenSparks.Blocks {
             }
             return ChangeResult.Unchanged;
         }
-
-        public static ChangeResult C4Det(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult C4Det(Player p, BlockID old, ushort x, ushort y, ushort z) {
             int index = p.level.PosToInt(x, y, z);
             C4Physics.BlowUp(index, p.level);
             return p.ChangeBlock(x, y, z, Block.Air);
         }
-
-        public static ChangeResult RevertDoor(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult RevertDoor(Player p, BlockID old, ushort x, ushort y, ushort z) {
             return ChangeResult.Unchanged;
         }
-
-        public static ChangeResult Door(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult Door(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (p.level.physics == 0) return p.ChangeBlock(x, y, z, Block.Air);
             
             BlockID physForm;
@@ -88,8 +88,8 @@ namespace GoldenSparks.Blocks {
             p.level.Blockchange(x, y, z, physForm, false, args);
             return ChangeResult.Modified;
         }
-
-        public static ChangeResult oDoor(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult oDoor(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (old == Block.oDoor_Green || old == Block.oDoor_Green_air) {
                 BlockID oDoorOpposite = p.level.Props[old].oDoorBlock;
                 p.level.Blockchange(x, y, z, oDoorOpposite);
@@ -97,15 +97,15 @@ namespace GoldenSparks.Blocks {
             }
             return ChangeResult.Unchanged;
         }
-
-        public static ChangeResult DoPortal(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult DoPortal(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (!Portal.Handle(p, x, y, z)) {
                 return p.ChangeBlock(x, y, z, Block.Air);
             }
             return ChangeResult.Unchanged;
         }
-
-        public static ChangeResult DoMessageBlock(Player p, BlockID old, ushort x, ushort y, ushort z) {
+        
+        internal static ChangeResult DoMessageBlock(Player p, BlockID old, ushort x, ushort y, ushort z) {
             if (!MessageBlock.Handle(p, x, y, z, true)) {
                 return p.ChangeBlock(x, y, z, Block.Air);
             }

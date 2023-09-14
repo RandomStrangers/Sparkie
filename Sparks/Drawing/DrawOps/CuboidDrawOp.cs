@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -26,7 +26,7 @@ namespace GoldenSparks.Drawing.Ops
         public override string Name { get { return "Cuboid"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            return (Max.X - Min.X + 1) * (Max.Y - Min.Y + 1) * (Max.Z - Min.Z + 1);
+            return SizeX * SizeY * SizeZ;
         }
         
         public override void Perform(Vec3S32[] marks, Brush brush, DrawOpOutput output) {
@@ -45,11 +45,11 @@ namespace GoldenSparks.Drawing.Ops
         public override string Name { get { return "Cuboid Hollow"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            int lenX = (Max.X - Min.X + 1), lenY = (Max.Y - Min.Y + 1), lenZ = (Max.Z - Min.Z + 1);
+            int lenX = SizeX, lenY = SizeY, lenZ = SizeZ;
             int xQuadsVol = Math.Min(lenX, 2) * (lenY * lenZ);
             int yQuadsVol = Math.Max(0, Math.Min(lenY, 2) * ((lenX - 2) * lenZ)); // we need to avoid double counting overlaps
-            int zQuadzVol = Math.Max(0, Math.Min(lenZ, 2) * ((lenX - 2) * (lenY - 2)));
-            return xQuadsVol + yQuadsVol + zQuadzVol;
+            int zQuadsVol = Math.Max(0, Math.Min(lenZ, 2) * ((lenX - 2) * (lenY - 2)));
+            return xQuadsVol + yQuadsVol + zQuadsVol;
         }
         
         public override void Perform(Vec3S32[] marks, Brush brush, DrawOpOutput output) {
@@ -69,8 +69,8 @@ namespace GoldenSparks.Drawing.Ops
                       (ushort)(p2.Y - 1), (ushort)(p2.X - 1), brush, output);
             }
         }
-
-        public void QuadX(ushort x, ushort y1, ushort z1, ushort y2, ushort z2, 
+        
+        protected void QuadX(ushort x, ushort y1, ushort z1, ushort y2, ushort z2, 
                              Brush brush, DrawOpOutput output) {
             for (ushort y = y1; y <= y2; y++)
                 for (ushort z = z1; z <= z2; z++)
@@ -78,8 +78,8 @@ namespace GoldenSparks.Drawing.Ops
                 output(Place(x, y, z, brush));
             }
         }
-
-        public void QuadY(ushort y, ushort x1, ushort z1, ushort x2, ushort z2, 
+        
+        protected void QuadY(ushort y, ushort x1, ushort z1, ushort x2, ushort z2, 
                              Brush brush, DrawOpOutput output) {
             for (ushort z = z1; z <= z2; z++)
                 for (ushort x = x1; x <= x2; x++)
@@ -87,8 +87,8 @@ namespace GoldenSparks.Drawing.Ops
                 output(Place(x, y, z, brush));
             }
         }
-
-        public void QuadZ(ushort z, ushort y1, ushort x1, ushort y2, ushort x2,
+        
+        protected void QuadZ(ushort z, ushort y1, ushort x1, ushort y2, ushort x2,
                              Brush brush, DrawOpOutput output) {
             for (ushort y = y1; y <= y2; y++)
                 for (ushort x = x1; x <= x2; x++)
@@ -103,7 +103,7 @@ namespace GoldenSparks.Drawing.Ops
         public override string Name { get { return "Cuboid Walls"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            int lenX = (Max.X - Min.X + 1), lenY = (Max.Y - Min.Y + 1), lenZ = (Max.Z - Min.Z + 1);
+            int lenX = SizeX, lenY = SizeY, lenZ = SizeZ;
             int xQuadsVol = Math.Min(lenX, 2) * (lenY * lenZ);
             int zQuadsVol = Math.Max(0, Math.Min(lenZ, 2) * ((lenX - 2) * lenY)); // we need to avoid double counting overlaps
             return xQuadsVol + zQuadsVol;
@@ -126,7 +126,7 @@ namespace GoldenSparks.Drawing.Ops
         public override string Name { get { return "Cuboid Wireframe"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            int lenX = (Max.X - Min.X + 1), lenY = (Max.Y - Min.Y + 1), lenZ = (Max.Z - Min.Z + 1);
+            int lenX = SizeX, lenY = SizeY, lenZ = SizeZ;
             int horSidesvol = 2 * (lenX * 2 + lenZ * 2); // TODO: slightly overestimated by at most four blocks.
             int verSidesVol = Math.Max(0, lenY - 2) * 4;
             return horSidesvol + verSidesVol;

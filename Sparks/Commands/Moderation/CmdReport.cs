@@ -1,15 +1,15 @@
 ﻿/*
  * Written By Jack1312
 
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.osedu.org/licenses/ECL-2.0
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using GoldenSparks.DB;
+using GoldenSparks.Events;
 
 namespace GoldenSparks.Commands.Moderation {
     public sealed class CmdReport : Command2 {
@@ -60,8 +61,8 @@ namespace GoldenSparks.Commands.Moderation {
             if (users.Length > 0) {
                 p.Message("The following players have been reported:");
                 string modifier = args.Length > 1 ? args[1] : "";
-                MultiPageOutput.Output(p, users, pl => p.FormatNick(pl),
-                                       "Review list", "players", modifier, false);
+                Paginator.Output(p, users, pl => p.FormatNick(pl),
+                                 "Review list", "players", modifier);
                 
                 p.Message("Use &T/Report check [player] &Sto view report details.");
                 p.Message("Use &T/Report delete [player] &Sto delete a report");
@@ -151,6 +152,10 @@ namespace GoldenSparks.Commands.Moderation {
             File.WriteAllLines(ReportPath(target), reports.ToArray());
             p.Message("&aReport sent! It should be viewed when a {0} &ais online", 
                       checkPerms.Describe());
+            
+            ModAction action = new ModAction(target, p, ModActionType.Reported, reason);
+            OnModActionEvent.Call(action);
+            if (!action.Announce) return;
             
             string opsMsg = "λNICK &Sreported " + nick + "&S. Reason: " + reason;
             Chat.MessageFrom(ChatScope.Perms, p, opsMsg, checkPerms, null, true);

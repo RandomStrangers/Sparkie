@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -26,13 +26,16 @@ namespace GoldenSparks.Commands.Building {
         public override LevelPermission defaultRank { get { return LevelPermission.AdvBuilder; } }
         
         protected override DrawOp GetDrawOp(DrawArgs dArgs) {
+            Player p = dArgs.Player;
             if (dArgs.Message.Length == 0) {
-                dArgs.Player.Message("Block name is required."); return null;
+                p.Message("Block name is required."); return null;
             }
             
             BlockID target;
             string[] parts = dArgs.Message.SplitSpaces(2);
-            if (!CommandParser.GetBlockIfAllowed(dArgs.Player, parts[0], out target)) return null;
+            // NOTE: Don't need to check if allowed to use block here
+            // (OutlineDrawOp skips all blocks that are equal to target)
+            if (!CommandParser.GetBlock(p, parts[0], out target)) return null;
             
             OutlineDrawOp op = new OutlineDrawOp();
             // e.g. testing air 'above' grass - therefore op.Above needs to be false for 'up mode'

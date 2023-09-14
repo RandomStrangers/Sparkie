@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -47,8 +47,8 @@ namespace GoldenSparks.Bots {
                 PlayerBot.Add(bot, false);
             }
         }
-
-        public static List<BotProperties> ReadAll(string path) {
+        
+        internal static List<BotProperties> ReadAll(string path) {
             List<BotProperties> props = new List<BotProperties>();
             if (elems == null) elems = ConfigElement.GetAll(typeof(BotProperties));
             string json = File.ReadAllText(path);
@@ -93,18 +93,17 @@ namespace GoldenSparks.Bots {
             }
         }
 
-        public static void WriteAll(TextWriter dst, List<BotProperties> props) {
+        internal static void WriteAll(TextWriter dst, List<BotProperties> props) {
             if (elems == null) elems = ConfigElement.GetAll(typeof(BotProperties));
 
             JsonConfigWriter w = new JsonConfigWriter(dst, elems);
             w.WriteArray(props);
         }
-
-        public static void LoadAi(BotProperties props, PlayerBot bot) {
+        
+        internal static void LoadAi(BotProperties props, PlayerBot bot) {
             if (String.IsNullOrEmpty(props.AI)) return;
             try {
                 ScriptFile.Parse(Player.Sparks, bot, props.AI);
-
             } catch (Exception ex) {
                 Logger.LogError("Error loading bot AI " + props.AI, ex);
             }

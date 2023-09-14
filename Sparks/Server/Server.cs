@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,36 +20,39 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading;
 using GoldenSparks.Authentication;
+using GoldenSparks.Blocks;
 using GoldenSparks.Commands;
 using GoldenSparks.DB;
 using GoldenSparks.Drawing;
 using GoldenSparks.Eco;
+using GoldenSparks.Events.LevelEvents;
 using GoldenSparks.Events.ServerEvents;
 using GoldenSparks.Games;
 using GoldenSparks.Network;
+using GoldenSparks.Platform;
 using GoldenSparks.Scripting;
+using GoldenSparks.SQL;
 using GoldenSparks.Tasks;
 using GoldenSparks.Util;
 using GoldenSparks.Modules.Awards;
-using System.Reflection;
+using System.Runtime.InteropServices;
 
-namespace GoldenSparks {
-    public sealed partial class Server {
-        
+namespace GoldenSparks
+{
+    public sealed partial class Server
+    {
         public Server() { Server.s = this; }
 
         //True = cancel event
         //Fale = dont cacnel event
-        public static bool Check(string cmd, string message)
-        {
+        public static bool Check(string cmd, string message) {
             if (SparksCommand != null) SparksCommand(cmd, message);
             return cancelcommand;
         }
-
         
         [Obsolete("Use Logger.Log(LogType, String)")]
         public void Log(string message) { Logger.Log(LogType.SystemActivity, message); }
@@ -60,13 +63,13 @@ namespace GoldenSparks {
             Logger.Log(type, message);
         }
         
-        static void CheckFile(string file) {
+        public static void CheckFile(string file) {
             if (File.Exists(file)) return;
             
             Logger.Log(LogType.SystemActivity, file + " doesn't exist, Downloading..");
             try {
                 using (WebClient client = HttpUtil.CreateWebClient()) {
-                    client.DownloadFile(Updater.BaseURL + file + "?raw=true", file);
+                    client.DownloadFile(Updater.BaseURL + file, file);
                 }
                 if (File.Exists(file)) {
                     Logger.Log(LogType.SystemActivity, file + " download succesful!");
@@ -75,53 +78,24 @@ namespace GoldenSparks {
                 Logger.LogError("Downloading " + file +" failed, try again later", ex);
             }
         }
-        static void CheckSQLiteFile()
-        {
-            string file = "sqlite3.dll";
-            if (File.Exists(file)) return;
-
-            Logger.Log(LogType.SystemActivity,"SQLite dll doesn't exist, Downloading..");
-            try
-            {
-                using (WebClient client = HttpUtil.CreateWebClient())
-                {
-                    client.DownloadFile(Updater.SQLiteURL, file);
-                }
-                if (File.Exists(file))
-                {
-                    Logger.Log(LogType.SystemActivity, "SQLite dll download succesful!");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Downloading " + file + " failed, try again later", ex);
-            }
-        }
-        public static ConfigElement[] serverConfig, levelConfig, zoneConfig;
+        
+        internal static ConfigElement[] serverConfig, levelConfig, zoneConfig;
         public static void Start() {
             serverConfig = ConfigElement.GetAll(typeof(ServerConfig));
             levelConfig  = ConfigElement.GetAll(typeof(LevelConfig));
             zoneConfig   = ConfigElement.GetAll(typeof(ZoneConfig));
-            
-#pragma warning disable 0618
-            Player.players = PlayerInfo.Online.list;
-            Server.levels = LevelInfo.Loaded.list;
-#pragma warning restore 0618
+
+            IOperatingSystem.DetectOS().Init();
             
             StartTime = DateTime.UtcNow;
-            shuttingDown = false;
             Logger.Log(LogType.SystemActivity, "Starting Server");
             ServicePointManager.Expect100Continue = false;
-            ForceEnableTLS();
-            
-            CheckFile("MySql.Data.dll");
-            CheckSQLiteFile();
-            CheckFile("sqlite3.dll");
 
-            EnsureFilesExist();
-            MoveOutdatedFiles();
+            SQLiteBackend.Instance.LoadDependencies();
+            MySQLBackend.Instance.LoadDependencies();
 
-            LoadAllSettings();
+
+            LoadAllSettings(true);
             InitDatabase();
             Economy.LoadDatabase();
 
@@ -142,57 +116,54 @@ namespace GoldenSparks {
                                    null, TimeSpan.FromMinutes(5));
         }
         
-        static void ForceEnableTLS() {
-            // Force enable TLS 1.1/1.2, otherwise checking for updates on Github doesn't work
-            try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)0x300; } catch { }
-            try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)0xC00; } catch { }
-        }
-        static void EnsureFilesExist() {
-            EnsureDirectoryExists("properties");
-            EnsureDirectoryExists("levels");
-            EnsureDirectoryExists("bots");
-            EnsureDirectoryExists("text");
-            EnsureDirectoryExists("ranks");
-            RankInfo.EnsureExists();
-            Ban.EnsureExists();
-            PlayerDB.EnsureDirectoriesExist();
-
-            EnsureDirectoryExists("extra");
-            EnsureDirectoryExists(Paths.WaypointsDir);
-            EnsureDirectoryExists("extra/bots");
-            EnsureDirectoryExists(Paths.ImportsDir);
-            EnsureDirectoryExists("blockdefs");
-            EnsureDirectoryExists(IScripting.DllDir);
-            EnsureDirectoryExists(ICompiler.SourceDir);
-            EnsureDirectoryExists("text/discord"); // TODO move to discord plugin
-            EnsureDirectoryExists("globalchat/"); // TODO move to globalchat plugins
-        }
         
         static void EnsureDirectoryExists(string dir) {
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-        }
+        }     
         
-        static void MoveOutdatedFiles() {
-            try {
-                if (File.Exists("blocks.json")) File.Move("blocks.json", "blockdefs/global.json");
-            }
-            catch { }
-        }        
+        public static void LoadAllSettings() { LoadAllSettings(false); }
         
-        public static void LoadAllSettings() {
-            // Unload custom plugins
-            List<Plugin> plugins = new List<Plugin>(Plugin.all);
-            foreach (Plugin p in plugins) {
-                if (Plugin.core.Contains(p)) continue;
-                Plugin.Unload(p, false);
-            }
-            
-            ZSGame.Instance.infectMessages = ZSConfig.LoadInfectMessages();
+        // TODO rethink this
+        static void LoadAllSettings(bool commands) {
             Colors.Load();
-            Alias.Load();
+            Alias.LoadCustom();
             BlockDefinition.LoadGlobal();
             ImagePalette.Load();
             
+            SrvProperties.Load();
+            if (commands) Command.InitAll();
+            AuthService.ReloadDefault();
+            Group.LoadAll();
+            CommandPerms.Load();
+            Block.SetBlocks();
+            BlockPerms.Load();
+            AwardsList.Load();
+            PlayerAwards.Load();
+            Economy.Load();
+            WarpList.Global.Filename = "extra/warps.save";
+            WarpList.Global.Load();
+            CommandExtraPerms.Load();
+            ProfanityFilter.Init();
+            Team.LoadList();
+            ChatTokens.LoadCustom();
+            SrvProperties.FixupOldPerms();
+            CpeExtension.LoadDisabledList();
+            
+            TextFile announcementsFile = TextFile.Files["Announcements"];
+            announcementsFile.EnsureExists();
+            announcements = announcementsFile.GetText();
+            // Unload custom plugins
+            List<Plugin> plugins = new List<Plugin>(Plugin.all);
+            foreach (Plugin p in plugins)
+            {
+                if (Plugin.core.Contains(p)) continue;
+                Plugin.Unload(p, false);
+            }
+
+            Colors.Load();
+            BlockDefinition.LoadGlobal();
+            ImagePalette.Load();
+
             SrvProperties.Load();
             AuthService.ReloadDefault();
             Group.LoadAll();
@@ -210,13 +181,13 @@ namespace GoldenSparks {
             ChatTokens.LoadCustom();
             SrvProperties.FixupOldPerms();
             CpeExtension.LoadDisabledList();
-            
-            TextFile announcementsFile = TextFile.Files["Announcements"];
+
             announcementsFile.EnsureExists();
             announcements = announcementsFile.GetText();
-            
+
             // Reload custom plugins
-            foreach (Plugin p in plugins) {
+            foreach (Plugin p in plugins)
+            {
                 if (Plugin.core.Contains(p)) continue;
                 Plugin.Load(p, false);
             }
@@ -230,8 +201,7 @@ namespace GoldenSparks {
             OnConfigUpdatedEvent.Call();
         }
         
-        static readonly object stopLock = new object();
-        static volatile Thread stopThread;
+
         public static Thread Stop(bool restart, string msg) {
             Server.shuttingDown = true;
             lock (stopLock) {
@@ -241,6 +211,206 @@ namespace GoldenSparks {
                 return stopThread;
             }
         }
+        
+        static void ShutdownThread(bool restarting, string msg) {
+            try {
+                Command.Find("say").Use(Player.Sparks, Server.SoftwareName + " " + Server.InternalVersion + " shutting down... :(");
+                Logger.Log(LogType.SystemActivity, "&fGoodbye Cruel World!");
+
+                Logger.Log(LogType.SystemActivity, "Server shutting down ({0})", msg);
+            } catch { }
+            
+            // Stop accepting new connections and disconnect existing sessions
+            Listener.Close();            
+            try {
+                Player[] players = PlayerInfo.Online.Items;
+                foreach (Player p in players) { p.Leave(msg); }
+            } catch (Exception ex) { Logger.LogError(ex); }
+            
+            byte[] kick = Packet.Kick(msg, false);
+            try {
+                INetSocket[] pending = INetSocket.pending.Items;
+                foreach (INetSocket p in pending) { p.Send(kick, SendFlags.None); }
+            } catch (Exception ex) { Logger.LogError(ex); }
+
+            OnShuttingDownEvent.Call(restarting, msg);
+            Plugin.UnloadAll();
+
+            try {
+                string autoload = SaveAllLevels();
+                if (Server.SetupFinished && !Server.Config.AutoLoadMaps) {
+                    File.WriteAllText("text/autoload.txt", autoload);
+                }
+            } catch (Exception ex) { Logger.LogError(ex); }
+            
+            try {
+                Logger.Log(LogType.SystemActivity, "Server shutdown completed");
+            } catch { }
+            
+            try { FileLogger.Flush(null); } catch { }
+            
+            if (restarting) {
+                IOperatingSystem.DetectOS().RestartProcess();
+                // TODO: FileLogger.Flush again maybe for if execvp fails?
+            }
+            Environment.Exit(0);
+        }
+
+        public static string SaveAllLevels() {
+            string autoload = null;
+            Level[] loaded  = LevelInfo.Loaded.Items;
+
+            foreach (Level lvl in loaded)
+            {
+                if (!lvl.SaveChanges) {
+                    Logger.Log(LogType.SystemActivity, "Skipping save for level {0}", lvl.ColoredName);
+                    continue;
+                }
+
+                autoload = autoload + lvl.name + "=" + lvl.physics + Environment.NewLine;
+                lvl.Save();
+                lvl.SaveBlockDBChanges();
+            }
+            return autoload;
+        }
+
+
+        public static string GetServerDLLPath() {
+            return Assembly.GetExecutingAssembly().Location;
+        }
+
+        public static string GetRestartPath() {
+            return RestartPath;
+        }
+
+        static bool checkedOnMono, runningOnMono;
+        public static bool RunningOnMono() {
+            if (!checkedOnMono) {
+                runningOnMono = Type.GetType("Mono.Runtime") != null;
+                checkedOnMono = true;
+            }
+            return runningOnMono;
+        }
+
+
+        public static void UpdateUrl(string url) {
+            if (OnURLChange != null) OnURLChange(url);
+        }
+
+        static void RandomMessage(SchedulerTask task) {
+            if (PlayerInfo.Online.Count > 0 && announcements.Length > 0) {
+                Chat.MessageGlobal(announcements[new Random().Next(0, announcements.Length)]);
+            }
+        }
+
+        internal static void SettingsUpdate() {
+            if (OnSettingsUpdate != null) OnSettingsUpdate();
+        }
+        
+        public static bool SetMainLevel(string map) {
+            OnMainLevelChangingEvent.Call(ref map);
+            string main = mainLevel != null ? mainLevel.name : Server.Config.MainLevel;
+            if (map.CaselessEq(main)) return false;
+            
+            Level lvl = LevelInfo.FindExact(map);
+            if (lvl == null)
+                lvl = LevelActions.Load(Player.Sparks, map, false);
+            if (lvl == null) return false;
+            
+            SetMainLevel(lvl); 
+            return true;
+        }
+        
+        public static void SetMainLevel(Level lvl) {
+            Level oldMain = mainLevel;            
+            mainLevel = lvl;
+            oldMain.AutoUnload();
+        }
+        
+        public static void DoGC() {
+            var sw = Stopwatch.StartNew();
+            long start = GC.GetTotalMemory(false);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            
+            long end = GC.GetTotalMemory(false);
+            double deltaKB = (start - end) / 1024.0;
+            if (deltaKB < 100.0) return;
+            
+            Logger.Log(LogType.BackgroundActivity, "GC performed in {0:F2} ms (tracking {1:F2} KB, freed {2:F2} KB)",
+                       sw.Elapsed.TotalMilliseconds, end / 1024.0, deltaKB);
+        }
+        
+        
+        // only want ASCII alphanumerical characters for salt
+        static bool AcceptableSaltChar(char c) {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') 
+                || (c >= '0' && c <= '9');
+        }
+        
+        /// <summary> Generates a random salt that is used for calculating mppasses. </summary>
+        public static string GenerateSalt() {
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
+            char[] str = new char[32];
+            byte[] one = new byte[1];
+            
+            for (int i = 0; i < str.Length; ) {
+                rng.GetBytes(one);
+                if (!AcceptableSaltChar((char)one[0])) continue;
+                
+                str[i] = (char)one[0]; i++;
+            }
+            return new string(str);
+        }
+        
+        static System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+        static MD5CryptoServiceProvider md5  = new MD5CryptoServiceProvider();
+        static object md5Lock = new object();
+        
+        /// <summary> Calculates mppass (verification token) for the given username. </summary>
+        public static string CalcMppass(string name, string salt) {
+            byte[] hash = null;
+            lock (md5Lock) hash = md5.ComputeHash(enc.GetBytes(salt + name));
+            return Utils.ToHexString(hash);
+        }
+        
+        /// <summary> Converts a formatted username into its original username </summary>
+        /// <remarks> If ClassiCubeAccountPlus option is set, removes + </remarks>
+        public static string ToRawUsername(string name) {
+            if (Config.ClassicubeAccountPlus)
+                return name.Replace("+", "");
+            return name;
+        }
+
+        /// <summary> Converts a username into its formatted username </summary>
+        /// <remarks> If ClassiCubeAccountPlus option is set, adds trailing + </remarks>
+        public static string FromRawUsername(string name) {
+            if (!Config.ClassicubeAccountPlus) return name;
+
+            // NOTE:
+            // This is technically incorrect when the server has both
+            //   classicube-account-plus enabled and is using authentication service suffixes
+            // (e.g. ToRawUsername("Test+$") ==> "Test$", so adding + to end is wrong)
+            // But since that is an unsupported combination to run the server in anyways,
+            //  I decided that it is not worth complicating the implementation for
+            if (!name.Contains("+")) name += "+";
+            return name;
+        }
+    
+       
+
+        static void MoveOutdatedFiles()
+        {
+            try
+            {
+                if (File.Exists("blocks.json")) File.Move("blocks.json", "blockdefs/global.json");
+            }
+            catch { }
+        }
+
+
+        static readonly object stopLock = new object();
+        static volatile Thread stopThread;
         public static Thread Update(bool restart, string msg)
         {
             Server.shuttingDown = true;
@@ -323,83 +493,17 @@ namespace GoldenSparks {
             }
             Environment.Exit(0);
         }
-
-
-
-
-
-
-
-        static void ShutdownThread(bool restarting, string msg) {
-            try {
-                Command.Find("say").Use(Player.Sparks, Server.SoftwareName + " " + Server.InternalVersion + " shutting down... :(");
-                Logger.Log(LogType.SystemActivity, "&fGoodbye Cruel World!");
-
-                Logger.Log(LogType.SystemActivity, "Server shutting down ({0})", msg);
-            } catch { }
-            
-            // Stop accepting new connections and disconnect existing sessions
-            try {
-                if (Listener != null) Listener.Close();
-            } catch (Exception ex) { Logger.LogError(ex); }
-            
-            try {
-                Player[] players = PlayerInfo.Online.Items;
-                foreach (Player p in players) { p.Leave(msg); }
-            } catch (Exception ex) { Logger.LogError(ex); }
-            
-            byte[] kick = Packet.Kick(msg, false);
-            try {
-                INetSocket[] pending = INetSocket.pending.Items;
-                foreach (INetSocket p in pending) { p.Send(kick, SendFlags.None); }
-            } catch (Exception ex) { Logger.LogError(ex); }
-
-            OnShuttingDownEvent.Call(restarting, msg);
-            Plugin.UnloadAll();
-
-            try {
-                string autoload = null;
-                Level[] loaded = LevelInfo.Loaded.Items;
-                foreach (Level lvl in loaded) {
-                    if (!lvl.SaveChanges) continue;
-                    
-                    autoload = autoload + lvl.name + "=" + lvl.physics + Environment.NewLine;
-                    lvl.Save();
-                    lvl.SaveBlockDBChanges();
-                }
-                
-                if (Server.SetupFinished && !Server.Config.AutoLoadMaps) {
-                    File.WriteAllText("text/autoload.txt", autoload);
-                }
-            } catch (Exception ex) { Logger.LogError(ex); }
-            
-            try {
-                Logger.Log(LogType.SystemActivity, "Server shutdown completed");
-            } catch { }
-            
-            try { FileLogger.Flush(null); } catch { }
-            
-            if (restarting) {
-                // first try to use excevp to restart in CLI mode under mono 
-                // - see detailed comment in HACK_Execvp for why this is required
-                if (HACK_TryExecvp()) HACK_Execvp();
-                Process.Start(RestartPath);
-            }
-            Environment.Exit(0);
-        }
-        
         [DllImport("libc", SetLastError = true)]
+
         static extern int execvp(string path, string[] argv);
-        
-        static bool HACK_TryExecvp() {
-            return CLIMode && Environment.OSVersion.Platform == PlatformID.Unix 
+
+        static bool HACK_TryExecvp()
+        {
+            return CLIMode && Environment.OSVersion.Platform == PlatformID.Unix
                 && RunningOnMono();
         }
-        public static string GetServerDLLPath()
+        static void HACK_Execvp()
         {
-            return Assembly.GetExecutingAssembly().Location;
-        }
-        static void HACK_Execvp() {
             // With using normal Process.Start with mono, after Environment.Exit
             //  is called, all FDs (including standard input) are also closed.
             // Unfortunately, this causes the new server process to constantly error with
@@ -421,116 +525,13 @@ namespace GoldenSparks {
             //
             // Note this issue does NOT happen with GUI mode for some reason - and also
             // don't want to use excevp in GUI mode, otherwise the X socket FDs pile up
-            try {
+            try
+            {
                 execvp("mono", new string[] { "mono", RestartPath });
-            } catch {
             }
-        }
-        
-        static bool checkedOnMono, runningOnMono;
-        public static bool RunningOnMono() {
-            if (!checkedOnMono) {
-                runningOnMono = Type.GetType("Mono.Runtime") != null;
-                checkedOnMono = true;
+            catch
+            {
             }
-            return runningOnMono;
-        }
-
-        public static void UpdateUrl(string url) {
-            if (OnURLChange != null) OnURLChange(url);
-        }
-        static void RandomMessage(SchedulerTask task) {
-            if (PlayerInfo.Online.Count > 0 && announcements.Length > 0) {
-                Chat.MessageGlobal(announcements[new Random().Next(0, announcements.Length)]);
-            }
-        }
-
-        public static void SettingsUpdate() {
-            if (OnSettingsUpdate != null) OnSettingsUpdate();
-        }
-        
-        public static bool SetMainLevel(string map) {
-            string main = mainLevel != null ? mainLevel.name : Server.Config.MainLevel;
-            if (map.CaselessEq(main)) return false;
-            
-            Level lvl = LevelInfo.FindExact(map);
-            if (lvl == null)
-                lvl = LevelActions.Load(Player.Sparks, map, false);
-
-            if (lvl == null) return false;
-            
-            SetMainLevel(lvl); return true;
-        }
-        
-        public static void SetMainLevel(Level lvl) {
-            Level oldMain = mainLevel;
-            mainLevel = lvl;
-            Server.Config.MainLevel = lvl.name;         
-            oldMain.AutoUnload();
-        }
-        
-        public static void DoGC() {
-            long start = GC.GetTotalMemory(false);
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            
-            long end = GC.GetTotalMemory(false);
-            double deltaKB = (start - end) / 1024.0;
-            if (deltaKB >= 100.0) {
-                string track = (end / 1024.0).ToString("F2");
-                string delta = deltaKB.ToString("F2");
-                Logger.Log(LogType.BackgroundActivity, "GC performed (tracking {0} KB, freed {1} KB)", track, delta);
-            }
-        }
-        
-        
-        // only want ASCII alphanumerical characters for salt
-        static bool AcceptableSaltChar(char c) {
-            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') 
-                || (c >= '0' && c <= '9');
-        }
-        
-        /// <summary> Generates a random salt that is used for calculating mppasses. </summary>
-        public static string GenerateSalt() {
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            char[] str = new char[32];
-            byte[] one = new byte[1];
-            
-            for (int i = 0; i < str.Length; ) {
-                rng.GetBytes(one);
-                if (!AcceptableSaltChar((char)one[0])) continue;
-                
-                str[i] = (char)one[0]; i++;
-            }
-            return new string(str);
-        }
-        
-        static System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-        static MD5CryptoServiceProvider md5  = new MD5CryptoServiceProvider();
-        static object md5Lock = new object();
-        
-        /// <summary> Calculates mppass (verification token) for the given username. </summary>
-        public static string CalcMppass(string name, string salt) {
-            byte[] hash = null;
-            lock (md5Lock) hash = md5.ComputeHash(enc.GetBytes(salt + name));
-            return BitConverter.ToString(hash).Replace("-", "");
-        }
-        
-        /// <summary> Converts a formatted username into its original username </summary>
-        /// <remarks> If ClassiCubeAccountPlus option is set, removes trailing + </remarks>
-        public static string ToRawUsername(string name) {
-            if (Config.ClassicubeAccountPlus)
-                return name.RemoveLastPlus();
-            return name;
-        }
-
-        /// <summary> Converts a username into its formatted username </summary>
-        /// <remarks> If ClassiCubeAccountPlus option is set, adds trailing + </remarks>
-        public static string FromRawUsername(string name) {
-            if (!Config.ClassicubeAccountPlus) return name;
-
-            if (!name.EndsWith("+")) name += "+";
-            return name;
         }
     }
 }

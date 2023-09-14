@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -73,7 +73,7 @@ namespace GoldenSparks {
         public static bool CanEditAny(Player p) {
             if (LevelInfo.IsRealmOwner(p.level, p.name)) { return true; }
             ItemPerms perms = CommandExtraPerms.Find("Bot", 1) ?? new ItemPerms(LevelPermission.Operator);
-            if (perms.UsableBy(p.Rank)) { return true; }
+            if (perms.UsableBy(p)) { return true; }
             return false;
         }
         
@@ -93,16 +93,16 @@ namespace GoldenSparks {
             bot.curJump = 0;
             if (save) BotsFile.Save(bot.level);
         }
-
-        public static int RemoveLoadedBots(Level lvl, bool save) {
+        
+        internal static int RemoveLoadedBots(Level lvl, bool save) {
             PlayerBot[] bots = lvl.Bots.Items;
             for (int i = 0; i < bots.Length; i++) {
                 Remove(bots[i], save);
             }
             return bots.Length;
         }
-
-        public static int RemoveBotsOwnedBy(Player p, string ownerName, Level lvl, bool save) {
+        
+        internal static int RemoveBotsOwnedBy(Player p, string ownerName, Level lvl, bool save) {
             PlayerBot[] bots = lvl.Bots.Items;
             int removedCount = 0;
             for (int i = 0; i < bots.Length; i++) {
@@ -192,10 +192,10 @@ namespace GoldenSparks {
                 Position pos = bot.Pos; Orientation rot = bot.Rot;
                 
                 Entities.GetPositionPacket(ref ptrSrc, bot.id, true, false,
-                                           pos, bot.lastPos, rot, bot.lastRot);
+                                           pos, bot._lastPos, rot, bot._lastRot);
                 Entities.GetPositionPacket(ref ptrExt, bot.id, true, true,
-                                           pos, bot.lastPos, rot, bot.lastRot);
-                bot.lastPos = pos; bot.lastRot = rot;
+                                           pos, bot._lastPos, rot, bot._lastRot);
+                bot._lastPos = pos; bot._lastRot = rot;
             }
             
             int countSrc = (int)(ptrSrc - src);
@@ -310,7 +310,7 @@ namespace GoldenSparks {
             
             if (String.IsNullOrEmpty(ClickedOnText)) return;
             ItemPerms perms = CommandExtraPerms.Find("About", 1) ?? new ItemPerms(LevelPermission.AdvBuilder);
-            if (!perms.UsableBy(p.Rank)) return; //don't show bot's ClickedOnText if player isn't allowed to see message block contents
+            if (!perms.UsableBy(p)) return; //don't show bot's ClickedOnText if player isn't allowed to see message block contents
             p.Message("  Clicked-on text: {0}", ClickedOnText);
         }
         

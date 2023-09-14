@@ -24,12 +24,12 @@ namespace GoldenSparks.Gui
 {
     public partial class PropertyWindow : Form 
     {
-        ZombieProperties zsSettings = new ZombieProperties();
+        //ZombieProperties zsSettings = new ZombieProperties();
         
         public PropertyWindow() {
             InitializeComponent();
-            zsSettings.LoadFromServer();
-            propsZG.SelectedObject = zsSettings;
+           // zsSettings.LoadFromServer();
+          //  propsZG.SelectedObject = zsSettings;
         }
         
         public void RunOnUI_Async(Action act) { BeginInvoke(act); }
@@ -39,8 +39,8 @@ namespace GoldenSparks.Gui
             // must be done in OnLoad, otherwise icon doesn't show on Mono
             GuiUtils.SetIcon(this);
             
-            OnMapsChangedEvent.Register(HandleMapsChanged, Priority.Low);
-            OnStateChangedEvent.Register(HandleStateChanged, Priority.Low);
+            //OnMapsChangedEvent.Register(HandleMapsChanged, Priority.Low);
+           // OnStateChangedEvent.Register(HandleStateChanged, Priority.Low);
             GuiPerms.UpdateRankNames();
             rank_cmbDefault.Items.AddRange(GuiPerms.RankNames);
             rank_cmbOsMap.Items.AddRange(GuiPerms.RankNames);
@@ -57,12 +57,12 @@ namespace GoldenSparks.Gui
                 Logger.LogError("Error loading commands and blocks", ex);
             }
 
-            LoadGameProps();
+           // LoadGameProps();
         }
 
         void PropertyWindow_Unload(object sender, EventArgs e) {
-            OnMapsChangedEvent.Unregister(HandleMapsChanged);
-            OnStateChangedEvent.Unregister(HandleStateChanged);
+            //OnMapsChangedEvent.Unregister(HandleMapsChanged);
+            //OnStateChangedEvent.Unregister(HandleStateChanged);
             Window.hasPropsForm = false;
         }
 
@@ -78,7 +78,7 @@ namespace GoldenSparks.Gui
             LoadMiscProps();
             LoadRankProps();
             LoadSecurityProps();
-            zsSettings.LoadFromServer();
+            //zsSettings.LoadFromServer();
         }
 
         void SaveProperties() {
@@ -94,7 +94,7 @@ namespace GoldenSparks.Gui
                 ApplyRankProps();
                 ApplySecurityProps();
                 
-                zsSettings.ApplyToServer();
+               // zsSettings.ApplyToServer();
                 SrvProperties.Save();
                 Economy.Save();                
             } catch (Exception ex) {
@@ -114,11 +114,8 @@ namespace GoldenSparks.Gui
             SaveRanks();
             SaveCommands();
             SaveBlocks();
-            SaveGameProps();
-            
-            try { ZSGame.Config.Save(); }
-            catch { Logger.Log(LogType.Warning, "Error saving Zombie Survival settings!"); }
-
+            //SaveGameProps();
+           
             SrvProperties.Load(); // loads when saving?
             CommandPerms.Load();
         }
@@ -142,7 +139,7 @@ namespace GoldenSparks.Gui
             SuperName = "&6S&ep&6a&er&6k&ei&6e";
         }
 
-        public override void Message(byte type, string message) {
+        public override void Message2(byte type, string message) {
             message = Chat.Format(message, this);
             Messages += message + "\r\n";
         }

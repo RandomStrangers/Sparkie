@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -25,8 +25,10 @@ using GoldenSparks.Levels.IO;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Commands.Info {
-    public sealed class CmdMapInfo : Command2 {
+namespace GoldenSparks.Commands.Info 
+{
+    public sealed class CmdMapInfo : Command2 
+    {
         public override string name { get { return "MapInfo"; } }
         public override string shortcut { get { return "mi"; } }
         public override string type { get { return CommandTypes.Information; } }
@@ -54,6 +56,11 @@ namespace GoldenSparks.Commands.Info {
                 info.FromLevel(lvl);
             } else {
                 info.FromMap(map);
+            }
+
+            // shouldn't be able to see env of levels can't vsit
+            if (env && map.Length > 0 && !info.Visit.CheckDetailed(p, data.Rank)) {
+                p.Message("Hence, you cannot see its environment settings"); return;
             }
             
             if (env) ShowEnv(p, info, info.Config);
@@ -89,7 +96,7 @@ namespace GoldenSparks.Commands.Info {
             
             ShowPermissions(p, data, cfg);
             p.Message("Use &T/mi env {0} &Sto see environment settings.", data.MapName);
-            ShowZombieSurvival(p, data, cfg);
+            ShowGameInfo(p, data, cfg);
         }
         
         void ShowPermissions(Player p, MapInfo data, LevelConfig cfg) {
@@ -112,16 +119,22 @@ namespace GoldenSparks.Commands.Info {
             p.Message(perms.ToString());
         }
         
-        void ShowZombieSurvival(Player p, MapInfo data, LevelConfig cfg) {
-            if (!ZSGame.Instance.HasMap(data.MapName)) return;
+        void ShowGameInfo(Player p, MapInfo data, LevelConfig cfg) {
+            IGame game = GetAssociatedGame(data.MapName);
+            if (game == null) return;
             
-            string[] authors = cfg.Authors.SplitComma();
-            p.Message("Map authors: {0}", authors.Join(n => p.FormatNick(n)));
-            int winChance = cfg.RoundsPlayed == 0 ? 100 : (cfg.RoundsHumanWon * 100) / cfg.RoundsPlayed;
-            p.Message("&a{0} &Srounds played total, &a{1}% &Swin chance for humans.",
-                           cfg.RoundsPlayed, winChance);
-            p.Message("This map has &a{0} likes &Sand &c{1} dislikes",
-                           cfg.Likes, cfg.Dislikes);
+            IGame.OutputMapSummary(p, cfg); // TODO: Always show this info?
+            game.OutputMapInfo(p, data.MapName, cfg);
+        }
+        
+        static IGame GetAssociatedGame(string map)
+        {
+            IGame[] games = IGame.RunningGames.Items;
+            foreach (IGame game in games)
+            {
+                if (game.ClaimsMap(map)) return game;
+            }
+            return null;
         }
         
         void ShowEnv(Player p, MapInfo data, LevelConfig cfg) {
@@ -153,7 +166,7 @@ namespace GoldenSparks.Commands.Info {
                       (data.Get(EnvProp.WeatherSpeed) / 256f).ToString("F2"));
             p.Message("Weather fade rate: &b{0}%&S, Exponential fog: {1}",
                       (data.Get(EnvProp.WeatherFade) / 128f).ToString("F2"),
-                      cfg.ExpFog > 0 ? "&aON" : "&cOFF");
+                      data.Get(EnvProp.ExpFog) > 0 ? "&aON" : "&cOFF");
             p.Message("Skybox rotations: Horizontal &b{0}&S, Vertical &b{1}",
                       data.GetSkybox(EnvProp.SkyboxHorSpeed), 
                       data.GetSkybox(EnvProp.SkyboxVerSpeed));
@@ -197,7 +210,7 @@ namespace GoldenSparks.Commands.Info {
                 int value    = Config.GetEnvProp(i);
                 bool block   = i == EnvProp.EdgeBlock || i == EnvProp.SidesBlock;
                 int default_ = block ? Block.Invalid : EnvConfig.ENV_USE_DEFAULT;
-                return value != default_ ? value : Config.DefaultEnvProp(i, Height);
+                return value != default_ ? value : EnvConfig.DefaultEnvProp(i, Height);
             }
             
             public string GetSkybox(EnvProp i) {

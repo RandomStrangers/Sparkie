@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,19 +21,19 @@ using System.IO;
 using System.Text;
 using GoldenSparks.Tasks;
 
-namespace GoldenSparks {
-    
-    public static class FileLogger {
-        
-        public static string LogPath { get { return msgPath; } }
-        public static string ErrorLogPath { get { return errPath; } }
+namespace GoldenSparks 
+{
+    public static class FileLogger 
+    {       
+        public static string LogPath      { get { return msg.Path; } }
+        public static string ErrorLogPath { get { return err.Path; } }
 
         static bool disposed;
         static DateTime last;
 
         static object logLock = new object();
-        static string errPath, msgPath;
-        static Queue<string> errCache = new Queue<string>(), msgCache = new Queue<string>();
+        static FileLogGroup err = new FileLogGroup();
+        static FileLogGroup msg = new FileLogGroup();
         static SchedulerTask logTask;
 
         public static void Init() {
@@ -52,8 +52,11 @@ namespace GoldenSparks {
             if (now.Year == last.Year && now.Month == last.Month && now.Day == last.Day) return;
             
             last = now;
-            msgPath = "logs/" + now.ToString("yyyy-MM-dd").Replace("/", "-") + ".txt";
-            errPath = "logs/errors/" + now.ToString("yyyy-MM-dd").Replace("/", "-") + "error.log";
+            msg.Path = "logs/"        + now.ToString("yyyy-MM-dd") + ".txt";
+            err.Path = "logs/errors/" + now.ToString("yyyy-MM-dd") + "error.log";
+
+            err.Close();
+            msg.Close();
         }
         
         static void LogMessage(LogType type, string message) {
@@ -67,39 +70,25 @@ namespace GoldenSparks {
                 sb.Append('-', 25);
                 
                 string output = sb.ToString();
-                lock (logLock) errCache.Enqueue(output);
+                lock (logLock) err.Cache.Enqueue(output);
                 
                 message = "!!!Error! See " + ErrorLogPath + " for more information.";
             }
             
             string now = DateTime.Now.ToString("(HH:mm:ss) ");
-            lock (logLock) msgCache.Enqueue(now + message);
+            lock (logLock) msg.Cache.Enqueue(now + message);
         }
         
 
         public static void Flush(SchedulerTask task) {
             lock (logLock) {
-                if (errCache.Count > 0 || msgCache.Count > 0) UpdatePaths();
-                
-                if (errCache.Count > 0) FlushCache(errPath, errCache);
-                if (msgCache.Count > 0) FlushCache(msgPath, msgCache);
-            }
-        }
-        
-        const int MAX_LOG_SIZE = 1024 * 1024 * 1024; // 1 GB
+                int errsCount = err.Cache.Count;
+                int msgsCount = msg.Cache.Count;
 
-        static void FlushCache(string path, Queue<string> cache) {
-            //TODO: not happy about constantly opening and closing a stream like this but I suppose its ok (Pidgeon)
-            using (StreamWriter w = new StreamWriter(path, true)) {
-            
-                // Failsafe in case something has gone catastrophically wrong
-                if (w.BaseStream.Length > MAX_LOG_SIZE) { cache.Clear(); return; }
-                
-                while (cache.Count > 0) {
-                    string item = cache.Dequeue();
-                    item = Colors.Strip(item);
-                    w.WriteLine(item);
-                }
+                if (errsCount > 0 || msgsCount > 0) UpdatePaths();
+
+                if (errsCount > 0) err.FlushCache();
+                if (msgsCount > 0) msg.FlushCache();
             }
         }
 
@@ -109,10 +98,51 @@ namespace GoldenSparks {
             Server.MainScheduler.Cancel(logTask);
             
             lock (logLock) {
-                if (errCache.Count > 0)
-                    FlushCache(errPath, errCache);
-                msgCache.Clear();
+                if (err.Cache.Count > 0) err.FlushCache();
+                msg.Cache.Clear();
             }
+        }
+    }
+
+    class FileLogGroup
+    {
+        public string Path;
+        public Queue<string> Cache = new Queue<string>();
+        Stream stream;
+        StreamWriter writer;
+
+        const int MAX_LOG_SIZE = 1024 * 1024 * 1024; // 1 GB
+
+        public void FlushCache() {
+            if (stream == null) {
+                stream = new FileStream(Path, FileMode.Append, FileAccess.Write, 
+                                        FileShare.ReadWrite, 4096, FileOptions.SequentialScan);
+                writer = new StreamWriter(stream);
+            }
+
+            try {
+                // Failsafe in case something has gone catastrophically wrong
+                if (stream.Length > MAX_LOG_SIZE) { Cache.Clear(); return; }
+
+                while (Cache.Count > 0)
+                {
+                    string item = Cache.Dequeue();
+                    item = Colors.Strip(item);
+                    writer.WriteLine(item);
+                }
+                writer.Flush();
+            } catch {
+                Close();
+                throw;
+            }
+        }
+
+        public void Close() {
+            if (stream == null) return;
+
+            stream.Dispose();
+            stream = null;
+            writer = null;
         }
     }
 }

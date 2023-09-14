@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -119,8 +119,8 @@ namespace GoldenSparks.Commands.Fun {
             }
             team = Team.Find(args[1]);
             if (team != null) { p.Message("There is already an existing team with that name."); return; }
-            if (args[1].Length > int.MaxValue) {
-                p.Message("Team names must be " + int.MaxValue + " characters or less."); return;
+            if (args[1].Length > 8) {
+                p.Message("Team names must be 8 characters or less."); return;
             }
             
             team = new Team(args[1], p.name);
@@ -203,8 +203,8 @@ namespace GoldenSparks.Commands.Fun {
         
         void HandleList(Player p, string[] args) {
             string modifier = args.Length > 1 ? args[1] : "";
-            MultiPageOutput.Output(p, Team.Teams, team => team.Color + team.Name,
-                                   "team list", "teams", modifier, false);
+            Paginator.Output(p, Team.Teams, team => team.Color + team.Name,
+                             "team list", "teams", modifier);
         }
         
         public override void Help(Player p) {

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,10 +20,12 @@ using System.Collections.Generic;
 using System.IO;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks {
+namespace GoldenSparks 
+{
     /// <summary> Utility methods for backing up and restoring a server. </summary>
-    public static class Backup {
-        const string zipPath = "GoldenSparks.zip", sqlPath = "SQL.sql", dbPath = "GoldenSparks.db";
+    public static class Backup 
+    {
+        const string zipPath = "GoldenSparks.zip", sqlPath = "SQL.sql";
         
         public static void Perform(Player p, bool files, bool db, bool lite, bool compress) {
             if (db) {
@@ -83,6 +85,7 @@ namespace GoldenSparks {
             Logger.Log(LogType.SystemActivity, "Compressing {0} files...", paths.Count);
             for (int i = 0; i < paths.Count; i++) {
                 string path = paths[i];
+                // .lvl contents are already compressed, no point in compressing again
                 bool compressThis = compress && !path.CaselessContains(".lvl");
                 
                 try {
@@ -172,7 +175,7 @@ namespace GoldenSparks {
             // NOTE: This does NOT account for foreign keys, BLOBs etc. It only works for what we actually put in the DB.
             sql.WriteLine("-- {0} SQL database dump", Server.SoftwareNameVersioned);
             sql.WriteLine("-- Host: {0}", Server.Config.MySQLHost);
-            sql.WriteLine("-- Generated on {0:d} at {0:HH:mm:ss}", DateTime.Now);
+            sql.WriteLine("-- Generated on {0:yyyy-MM-dd} at {0:HH:mm:ss}", DateTime.Now);
             sql.WriteLine();
             sql.WriteLine();
 
@@ -204,8 +207,8 @@ namespace GoldenSparks {
             }
             ImportSql(sql);
         }
-
-        public static void ImportSql(Stream sql) {
+        
+        internal static void ImportSql(Stream sql) {
             // Import data (we only have CREATE TABLE and INSERT INTO statements)
             using (StreamReader reader = new StreamReader(sql)) {
                 ImportBulk(reader);

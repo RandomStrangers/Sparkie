@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -214,6 +214,10 @@ namespace GoldenSparks.Maths
             return new Vec3F32(a * b.X, a * b.Y, a * b.Z);
         }
         
+        public static Vec3F32 operator * (Vec3F32 a, float b) {
+            return new Vec3F32(a.X * b, a.Y * b, a.Y * b);
+        }
+
         public static Vec3F32 operator - (Vec3F32 a, Vec3F32 b) {
             return new Vec3F32(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
         }

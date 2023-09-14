@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    http://www.opensource.org/licenses/ecl2.php
-    http://www.gnu.org/licenses/gpl-3.0.html
+    https://opensource.org/license/ecl-2-0/
+    https://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -29,10 +29,12 @@ namespace GoldenSparks.Network
         #region Classic
         
         public static byte[] Motd(Player p, string motd) {
-            bool type     = p.ProtocolVersion >= Server.VERSION_0020;
+            byte version  = p.Session.ProtocolVersion;
+            bool type     = version >= Server.VERSION_0020;
+
             byte[] buffer = new byte[130 + (type ? 1 : 0)];
             buffer[0] = Opcode.Handshake;
-            buffer[1] = p.ProtocolVersion;
+            buffer[1] = version;
             
             if (motd.Length > NetUtils.StringSize) {
                 NetUtils.Write(motd, buffer, 2, p.hasCP437);
@@ -338,18 +340,18 @@ namespace GoldenSparks.Network
             NetUtils.Write(url, buffer, 1, hasCP437);
             return buffer;
         }
-        public static byte[] EnvMapUrlV2(string url, bool hasCP437)
-        {
+        
+        public static byte[] EnvMapUrlV2(string url, bool hasCP437) {
             byte[] buffer = new byte[129];
             buffer[0] = Opcode.CpeSetMapEnvUrl;
             NetUtils.Write(url, buffer, 1, hasCP437);
-
-            if (url.Length > NetUtils.StringSize)
-            {
+            
+            if (url.Length > NetUtils.StringSize) {
                 NetUtils.Write(url.Substring(NetUtils.StringSize), buffer, 65, hasCP437);
             }
             return buffer;
         }
+        
         public static byte[] EnvMapProperty(EnvProp prop, int value) {
             byte[] buffer = new byte[6];
             buffer[0] = Opcode.CpeSetMapEnvProperty;
@@ -660,11 +662,30 @@ namespace GoldenSparks.Network
             return buffer;
         }
 
+        public enum TeleportMoveMode { AbsoluteInstant, AbsoluteSmooth, RelativeSmooth, RelativeShift }
+        public static byte[] TeleportExt(byte entityID, bool usePos, TeleportMoveMode moveMode, bool useOri, bool interpolateOri,
+                                         Position pos, Orientation rot, bool extPos) {
+            byte flags = 0;
+            if (usePos) { flags |= 1; }
+            flags |= (byte)((byte)moveMode << 1);
+            if (useOri) { flags |= 16; }
+            if (interpolateOri) { flags |= 32; }
+
+            byte[] buffer = new byte[11 + (extPos ? 6 : 0)];
+            buffer[0] = Opcode.CpeEntityTeleportExt;
+            buffer[1] = entityID;
+            buffer[2] = flags;
+
+            int offset = NetUtils.WritePos(pos, buffer, 3, extPos);
+            buffer[3 + offset] = rot.RotY;
+            buffer[4 + offset] = rot.HeadX;
+            return buffer;
+        }
         #endregion
-        
-        
+
+
         #region Block definitions
-        
+
         public static byte[] DefineBlock(BlockDefinition def, bool hasCP437, 
                                          bool extBlocks, bool extTexs) {
             byte[] buffer = new byte[(extBlocks ? 81 : 80) + (extTexs ? 3 : 0)];
