@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-https://opensource.org/license/ecl-2-0/
-https://www.gnu.org/licenses/gpl-3.0.html
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -31,20 +31,21 @@ namespace GoldenSparks {
 
         public PlayerIgnores Ignores = new PlayerIgnores();
         public static string lastMSG = "";
-        internal PersistentMessages persistentMessages = new PersistentMessages();
         public Zone ZoneIn;
-        
+
         //TpA
-        internal bool Request;
-        internal string senderName = "";
-        internal string currentTpa = "";
+        public bool Request;
+        public string senderName = "";
+        public string currentTpa = "";
 
         /// <summary> Account name of the user </summary>
         /// <remarks> Use 'truename' for displaying/logging, use 'name' for storing data </remarks>
         public string truename;
         /// <summary> The underlying socket for sending/receiving raw data </summary>
         public INetSocket Socket;
-        public IGameSession Session;
+        public ClassicProtocol Session;
+        public PingList Ping = new PingList();
+        public BlockID MaxRawBlock = Block.CLASSIC_MAX_BLOCK;
         
         public DateTime LastAction, AFKCooldown;
         public bool IsAfk, AutoAfk;
@@ -65,14 +66,15 @@ namespace GoldenSparks {
         public string ip;
         public string color;
         public Group group;
-        public LevelPermission hideRank = LevelPermission.Banned;
+        public LevelPermission hideRank = LevelPermission.Sparkie;
+
         public bool hidden;
         public bool painting;
         public bool checkingBotInfo;
         public bool muted;
         public bool jailed;
         public bool agreed = true;
-        public bool invincible;
+        public bool invulnerable;
         public string prefix = "";
         public string title = "";
         public string titlecolor = "";
@@ -89,6 +91,7 @@ namespace GoldenSparks {
         /// I finally am.)</summary>
         public bool IsSparkie { get { return this == Sparks; } }
 
+        
         public virtual string FullName { get { return color + prefix + DisplayName; } }  
         public string ColoredName { get { return color + DisplayName; } }
         public string GroupPrefix { get { return group.Prefix.Length == 0 ? "" : "&f" + group.Prefix; } }
@@ -104,7 +107,7 @@ namespace GoldenSparks {
         string partialMessage = "";
 
         public bool trainGrab;
-        public bool onTrain, trainInvincible;
+        public bool onTrain, trainInvulnerable;
         int mbRecursion;
 
         public bool frozen;
@@ -134,13 +137,12 @@ namespace GoldenSparks {
         public DateTime FirstLogin, LastLogin;
 
         public bool staticCommands;
-        internal DateTime lastAccessStatus;
+        public DateTime lastAccessStatus;
         public VolatileArray<SchedulerTask> CriticalTasks = new VolatileArray<SchedulerTask>();
 
-        public bool isFlying;
         public bool aiming;
         public Weapon weapon;
-        internal BufferedBlockSender weaponBuffer;
+        public bool isFlying;
 
         public bool joker;
         public bool Unverified, verifiedPass;
@@ -159,10 +161,14 @@ namespace GoldenSparks {
         public ushort checkpointX, checkpointY, checkpointZ;
         public byte checkpointRotX, checkpointRotY;
         public bool voted;
-        public bool flipHead, infected;
-        public GameProps Game = new GameProps();     
+        public bool flipHead;
+        public GameProps Game = new GameProps();
+        
         /// <summary> Persistent ID of this user in the Players table. </summary>
         public int DatabaseID;
+        public const int SessionIDMask = (1 << 20) - 1;
+        /// <summary> Temp unique ID for this session only. </summary>
+        public int SessionID;
 
         public List<CopyState> CopySlots = new List<CopyState>();
         public int CurrentCopySlot;
@@ -173,30 +179,31 @@ namespace GoldenSparks {
                 CopySlots[CurrentCopySlot] = value;
             }
         }
-        
+
         // BlockDefinitions
-        internal int gbStep = 0, lbStep = 0;
-        internal BlockDefinition gbBlock, lbBlock;
+        public int gbStep = 0, lbStep = 0;
+        public BlockDefinition gbBlock, lbBlock;
 
         //Undo
         public VolatileArray<UndoDrawOpEntry> DrawOps = new VolatileArray<UndoDrawOpEntry>();
-        internal readonly object pendingDrawOpsLock = new object();
-        internal List<PendingDrawOp> PendingDrawOps = new List<PendingDrawOp>();
+        public readonly object pendingDrawOpsLock = new object();
+        public List<PendingDrawOp> PendingDrawOps = new List<PendingDrawOp>();
 
         public bool showPortals, showMBs;
         public string prevMsg = "";
 
         //Movement
-        internal int oldIndex = -1, lastWalkthrough = -1, startFallY = -1, lastFallY = -1;
+        public int oldIndex = -1, lastWalkthrough = -1, startFallY = -1, lastFallY = -1;
         public DateTime drownTime = DateTime.MaxValue;
 
-        public DateTime deathCooldown;
+        //Games
+        public DateTime lastDeath = DateTime.UtcNow;
 
         public BlockID ModeBlock = Block.Invalid;
         /// <summary> The block ID this player's client specifies it is currently holding in hand. </summary>
         /// <remarks> This ignores /bind and /mode. GetHeldBlock() is usually preferred. </remarks>
         public BlockID ClientHeldBlock = Block.Stone;
-        public BlockID[] BlockBindings = new BlockID[Block.SUPPORTED_COUNT];
+        public BlockID[] BlockBindings = new BlockID[Block.ExtendedCount];
         public Dictionary<string, string> CmdBindings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         
         public string lastCMD = "";
@@ -205,7 +212,7 @@ namespace GoldenSparks {
 
         public Level level;
         public bool Loading = true; //True if player is loading a map.
-        internal int UsingGoto = 0, GeneratingMap = 0, LoadingMuseum = 0;
+        public int UsingGoto = 0, GeneratingMap = 0, LoadingMuseum = 0;
         public Vec3U16 lastClick = Vec3U16.Zero;
         
         public Position PreTeleportPos;
@@ -213,14 +220,13 @@ namespace GoldenSparks {
         public string PreTeleportMap;
         
         public string summonedMap;
-        public Position _tempPos;
+        public Position tempPos;
 
         // Extra storage for custom commands
         public ExtrasCollection Extras = new ExtrasCollection();
         
         SpamChecker spamChecker;
-        internal DateTime cmdUnblocked;
-        List<DateTime> partialLog;
+        public DateTime cmdUnblocked;
 
         public WarpList Waypoints = new WarpList();
         public DateTime LastPatrol;
@@ -229,18 +235,14 @@ namespace GoldenSparks {
         /// <summary> Whether player has completed login process and has been sent initial map. </summary>
         public bool loggedIn;
         public bool verifiedName;
-        /// <summary> The URL of the authentication service this player's name was verified via. Can be null </summary>
-        /// <example> http://www.classicube.net/heartbeat.jsp </example>
-        public string VerifiedVia;
         bool gotSQLData;
         
+        public byte ProtocolVersion;
+        public byte[] fallback = new byte[256]; // fallback for classic+CPE block IDs
         
-        public bool cancelcommand, cancelchat;
-        public bool cancellogin, cancelconnecting;
         
-        Queue<SerialCommand> serialCmds = new Queue<SerialCommand>();
-        object serialCmdsLock = new object();
-        struct SerialCommand { public Command cmd; public string args; public CommandData data; }
+        public bool cancelcommand, cancelchat, cancelmove;
+        public bool cancellogin, cancelconnecting, cancelDeath;     
       
         /// <summary> Called when a player removes or places a block.
         /// NOTE: Currently this prevents the OnBlockChange event from being called. </summary>

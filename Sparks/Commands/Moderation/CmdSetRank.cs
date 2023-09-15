@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -70,7 +70,7 @@ namespace GoldenSparks.Commands.Moderation {
             OnModActionEvent.Call(action);
         }
         
-        internal static bool CanChangeRank(string name, Group curRank, Group newRank,
+        public static bool CanChangeRank(string name, Group curRank, Group newRank,
                                            Player p, CommandData data, ref string reason) {
             Group banned = Group.BannedRank;
             if (reason == null) {
@@ -81,14 +81,14 @@ namespace GoldenSparks.Commands.Moderation {
             if (reason == null) return false;
             
             if (newRank == banned) {
-                p.Message("Use &T/Ban &Sto change a player's rank to {0}&S.", banned.ColoredName); return false;
+                p.Message("Use /ban to change a player's rank to {0}&S.", banned.ColoredName); return false;
             }
             if (curRank == banned) {
-                p.Message("Use &T/Unban &Sto change a player's rank from &S{0}.", banned.ColoredName); return false;
+                p.Message("Use /unban to change a player's rank from &S{0}.", banned.ColoredName); return false;
             }
             
-            if (!CheckRank(p, data, name, curRank.Permission, "change the rank of", false)) return false;            
-            if (newRank.Permission >= data.Rank) {
+            if (!CheckRank(p, data, name, curRank.Permission, "change the rank of", false)) return false;
+                if (!p.IsSparkie && newRank.Permission >= data.Rank) {
                 p.Message("Cannot rank a player to a rank equal to or higher than yours."); return false;
             }
             
@@ -121,7 +121,7 @@ namespace GoldenSparks.Commands.Moderation {
             int index = Group.GroupList.IndexOf(curRank);
             if (index < Group.GroupList.Count - 1) {
                 Group next = Group.GroupList[index + 1];
-                return next;
+                if (next.Permission < LevelPermission.Sparkie) return next;
             }
             p.Message("No higher ranks exist"); return null;
         }

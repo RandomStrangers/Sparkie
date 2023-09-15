@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -30,7 +30,7 @@ namespace GoldenSparks.Commands.World {
         const string latestFlag = "*latest";
         
         public override void Use(Player p, string message, CommandData data) {
-            if (message.Length == 0) { LevelOperations.OutputBackups(p, p.level); return; }
+            if (message.Length == 0) { LevelInfo.OutputBackups(p, p.level.MapName); return; }
 
             string[] args = message.ToLower().SplitSpaces();
             string mapArg = args.Length > 1 ? args[0] : p.level.MapName;
@@ -42,7 +42,7 @@ namespace GoldenSparks.Commands.World {
                 if (!LevelInfo.MapExists(mapArg)) {
                     if (Directory.Exists(LevelInfo.BackupBasePath(mapArg))) {
                         p.Message("&WLevel \"{0}\" does not currently exist, &Showever:", mapArg);
-                        LevelOperations.OutputBackups(p, mapArg, LevelInfo.GetConfig(mapArg));
+                        LevelInfo.OutputBackups(p, mapArg);
                     } else {
                         p.Message("&WLevel \"{0}\" does not exist and no backups could be found.", mapArg);
                     }

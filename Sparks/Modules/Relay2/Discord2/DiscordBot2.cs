@@ -330,7 +330,7 @@ namespace GoldenSparks.Modules.Relay2.Discord2
 
         string GetStatusMessage()
         {
-            string online = PlayerInfo.Count().ToString();
+            string online = PlayerInfo.NonHiddenCount().ToString();
             return Config.StatusMessage.Replace("{PLAYERS}", online);
         }
 

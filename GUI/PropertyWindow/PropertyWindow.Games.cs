@@ -17,7 +17,6 @@ using System.Globalization;
 using System.Threading;
 using System.Windows.Forms;
 using GoldenSparks.Games;
-using GoldenSparks.Modules.Games.LS;
 
 namespace GoldenSparks.Gui {
     public partial class PropertyWindow : Form {
@@ -134,7 +133,7 @@ namespace GoldenSparks.Gui {
         
         void SaveLSSettings() {
             try {
-                LSConfig cfg = LSConfig;
+                LSConfig cfg = LSGame.Config;
                 cfg.MaxLives = (int)ls_numMax.Value;
                 
                 lsHelper.Save();

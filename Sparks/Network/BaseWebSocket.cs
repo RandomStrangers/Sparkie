@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,23 +19,15 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace GoldenSparks.Network 
-{
+namespace GoldenSparks.Network {
+    
     /// <summary> Abstracts WebSocket handling </summary>
-    /// <remarks> See RFC 6455 for websocket specification </remarks>
-    public abstract class BaseWebSocket : INetSocket, INetProtocol 
-    {
+    public abstract class BaseWebSocket : INetSocket, INetProtocol {
         public bool conn, upgrade;
         public bool readingHeaders = true;
 
         /// <summary> Computes a base64-encoded handshake verification key </summary>
         public static string ComputeKey(string rawKey) {
-            // RFC 6455, section 1.3 - Opening Handshake
-            //   For this header field, the server has to take the value (as present
-            //    in the header field... and concatenate this with the GUID
-            //    "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" in string form
-            //   A SHA-1 hash, base64-encoded, of this concatenation is 
-            //    then returned in the server's handshake.
             string key = rawKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
             SHA1   sha = SHA1.Create();
             byte[] raw = sha.ComputeHash(Encoding.ASCII.GetBytes(key));
@@ -43,7 +35,7 @@ namespace GoldenSparks.Network
         }
 
         public abstract void OnGotAllHeaders();
-        public abstract void OnGotHeader(string name, string value);
+        public abstract void OnGotHeader(string key, string val);
 
         void ProcessHeader(string raw) {
             // end of all headers
@@ -53,17 +45,15 @@ namespace GoldenSparks.Network
             int sep = raw.IndexOf(':');
             if (sep == -1) return;
             
-            string name  = raw.Substring(0, sep);
-            string value = raw.Substring(sep + 1).Trim();
+            string key = raw.Substring(0, sep);
+            string val = raw.Substring(sep + 1).Trim();
             
-            // RFC 6455, section 1.3 - Opening Handshake
-            //   To this end, the WebSocket client's handshake is an HTTP Upgrade request
-            if (name.CaselessEq("Connection")) {
-                conn    = value.CaselessContains("Upgrade");
-            } else if (name.CaselessEq("Upgrade")) {
-                upgrade = value.CaselessEq("websocket");
+            if (key.CaselessEq("Connection")) {
+                conn    = val.CaselessContains("Upgrade");
+            } else if (key.CaselessEq("Upgrade")) {
+                upgrade = val.CaselessEq("websocket");
             } else {
-                OnGotHeader(name, value);
+                OnGotHeader(key, val);
             }
         }
         
@@ -109,9 +99,9 @@ namespace GoldenSparks.Network
         int GetDisconnectReason() {
             if (frameLen < 2) return REASON_NORMAL;
             
-            // RFC 6455, section 5.5.1 - Close
-            //   If there is a body, the first two bytes of the body MUST 
-            //    be a 2-byte unsigned integer (in network byte order)...
+            // See section 5.5.1 of websockets specification:
+            //  "... If there is a body, the first two bytes of the body MUST 
+            //   be a 2-byte unsigned integer (in network byte order)..."
             return (frame[0] << 8) | frame[1];
         }
         
@@ -218,7 +208,7 @@ namespace GoldenSparks.Network
             }
             return offset;
         }
-        
+
         public static byte[] WrapDisconnect(int reason) {
             byte[] packet = new byte[4];
             packet[0] = OPCODE_DISCONNECT | FIN;
@@ -248,8 +238,7 @@ namespace GoldenSparks.Network
     }
     
     /// <summary> Abstracts a server side WebSocket </summary>
-    public abstract class ServerWebSocket : BaseWebSocket 
-    {
+    public abstract class ServerWebSocket : BaseWebSocket {
         bool version;
         string verKey;
         
@@ -267,7 +256,7 @@ namespace GoldenSparks.Network
             SendRaw(Encoding.ASCII.GetBytes(headers), SendFlags.None);
             readingHeaders = false;
         }
-        
+
         public override void OnGotAllHeaders() {
             if (conn && upgrade && version && verKey != null) {
                 AcceptConnection();
@@ -277,11 +266,11 @@ namespace GoldenSparks.Network
             }
         }
 
-        public override void OnGotHeader(string name, string value) {
-            if (name.CaselessEq("Sec-WebSocket-Version")) {
-                version = value.CaselessEq("13");
-            } else if (name.CaselessEq("Sec-WebSocket-Key")) {
-                verKey  = value;
+        public override void OnGotHeader(string key, string val) {
+            if (key.CaselessEq("Sec-WebSocket-Version")) {
+                version = val.CaselessEq("13");
+            } else if (key.CaselessEq("Sec-WebSocket-Key")) {
+                verKey  = val;
             }
         }
 
@@ -304,8 +293,7 @@ namespace GoldenSparks.Network
     }
     
     /// <summary> Abstracts a client side WebSocket </summary>
-    public abstract class ClientWebSocket : BaseWebSocket 
-    {
+    public abstract class ClientWebSocket : BaseWebSocket {
         public string path = "/";
         string verKey;
         // TODO: use a random securely generated key
@@ -324,9 +312,9 @@ namespace GoldenSparks.Network
             }
         }
 
-        public override void OnGotHeader(string name, string value) {
-            if (name.CaselessEq("Sec-WebSocket-Accept")) {
-                verKey = value;
+        public override void OnGotHeader(string key, string val) {
+            if (key.CaselessEq("Sec-WebSocket-Accept")) {
+                verKey = val;
             }
         }
 

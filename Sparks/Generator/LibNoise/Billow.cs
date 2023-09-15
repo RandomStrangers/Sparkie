@@ -24,20 +24,23 @@ using System;
 
 namespace LibNoise
 {
-    public sealed class Billow : IModule
+    public sealed class Billow : GradientNoiseBasis, IModule
     {
+        public double Frequency;
         public double Persistence;
+        public int Seed;
         public int OctaveCount;
         public double Lacunarity;
 
         public Billow()
         {
-            Lacunarity  = 2.0;
+            Frequency = 1.0;
+            Lacunarity = 2.0;
             OctaveCount = 6;
             Persistence = 0.5;
         }
 
-        public override double GetValue(double x, double y, double z)
+        public double GetValue(double x, double y, double z)
         {
             double value = 0.0;
             double signal = 0.0;
@@ -49,7 +52,7 @@ namespace LibNoise
 
             for (int octave = 0; octave < OctaveCount; octave++)
             {
-                signal = GradientNoise.GradientCoherentNoise(x, y, z, Seed + octave);
+                signal = GradientCoherentNoise(x, y, z, Seed + octave);
                 signal = 2.0 * Math.Abs(signal) - 1.0;
                 value += signal * curPersistence;
 

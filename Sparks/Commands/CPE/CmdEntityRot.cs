@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,10 +18,8 @@
 using System;
 using GoldenSparks.Bots;
 
-namespace GoldenSparks.Commands.CPE 
-{
-    public class CmdEntityRot : EntityPropertyCmd 
-    {
+namespace GoldenSparks.Commands.CPE {
+    public class CmdEntityRot : EntityPropertyCmd {
         public override string name { get { return "EntityRot"; } }
         public override string shortcut { get { return "EntRot"; } }
         public override string type { get { return CommandTypes.Other; } }
@@ -39,12 +37,12 @@ namespace GoldenSparks.Commands.CPE
             UseBotOrOnline(p, data, message, "rotation");
         }
         
-        protected override void SetBotData(Player p, PlayerBot bot, string args) {
+        public override void SetBotData(Player p, PlayerBot bot, string args) {
             if (!ParseArgs(p, args, bot)) return;
             BotsFile.Save(p.level);
         }
         
-        protected override void SetOnlineData(Player p, Player who, string args) {
+        public override void SetOnlineData(Player p, Player who, string args) {
             if (!ParseArgs(p, args, who)) return;
             Server.rotations.Update(who.name, who.Rot.RotX + " " + who.Rot.RotZ);
             Server.rotations.Save();

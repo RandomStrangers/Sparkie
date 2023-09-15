@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -85,9 +85,9 @@ namespace GoldenSparks.Commands.Moderation {
                        });
             buffer.Flush();
             
-            if (op.totalChanges > 0) {
-                p.Message("Highlighting &T{0}&S changes by {1}&S in the past &b{2}",
-                           op.totalChanges.ToString("N0"), p.FormatNick(who), delta.Shorten(true));
+            if (op.found) {
+                p.Message("Now highlighting past &b{0} &Sfor {1}",
+                           delta.Shorten(true), p.FormatNick(who));
                 p.Message("&WUse /reload to un-highlight");
             } else {
                 p.Message("No changes found by {1} &Sin the past &b{0}",

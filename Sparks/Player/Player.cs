@@ -1,54 +1,58 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-https://opensource.org/license/ecl-2-0/
-https://www.gnu.org/licenses/gpl-3.0.html
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 or implied. See the Licenses for the specific language governing
 permissions and limitations under the Licenses.
 */
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Threading;
 using GoldenSparks.Authentication;
 using GoldenSparks.DB;
 using GoldenSparks.Drawing;
 using GoldenSparks.Events.EconomyEvents;
 using GoldenSparks.Events.EntityEvents;
-using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Events.PlayerDBEvents;
+using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Games;
 using GoldenSparks.Maths;
 using GoldenSparks.Network;
 using GoldenSparks.SQL;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks {
-    sealed class GoldenPlayer : Player
-    {
-        public GoldenPlayer() : base("&e(&6S&ep&6a&er&6k&ei&6e)")
-        {
+namespace GoldenSparks
+{
+
+    sealed class GoldenPlayer : Player {
+        public GoldenPlayer() : base("&e(&6S&ep&6a&er&6k&ei&6e)") {
             group = Group.GoldenRank;
             color = "&S";
             SuperName = "&6S&ep&6a&er&6k&ei&6e";
         }
-
-        public override string FullName
-        {
+        
+        public override string FullName {
             get { return "&6S&ep&6a&er&6k&ei&6e [&6" + Server.Config.CoreState + "&S]"; }
+        }
+        
+        public override void Message(byte type, string message) {
+            Logger.Log(LogType.GoldenSparksMessage, message);
         }
     }
 
     public partial class Player : Entity, IDisposable {
-        public static List<Player> players = new List<Player>();
+
         static int sessionCounter;
         public static Player Sparks = new GoldenPlayer();
+
 
 
         //This is so that plugin devs can declare a player without needing a socket..
@@ -59,25 +63,24 @@ namespace GoldenSparks {
             DisplayName = playername;
             
             SetIP(IPAddress.Loopback);
+            SessionID = Interlocked.Increment(ref sessionCounter) & SessionIDMask;
             IsSuper   = true;
         }
 
-        const int SESSION_ID_MASK = (1 << 20) - 1;
-        public Player(INetSocket socket, IGameSession session) {
+        public Player(INetSocket socket, ClassicProtocol session) {
             Socket  = socket;
             Session = session;
             SetIP(Socket.IP);
             
             spamChecker = new SpamChecker(this);
-            partialLog  = new List<DateTime>(20);
-            session.ID  = Interlocked.Increment(ref sessionCounter) & SESSION_ID_MASK;
+            SessionID   = Interlocked.Increment(ref sessionCounter) & SessionIDMask;
             
-            for (int b = 0; b < BlockBindings.Length; b++) 
-            {
+            for (int b = 0; b < BlockBindings.Length; b++) {
                 BlockBindings[b] = (BlockID)b;
             }
         }
-        
+        public static List<Player> players2 = new List<Player>();
+        public static byte number { get { return (byte)players2.Count; } }
         public override byte EntityID { get { return id; } }
         public override Level Level { get { return level; } }
         public override bool RestrictsScale { get { return true; } }
@@ -119,28 +122,20 @@ namespace GoldenSparks {
         }
         
         public void SetPrefix() {
-            List<string> prefixes = new List<string>(6);
-            prefixes.Add(Game.Referee           ? "&2[Ref] " : "");
-            prefixes.Add(GroupPrefix.Length > 0 ? GroupPrefix + color : "");
+            prefix = Game.Referee ? "&2[Ref] " : "";
+            if (GroupPrefix.Length > 0) { prefix += GroupPrefix + color; }
             
             Team team = Game.Team;
-            prefixes.Add(team == null ? "" : "<" + team.Color + team.Name + color + "> ");
+            prefix += team != null ? "<" + team.Color + team.Name + color + "> " : "";
             
             IGame game = IGame.GameOn(level);
-            prefixes.Add(game == null ? "" : game.GetPrefix(this));
+            if (game != null) game.AdjustPrefix(this, ref prefix);
             
-            bool devPrefix = Server.Config.SoftwareStaffPrefixes &&
-                             Server.Devs.CaselessContains(truename);
-
-            prefixes.Add(devPrefix        ? MakeTitle("Dev", "&6") : "");
-            prefixes.Add(title.Length > 0 ? MakeTitle(title, titlecolor) : "");
-
-            OnSettingPrefixEvent.Call(this, prefixes);
-            prefix = prefixes.Join("");
-        }
-
-        internal string MakeTitle(string title, string titleCol) {
-             return color + "[" + titleCol + title + color + "] ";
+            bool isDev = Server.Devs.CaselessContains(truename);
+            bool devPrefix = Server.Config.SoftwareStaffPrefixes;
+            
+            if (devPrefix && isDev) prefix += MakeTitle("Dev", "&6");
+            if (title.Length > 0)   prefix += MakeTitle(title, titlecolor);
         }
         
         /// <summary> Raises OnSettingColorEvent then sets color. </summary>
@@ -158,6 +153,10 @@ namespace GoldenSparks {
             if (prevCol == color) return;
             Entities.GlobalRespawn(this);
             SetPrefix();
+        }
+
+        public string MakeTitle(string title, string titleCol) {
+             return color + "[" + titleCol + title + color + "] ";
         }
         
         public bool IsLikelyInsideBlock() {
@@ -185,11 +184,15 @@ namespace GoldenSparks {
         }
         
         public void SetIP(IPAddress addr) {
+            // Convert IPv4 mapped addresses to IPv4 addresses for consistency
+            //  (e.g. so IPv4 mapped LAN IPs are treated as LAN IPs)
+            if (IPUtil.IsIPv4Mapped(addr)) addr = IPUtil.MapToIPV4(addr);
+            
             IP = addr;
             ip = addr.ToString();
         }
         
-        public bool CanUse(Command cmd) { return cmd.Permissions.UsableBy(this); }
+        public bool CanUse(Command cmd) { return group.Commands.Contains(cmd); }
         public bool CanUse(string cmdName) {
             Command cmd = Command.Find(cmdName);
             return cmd != null && CanUse(cmd);
@@ -211,7 +214,7 @@ namespace GoldenSparks {
         
         /// <summary> Disconnects the player from the server, 
         /// with their default logout message shown in chat. </summary>
-        public void Disconnect() { LeaveServer(PlayerInfo.GetLogoutMessage(this), "disconnected", false); }
+        public void Disconnect() { LeaveServer(PlayerDB.GetLogoutMessage(this), "disconnected", false); }
         
         /// <summary> Kicks the player from the server,
         /// with the given messages shown in chat and in the disconnect packet. </summary>
@@ -320,25 +323,28 @@ namespace GoldenSparks {
             
             DrawOps.Clear();
             if (spamChecker != null) spamChecker.Clear();
-            ClearSerialCommands();
         }
 
         #endregion
         #region == OTHER ==
-
-        public const string USERNAME_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890._";
         
-        internal byte UserType() { return group.Blocks[Block.Bedrock] ? (byte)100 : (byte)0; }
+        [Obsolete("Use PlayerInfo.Online.Items")]
+        public static List<Player> players;
+        public const string USERNAME_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890._!@#$%^&*()+-=[]{}|";
+
+        public byte UserType() { return group.Blocks[Block.Bedrock] ? (byte)100 : (byte)0; }
 
         #endregion
 
         /// <summary> Returns whether the player is currently allowed to talk. </summary>
-        public bool CanSpeak() { 
+        public bool CanSpeak() {
             return IsSparkie || (!muted && !Unverified && (voice || !Server.chatmod));
+
         }
         
         public bool CheckCanSpeak(string action) {
             if (IsSparkie) return true;
+
             
             if (muted) { 
                 Message("Cannot {0} &Swhile muted", action); return false; 
@@ -347,25 +353,19 @@ namespace GoldenSparks {
                 Message("Cannot {0} &Swhile chat moderation is on without &T/Voice&S", action); return false; 
             }
             if (Unverified) {
-                PassAuthenticator.Current.RequiresVerification(this, action);
+                Authenticator.Current.RequiresVerification(this, action);
                 return false;
             }
             return true;
         }
-        
-        /// <summary> Checks if player is this player requires additional verification </summary>
-        public bool NeedsVerification() {
-            if (verifiedPass) return false;
-            Unverified = Server.Config.verifyadmins && Rank >= Server.Config.VerifyAdminsRank;
-            return Unverified;
-        }
-        
         /// <summary> Checks if player is currently unverified, and if so, sends a message informing them </summary>
         public void CheckIsUnverified() {
-            if (NeedsVerification()) PassAuthenticator.Current.NeedVerification(this);
+            if (verifiedPass) return;
+            Unverified = Server.Config.verifyadmins && Rank >= Server.Config.VerifyAdminsRank;
+            if (!Unverified) return;
+            
+            Authenticator.Current.NeedVerification(this);
         }
-        
-          
         /// <summary> Formats a player name for displaying in chat. </summary>
         public string FormatNick(string name) {
             Player target = PlayerInfo.FindExact(name);
@@ -398,8 +398,8 @@ namespace GoldenSparks {
             money = amount;
             OnMoneyChangedEvent.Call(this);
         }
-        
-        internal static bool CheckVote(string msg, Player p, string a, string b, ref int totalVotes) {
+
+        public static bool CheckVote(string msg, Player p, string a, string b, ref int totalVotes) {
             if (!(msg.CaselessEq(a) || msg.CaselessEq(b))) return false;
             
             if (p.voted) {
@@ -407,7 +407,7 @@ namespace GoldenSparks {
             } else {
                 totalVotes++;
                 p.Message("&aThanks for voting!");
-                p.voted = true;
+                p.voted = false;
             }
             return true;
         }
@@ -416,7 +416,7 @@ namespace GoldenSparks {
             if (spamChecker != null) spamChecker.CheckChatSpam();
         }
 
-        internal void SetBaseTotalModified(long modified) {
+        public void SetBaseTotalModified(long modified) {
             long adjust    = modified - TotalModified;
             TotalModified  = modified;
             // adjust so that SessionModified is unaffected

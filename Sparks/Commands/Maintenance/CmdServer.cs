@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -38,7 +38,7 @@ namespace GoldenSparks.Commands.Maintenance {
                     case "backup": DoBackup(p, args); break;
                     case "restore": DoRestore(p); break;
                     case "import": DoImport(p, args); break;
-                    case "update" : p.Message("Use &T/Update &Sto update the server"); break;
+                    case "update" : DoUpdate(p); break;
                     case "upgradeblockdb": DoBlockDBUpgrade(p, args); break;
                     default: Help(p); break;
             }
@@ -101,19 +101,25 @@ namespace GoldenSparks.Commands.Maintenance {
                 Help(p);
             }
         }
-        
-        static void DoRestore(Player p) {
-            if (!CheckPerms(p)) {
-                p.Message("Only Sparks or the Server Owner can restore the server."); return;
+
+        static void DoRestore(Player p)
+        {
+            if (!CheckPerms(p))
+            {
+                p.Message("Only GoldenSparks or the Server Owner can restore the server."); return;
             }
             Backup.Extract(p);
         }
 
-        static bool CheckPerms(Player p) {
-            if (p.IsSparkie) return true;
-            if (Server.Config.OwnerName.CaselessEq("Notch")) return false;
-            return p.name.CaselessEq(Server.Config.OwnerName);
+        static void DoUpdate(Player p)
+        {
+            if (!CheckPerms(p))
+            {
+                p.Message("Only GoldenSparks or the Server Owner can update the server."); return;
+            }
+            Updater.PerformUpdate();
         }
+
         
         void DoImport(Player p, string[] args) {
             if (args.Length == 1) { p.Message("You need to provide the table name to import."); return; }
@@ -144,6 +150,14 @@ namespace GoldenSparks.Commands.Maintenance {
             }
         }
         
+
+        static bool CheckPerms(Player p) {
+
+            if (p.IsSparkie) return true;
+            if (Server.Config.OwnerName.CaselessEq("Notch")) return false;
+            return p.name.CaselessEq(Server.Config.OwnerName);
+        }
+        
         public override void Help(Player p, string message) {
             if (message.CaselessEq("backup")) {
                 p.Message("&T/Server backup [mode] <compress>");
@@ -161,6 +175,7 @@ namespace GoldenSparks.Commands.Maintenance {
         public override void Help(Player p) {
             p.Message("&T/Server reload &H- Reloads the server files");
             p.Message("&T/Server public/private &H- Makes the server public or private");
+            p.Message("&T/Server update &H- Force updates the server");
             p.Message("&T/Server restore &H- Restores the server from a backup");           
             p.Message("&T/Server backup &H- Make a backup. See &T/help server backup");
             p.Message("&T/Server backup table [name] &H- Backups that database table");

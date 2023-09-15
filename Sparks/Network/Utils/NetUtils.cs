@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,11 +18,9 @@
 using System;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks 
-{
+namespace GoldenSparks {
     /// <summary> Utility methods for reading/writing big endian integers, and fixed length strings. </summary>
-    public static class NetUtils 
-    {
+    public static class NetUtils {
         public const int StringSize = 64;        
 
         /// <summary> Reads a signed 16 bit big endian integer. </summary>
@@ -64,7 +62,7 @@ namespace GoldenSparks
             NetUtils.WriteI32(num, buffer, i);
         }
 
-        internal static int WritePos(Position pos, byte[] arr, int offset, bool extPos) {
+        public static int WritePos(Position pos, byte[] arr, int offset, bool extPos) {
             if (!extPos) {
                 WriteI16((short)pos.X, arr, offset + 0);
                 WriteI16((short)pos.Y, arr, offset + 2);

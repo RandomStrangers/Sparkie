@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
         
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,15 +19,15 @@ using System;
 using BlockID = System.UInt16;
 using BlockRaw = System.Byte;
 
-namespace GoldenSparks.Blocks.Physics 
-{
-    public static class TrainPhysics 
-    {
+namespace GoldenSparks.Blocks.Physics {
+    
+    public static class TrainPhysics {
+        
         public static void Do(Level lvl, ref PhysInfo C) {
             Random rand = lvl.physRandom;
-            int dirX = rand.Next(1, 100+1) <= 50 ? 1 : -1;
-            int dirY = rand.Next(1, 100+1) <= 50 ? 1 : -1;
-            int dirZ = rand.Next(1, 100+1) <= 50 ? 1 : -1;
+            int dirX = rand.Next(1, 10) <= 5 ? 1 : -1;
+            int dirY = rand.Next(1, 10) <= 5 ? 1 : -1;
+            int dirZ = rand.Next(1, 10) <= 5 ? 1 : -1;
             ushort x = C.X, y = C.Y, z = C.Z;
 
             for (int dx = -dirX; dx != 2 * dirX; dx += dirX)

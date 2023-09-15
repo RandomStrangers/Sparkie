@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,9 +16,11 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Collections.Generic;
 using GoldenSparks.Blocks;
 using GoldenSparks.Blocks.Physics;
 using GoldenSparks.DB;
+using GoldenSparks.Games;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 using BlockRaw = System.Byte;
@@ -94,24 +96,17 @@ namespace GoldenSparks {
         /// <returns> Undefined behaviour if coordinates are invalid </returns>
         public BlockID FastGetBlock(int index) {
             byte raw = blocks[index];
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[raw];
             return extended == 0 ? raw : (BlockID)(extended | GetExtTile(index));
-            #else
-            return raw != Block.custom_block ? raw : (BlockID)(Block.Extended | GetExtTile(index));
-            #endif
         }
         
         /// <summary> Gets the block at the given coordinates </summary>
         /// <returns> Undefined behaviour if coordinates are invalid </returns>
         public BlockID FastGetBlock(ushort x, ushort y, ushort z) {
             byte raw = blocks[x + Width * (z + y * Length)];
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[raw];
             return extended == 0 ? raw : (BlockID)(extended | FastGetExtTile(x, y, z));
-            #else
-            return raw != Block.custom_block ? raw : (BlockID)(Block.Extended | FastGetExtTile(x, y, z));
-            #endif
+
         }
         
         /// <summary> Gets the block at the given coordinates </summary>
@@ -120,12 +115,9 @@ namespace GoldenSparks {
             if (x >= Width || y >= Height || z >= Length || blocks == null) return Block.Invalid;
             byte raw = blocks[x + Width * (z + y * Length)];
             
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[raw];
             return extended == 0 ? raw : (BlockID)(extended | FastGetExtTile(x, y, z));
-            #else
-            return raw != Block.custom_block ? raw : (BlockID)(Block.Extended | FastGetExtTile(x, y, z));
-            #endif
+
         }
         
         /// <summary> Gets the block at the given coordinates </summary>
@@ -135,12 +127,9 @@ namespace GoldenSparks {
             index = x + Width * (z + y * Length);
             byte raw = blocks[index];
             
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[raw];
             return extended == 0 ? raw : (BlockID)(extended | FastGetExtTile(x, y, z));
-            #else
-            return raw != Block.custom_block ? raw : (BlockID)(Block.Extended | FastGetExtTile(x, y, z));
-            #endif
+
         }
         
         /// <summary> Gets whether the block at the given coordinates is air </summary>
@@ -174,6 +163,12 @@ namespace GoldenSparks {
             int cx = x >> 4, cy = y >> 4, cz = z >> 4;
             byte[] chunk = CustomBlocks[(cy * ChunksZ + cz) * ChunksX + cx];
             return chunk == null ? Block.Air : chunk[(y & 0x0F) << 8 | (z & 0x0F) << 4 | (x & 0x0F)];
+        }
+        
+        public void SetTile(int index, byte block) {
+            if (blocks == null || index < 0 || index >= blocks.Length) return;
+            blocks[index] = block;
+            Changed = true;
         }
         
         public void SetTile(ushort x, ushort y, ushort z, byte block) {
@@ -210,19 +205,15 @@ namespace GoldenSparks {
             Changed = true;
             
             if (block >= Block.Extended) {
-                #if TEN_BIT_BLOCKS
                 blocks[index] = Block.ExtendedClass[block >> Block.ExtendedShift];
-                #else
-                blocks[index] = Block.custom_block;
-                #endif
                 FastSetExtTile(x, y, z, (BlockRaw)block);
             } else {
                 blocks[index] = (BlockRaw)block;
             }
         }
-        
-  
-        internal bool BuildIn(BlockID block) {
+
+
+        public bool BuildIn(BlockID block) {
             if (block == Block.Op_Water || block == Block.Op_Lava || Props[block].IsPortal || Props[block].IsMessageBlock) return false;
             block = Block.Convert(block);
             return block >= Block.Water && block <= Block.StillLava;
@@ -324,11 +315,7 @@ namespace GoldenSparks {
                 
                 errorLocation = "Setting tile";
                 if (block >= Block.Extended) {
-                    #if TEN_BIT_BLOCKS
                     SetTile(x, y, z, Block.ExtendedClass[block >> Block.ExtendedShift]);
-                    #else
-                    SetTile(x, y, z, Block.custom_block);
-                    #endif
                     FastSetExtTile(x, y, z, (BlockRaw)block);
                 } else {
                     SetTile(x, y, z, (BlockRaw)block);
@@ -375,12 +362,9 @@ namespace GoldenSparks {
                                          PhysicsArgs data = default(PhysicsArgs), bool addUndo = true) {
             if (blocks == null || b < 0 || b >= blocks.Length) return false;
             BlockID old = blocks[b];
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[old];
             if (extended > 0) old = (BlockID)(extended | GetExtTile(b));
-            #else
-            if (old == Block.custom_block) old = (BlockID)(Block.Extended | GetExtTile(b));
-            #endif
+
             
             try
             {
@@ -412,11 +396,7 @@ namespace GoldenSparks {
                 
                 Changed = true;
                 if (block >= Block.Extended) {
-                    #if TEN_BIT_BLOCKS
                     blocks[b] = Block.ExtendedClass[block >> Block.ExtendedShift];
-                    #else
-                    blocks[b] = Block.custom_block;
-                    #endif
                     ushort x, y, z;
                     IntToPos(b, out x, out y, out z);
                     FastSetExtTile(x, y, z, (BlockRaw)block);
@@ -452,7 +432,7 @@ namespace GoldenSparks {
             if (result == ChangeResult.VisuallySame) return;
             
             if (buffered) {
-                p.level.blockqueue.Add(index, block);
+                p.level.blockqueue.Add(p, index, block);
             } else {
                 BroadcastChange(x, y, z, block);
             }

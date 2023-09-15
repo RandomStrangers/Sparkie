@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,11 +19,10 @@ using System;
 using System.IO;
 using GoldenSparks.Maths;
 
-namespace GoldenSparks.Bots 
-{
+namespace GoldenSparks.Bots {
+    
     /// <summary> Causes the bot to move towards the closest player, within a defined search radius. </summary>
-    public sealed class HuntInstruction : BotInstruction 
-    {
+    public sealed class HuntInstruction : BotInstruction {
         public HuntInstruction() { Name = "hunt"; }
         
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -36,14 +35,14 @@ namespace GoldenSparks.Bots
             if (overlapsPlayer) { bot.NextInstruction(); return false; }
             return true;
         }
-        
-        internal static Player ClosestPlayer(PlayerBot bot, int search) {
+
+        public static Player ClosestPlayer(PlayerBot bot, int search) {
             int maxDist = search * 32;
             Player[] players = PlayerInfo.Online.Items;
             Player closest = null;
             
             foreach (Player p in players) {
-                if (p.level != bot.level || p.invincible || p.hidden) continue;
+                if (p.level != bot.level || p.invulnerable || p.hidden) continue;
                 
                 int dx = p.Pos.X - bot.Pos.X, dy = p.Pos.Y - bot.Pos.Y, dz = p.Pos.Z - bot.Pos.Z;
                 int playerDist = Math.Abs(dx) + Math.Abs(dy) + Math.Abs(dz);
@@ -107,7 +106,7 @@ namespace GoldenSparks.Bots
         public override bool Execute(PlayerBot bot, InstructionData data) {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player p in players) {
-                if (p.level != bot.level || p.invincible) continue;
+                if (p.level != bot.level || p.invulnerable) continue;
                 
                 int dx = Math.Abs(bot.Pos.X - p.Pos.X);
                 int dy = Math.Abs(bot.Pos.Y - p.Pos.Y);

@@ -8,8 +8,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -39,8 +39,8 @@ namespace GoldenSparks.Commands.Moderation {
             } else {
                 Player target = candidates[new Random().Next(candidates.Count)];
                 target.LastPatrol = DateTime.UtcNow;
-                
-                Command.Find("TP").Use(p, target.name, data);
+
+                Find("TP").Use(p, target.name, data);
                 p.Message("Now visiting {0}&S.", p.FormatNick(target));
             }
         }
@@ -51,9 +51,8 @@ namespace GoldenSparks.Commands.Moderation {
             Player[] players = PlayerInfo.Online.Items;
             DateTime cutoff  = DateTime.UtcNow.AddSeconds(-15);
             
-            foreach (Player target in players) 
-            {
-                if (except.UsableBy(target) || !p.CanSee(target, data.Rank)) continue;
+            foreach (Player target in players) {
+                if (except.UsableBy(target.Rank) || !p.CanSee(target, data.Rank)) continue;
                 if (target == p || target.LastPatrol > cutoff) continue;
                 candidates.Add(target);
             }

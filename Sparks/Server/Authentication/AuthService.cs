@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -27,7 +27,6 @@ namespace GoldenSparks.Authentication
         public string URL;
         public string NameSuffix = "";
         public string SkinPrefix = "";
-        public bool MojangAuth;
     }
     
     public class AuthService
@@ -38,16 +37,18 @@ namespace GoldenSparks.Authentication
         public Heartbeat Beat;
         public AuthServiceConfig Config;
         
-        public virtual void AcceptPlayer(Player p) {
+        public virtual bool Authenticate(Player p, string mppass) {
+            bool valid = Authenticator.Current.VerifyLogin(p, mppass, this);
+            if (!valid) return false;
             AuthServiceConfig cfg = Config;
             
-            p.VerifiedVia  = Config.URL;
             p.verifiedName = true;
             p.SkinName     = cfg.SkinPrefix + p.SkinName;
             
             p.name        += cfg.NameSuffix;
             p.truename    += cfg.NameSuffix;
             p.DisplayName += cfg.NameSuffix;
+            return true;
         }
         
         
@@ -84,6 +85,7 @@ namespace GoldenSparks.Authentication
                 
                 Services.Add(auth);
                 Heartbeat.Register(beat);
+
             }
         }
         
@@ -126,9 +128,6 @@ namespace GoldenSparks.Authentication
             } else if (key.CaselessEq("skin-prefix")) {
                 if (cur == null) return;
                 cur.SkinPrefix = value;
-            } else if (key.CaselessEq("mojang-auth")) {
-                if (cur == null) return;
-                bool.TryParse(value, out cur.MojangAuth);
             }
         }
         
@@ -148,9 +147,6 @@ namespace GoldenSparks.Authentication
                 w.WriteLine("#skin-prefix = string");
                 w.WriteLine("#   Characters that are prefixed to skin name of players that login through the authentication service");
                 w.WriteLine("#   (used to ensure players from other authentication services see the correct skin)");
-                w.WriteLine("#mojang-auth = boolean");
-                w.WriteLine("#   Whether to try verifying users using Mojang's authentication servers if mppass verification fails");
-                w.WriteLine("#   NOTE: This should only be used for the Betacraft.uk authentication service");
                 w.WriteLine();
                 
                 foreach (AuthServiceConfig c in configs) 
@@ -158,7 +154,6 @@ namespace GoldenSparks.Authentication
                     w.WriteLine("URL = " + c.URL);
                     w.WriteLine("name-suffix = " + c.NameSuffix);
                     w.WriteLine("skin-prefix = " + c.SkinPrefix);
-                    w.WriteLine("mojang-auth = " + c.MojangAuth);
                     w.WriteLine();
                 }
             }

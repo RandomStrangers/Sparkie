@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -48,7 +48,7 @@ namespace GoldenSparks.Commands.Building {
         
         void HandleCreate(Player p, string[] args) {
             if (args.Length != 2) { Help(p); return; }
-            if (!Formatter.ValidFilename(p, args[1])) return;
+            if (!Formatter.ValidName(p, args[1], "palette")) return;
             
             ImagePalette palette = ImagePalette.Find(args[1]);
             if (palette != null) {
@@ -143,12 +143,12 @@ namespace GoldenSparks.Commands.Building {
             }
             
             string modifer = args.Length > 2 ? args[2] : "";
-            Paginator.Output(p, palette.Entries, PrintEntry, 
-                             "Palette entries", "entries", modifer);
+            MultiPageOutput.Output(p, palette.Entries, (e) => FormatEntry(e, p), 
+                                   "Palette entries", "entries", modifer, true);
         }
         
-        static void PrintEntry(Player p, PaletteEntry e) {
-            p.Message("{0} - {1}", Block.GetName(p, e.Block), Utils.Hex(e.R, e.G, e.B));
+        static string FormatEntry(PaletteEntry e, Player p) {
+            return Block.GetName(p, e.Block) + " - " + Utils.Hex(e.R, e.G, e.B);
         }
 
         public override void Help(Player p) {

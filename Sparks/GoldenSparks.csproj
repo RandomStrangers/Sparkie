@@ -11,7 +11,21 @@
     <RootNamespace>GoldenSparks</RootNamespace>
     <AssemblyName>GoldenSparks_</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <NoWin32Manifest>False</NoWin32Manifest>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
@@ -25,7 +39,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>..\bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;TEN_BIT_BLOCKS</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;TEN_BIT_BLOCKS,</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <BaseAddress>4194304</BaseAddress>
@@ -40,6 +54,7 @@
     <DefineConstants>TRACE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>..\..\Source\General.ruleset</CodeAnalysisRuleSet>
     <DebugSymbols>True</DebugSymbols>
     <BaseAddress>4194304</BaseAddress>
     <RegisterForComInterop>False</RegisterForComInterop>
@@ -55,6 +70,50 @@
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
     <StartAction>Project</StartAction>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TEN_BIT_BLOCKS,DEV_BUILD_RS</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>11.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>PdbOnly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>11.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>..\..\Source\General.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TEN_BIT_BLOCKS</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>ARM64</PlatformTarget>
+    <LangVersion>11.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM64\Release\</OutputPath>
+    <DefineConstants>TRACE;</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>PdbOnly</DebugType>
+    <PlatformTarget>ARM64</PlatformTarget>
+    <LangVersion>11.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>..\..\Source\General.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="MySql.Data">
       <HintPath>..\MySql.Data.dll</HintPath>
@@ -62,6 +121,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Blocks\Behaviour\BlockBehaviour.cs" />
@@ -196,24 +256,43 @@
     <Compile Include="Commands\Economy\CmdTake.cs" />
     <Compile Include="Commands\Economy\MoneyCmd.cs" />
     <Compile Include="Commands\EntityPropertyCmd.cs" />
+    <Compile Include="Commands\Fun\CmdCountdown.cs" />
     <Compile Include="Commands\Fun\CmdExplode.cs" />
-    <Compile Include="Commands\Fun\CmdFliphead.cs" />
     <Compile Include="Commands\Fun\CmdFlipHeads.cs" />
     <Compile Include="Commands\Fun\CmdGun.cs" />
+    <Compile Include="Commands\Fun\CmdLavaSurvival.cs" />
     <Compile Include="Commands\Fun\CmdMissile.cs" />
     <Compile Include="Commands\Fun\CmdReferee.cs" />
     <Compile Include="Commands\Fun\CmdSlap.cs" />
     <Compile Include="Commands\Fun\CmdTeam.cs" />
+    <Compile Include="Commands\Fun\CmdTntWars.cs" />
     <Compile Include="Commands\Fun\CmdZombieSpawn.cs" />
+    <Compile Include="Commands\Fun\CTF\CmdCtf.cs" />
     <Compile Include="Commands\Fun\RateMapCmds.cs" />
     <Compile Include="Commands\Fun\RoundsGameCmd.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdAka.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdAlive.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdBounties.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdBounty.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdDisinfect.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdFliphead.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdHuman.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdInfect.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdInfected.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdLastLevels.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdQueue.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdShowQueue.cs" />
+    <Compile Include="Commands\Fun\ZombieSurvival\CmdZombieSurvival.cs" />
     <Compile Include="Commands\Information\CmdAbout.cs" />
     <Compile Include="Commands\Information\CmdBanInfo.cs" />
     <Compile Include="Commands\Information\CmdBlocks.cs" />
     <Compile Include="Commands\Information\CmdClones.cs" />
     <Compile Include="Commands\Information\CmdCommands.cs" />
     <Compile Include="Commands\Information\CmdFaq.cs" />
+    <Compile Include="Commands\Information\CmdHasirc1.cs" />
     <Compile Include="Commands\Information\CmdHasirc.cs" />
+    <Compile Include="Commands\Information\CmdHasglobalirc.cs" />
+    <Compile Include="Commands\Information\CmdHasirc2.cs" />
     <Compile Include="Commands\Information\CmdHelp.cs" />
     <Compile Include="Commands\Information\CmdRankInfo.cs" />
     <Compile Include="Commands\Information\CmdServerInfo.cs" />
@@ -284,15 +363,20 @@
     <Compile Include="Commands\Moderation\ItemPermsCmd.cs" />
     <Compile Include="Commands\Moderation\ZoneCmds.cs" />
     <Compile Include="Commands\Moderation\ModActionCmd.cs" />
+    <Compile Include="Commands\Scripting\CmdCmdCreate.cs" />
+    <Compile Include="Commands\Scripting\CmdCmdLoad.cs" />
+    <Compile Include="Commands\Scripting\CmdCmdUnload.cs" />
+    <Compile Include="Commands\Scripting\CmdCompile.cs" />
+    <Compile Include="Commands\Scripting\CmdCompload.cs" />
+    <Compile Include="Commands\Scripting\CmdPlugin.cs" />
     <Compile Include="Commands\other\CmdAscend.cs" />
     <Compile Include="Commands\other\CmdBack.cs" />
-    <Compile Include="Commands\other\cmdCTFADSFD.cs" />
     <Compile Include="Commands\other\CmdDelay.cs" />
     <Compile Include="Commands\other\CmdDescend.cs" />
     <Compile Include="Commands\other\CmdFakerank.cs" />
     <Compile Include="Commands\other\CmdFly.cs" />
     <Compile Include="Commands\other\CmdHackRank.cs" />
-    <Compile Include="Commands\other\CmdInvincible.cs" />
+    <Compile Include="Commands\other\CmdInvulnerable.cs" />
     <Compile Include="Commands\other\CmdKill.cs" />
     <Compile Include="Commands\other\CmdRide.cs" />
     <Compile Include="Commands\other\CmdSendCmd.cs" />
@@ -301,9 +385,6 @@
     <Compile Include="Commands\other\CmdTp.cs" />
     <Compile Include="Commands\other\CmdTpA.cs" />
     <Compile Include="Commands\other\QuitCmds.cs" />
-    <Compile Include="Commands\Scripting\CmdCmdLoad.cs" />
-    <Compile Include="Commands\Scripting\CmdCmdUnload.cs" />
-    <Compile Include="Commands\Scripting\CmdPlugin.cs" />
     <Compile Include="Commands\World\CmdBlockProperties.cs" />
     <Compile Include="Commands\World\CmdCopyLVL.cs" />
     <Compile Include="Commands\World\CmdDeleteLvl.cs" />
@@ -351,7 +432,6 @@
     <Compile Include="CorePlugin\HelloWorldPlugin.cs" />
     <Compile Include="CorePlugin\MiscHandlers.cs" />
     <Compile Include="CorePlugin\ModActionHandler.cs" />
-    <Compile Include="Database\Backends\Interfaces.cs" />
     <Compile Include="Database\Backends\SQLite.cs" />
     <Compile Include="Database\Backends\SQLiteBackend.cs" />
     <Compile Include="Database\BlockDB\BlockDB.cs" />
@@ -367,6 +447,7 @@
     <Compile Include="Database\ColumnDesc.cs" />
     <Compile Include="Database\IDatabaseBackend.cs" />
     <Compile Include="Database\Backends\MySQL.cs" />
+    <Compile Include="Database\SqlQuery.cs" />
     <Compile Include="Database\PlayerData.cs" />
     <Compile Include="Database\Stats\OfflineStat.cs" />
     <Compile Include="Database\Stats\OnlineStat.cs" />
@@ -374,18 +455,14 @@
     <Compile Include="Database\TableDumper.cs" />
     <Compile Include="Drawing\Brushes\Brush.cs" />
     <Compile Include="Drawing\Brushes\CloudyBrush.cs" />
-    <Compile Include="Drawing\Brushes\GradientBrush.cs" />
-    <Compile Include="Drawing\Brushes\GridBrush.cs" />
     <Compile Include="Drawing\Brushes\PasteBrush.cs" />
     <Compile Include="Drawing\Brushes\RainbowBrush.cs" />
     <Compile Include="Drawing\Brushes\RandomBrush.cs" />
-    <Compile Include="Drawing\Brushes\ReplaceBrushBrushes.cs" />
     <Compile Include="Drawing\Brushes\ReplaceBrushes.cs" />
     <Compile Include="Drawing\Brushes\SimpleBrushes.cs" />
     <Compile Include="Drawing\BrushFactories\BrushFactory.cs" />
     <Compile Include="Drawing\BrushFactories\CloudyBrush.cs" />
     <Compile Include="Drawing\BrushFactories\FrequencyBrushes.cs" />
-    <Compile Include="Drawing\BrushFactories\ReplaceBrushBrushes.cs" />
     <Compile Include="Drawing\BrushFactories\ReplaceBrushes.cs" />
     <Compile Include="Drawing\BrushFactories\SimpleBrushes.cs" />
     <Compile Include="Drawing\CopyState.cs" />
@@ -404,8 +481,9 @@
     <Compile Include="Drawing\DrawOps\MazeDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\PasteDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\RedoDrawOp.cs" />
+    <Compile Include="Drawing\DrawOps\ReplaceDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\RestoreSelectionDrawOp.cs" />
-    <Compile Include="Drawing\DrawOps\SpheroidDrawOps.cs" />
+    <Compile Include="Drawing\DrawOps\SpheroidDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\PyramidDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\SPlaceDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\TorusDrawOp.cs" />
@@ -418,6 +496,7 @@
     <Compile Include="Drawing\Image\ImagePalette.cs" />
     <Compile Include="Drawing\Image\ImagePrintDrawOp.cs" />
     <Compile Include="Drawing\Image\IPaletteMatcher.cs" />
+    <Compile Include="Drawing\Image\PixelGetter.cs" />
     <Compile Include="Drawing\TransformFactories\RotateTransform.cs" />
     <Compile Include="Drawing\TransformFactories\SimpleTransforms.cs" />
     <Compile Include="Drawing\TransformFactories\TransformFactory.cs" />
@@ -426,6 +505,7 @@
     <Compile Include="Drawing\Transform\Transform.cs" />
     <Compile Include="Economy\Economy.DB.cs" />
     <Compile Include="Economy\OtherItems.cs" />
+    <Compile Include="Economy\ZombieItems.cs" />
     <Compile Include="Economy\Economy.cs" />
     <Compile Include="Economy\Item.cs" />
     <Compile Include="Economy\LevelItem.cs" />
@@ -448,8 +528,20 @@
     <Compile Include="Events\ModActionEvent.cs" />
     <Compile Include="Events\PlayerEvents.cs" />
     <Compile Include="Events\ServerEvents.cs" />
+    <Compile Include="Games\Countdown\CountdownGame.cs" />
+    <Compile Include="Games\Countdown\CountdownGame.Plugin.cs" />
+    <Compile Include="Games\Countdown\CountdownGame.Round.cs" />
+    <Compile Include="Games\Countdown\CountdownMap.cs" />
+    <Compile Include="Games\CTF\CtfConfig.cs" />
+    <Compile Include="Games\CTF\CtfGame.DB.cs" />
+    <Compile Include="Games\CTF\CtfGame.Plugin.cs" />
+    <Compile Include="Games\CTF\CtfGame.Round.cs" />
     <Compile Include="Games\GameProps.cs" />
     <Compile Include="Games\IGame.cs" />
+    <Compile Include="Games\LavaSurvival\LSGame.Plugin.cs" />
+    <Compile Include="Games\LavaSurvival\LSGame.cs" />
+    <Compile Include="Games\LavaSurvival\LSConfig.cs" />
+    <Compile Include="Games\LavaSurvival\LSGame.Round.cs" />
     <Compile Include="Games\HacksDetection.cs" />
     <Compile Include="Games\RoundsGame\LevelPicker.cs" />
     <Compile Include="Games\RoundsGame\RoundsGameConfig.cs" />
@@ -463,33 +555,36 @@
     <Compile Include="Games\Weapons\Missile.cs" />
     <Compile Include="Games\Weapons\Weapon.cs" />
     <Compile Include="Games\Weapons\Guns.cs" />
+    <Compile Include="Games\ZombieSurvival\ZSGame.DB.cs" />
+    <Compile Include="Games\ZombieSurvival\ZSGame.Round.cs" />
+    <Compile Include="Games\ZombieSurvival\ZSGame.cs" />
+    <Compile Include="Games\ZombieSurvival\ZSGame.Plugin.cs" />
+    <Compile Include="Games\ZombieSurvival\ZSConfig.cs" />
+    <Compile Include="Generator\AdvNoiseGen.cs" />
     <Compile Include="Generator\Classic\ClassicGenerator.cs" />
     <Compile Include="Generator\Classic\ClassicGenerator.Utils.cs" />
     <Compile Include="Generator\Classic\Noise.cs" />
-    <Compile Include="Generator\fCraft\fCraftMapGen.cs" />
-    <Compile Include="Generator\fCraft\fCraftMapGenArgs.cs" />
+    <Compile Include="Generator\fCraft\MapGen.cs" />
+    <Compile Include="Generator\fCraft\MapGenArgs.cs" />
     <Compile Include="Generator\fCraft\Noise.cs" />
     <Compile Include="Generator\Foliage\AshTree.cs" />
-    <Compile Include="Generator\Foliage\ClassicTree.cs" />
-    <Compile Include="Generator\Foliage\fCraftTree.cs" />
     <Compile Include="Generator\Foliage\OakTree.cs" />
     <Compile Include="Generator\Foliage\ForesterTrees.cs" />
     <Compile Include="Generator\Foliage\StandardTrees.cs" />
     <Compile Include="Generator\Foliage\Tree.cs" />
     <Compile Include="Generator\HeightmapGen.cs" />
     <Compile Include="Generator\ImprovedNoise.cs" />
-    <Compile Include="Generator\LibNoise\AdvNoiseGen.cs" />
     <Compile Include="Generator\LibNoise\Billow.cs" />
-    <Compile Include="Generator\LibNoise\GradientNoise.cs" />
+    <Compile Include="Generator\LibNoise\Checkerboard.cs" />
+    <Compile Include="Generator\LibNoise\GradientNoiseBasis.cs" />
     <Compile Include="Generator\LibNoise\IModule.cs" />
     <Compile Include="Generator\LibNoise\Perlin.cs" />
     <Compile Include="Generator\LibNoise\RidgedMultifractal.cs" />
     <Compile Include="Generator\LibNoise\Voronoi.cs" />
     <Compile Include="Generator\MapGen.cs" />
-    <Compile Include="Generator\MapGenBiome.cs" />
-    <Compile Include="Generator\Realistic\RealisticMapGenArgs.cs" />
+    <Compile Include="Generator\Realistic\MapGenArgs.cs" />
     <Compile Include="Generator\Realistic\Noise.cs" />
-    <Compile Include="Generator\Realistic\RealisticMapGen.cs" />
+    <Compile Include="Generator\Realistic\MapGen.cs" />
     <Compile Include="Generator\SimpleGen.cs" />
     <Compile Include="Levels\EnvPreset.cs" />
     <Compile Include="Levels\Hacks.cs" />
@@ -511,7 +606,6 @@
     <Compile Include="Levels\LevelActions.cs" />
     <Compile Include="Levels\LevelEnv.cs" />
     <Compile Include="Levels\LevelInfo.cs" />
-    <Compile Include="Levels\LevelOperations.cs" />
     <Compile Include="Levels\LevelOptions.cs" />
     <Compile Include="Blocks\Physics\ActivateablePhysics.cs" />
     <Compile Include="Blocks\Physics\AirPhysics.cs" />
@@ -579,9 +673,9 @@
     <Compile Include="Network\ClassicProtocol.cs" />
     <Compile Include="Network\CPESupport.cs" />
     <Compile Include="Network\Heartbeat\ClassiCube.cs" />
+    <Compile Include="Network\Heartbeat\CmdCCBeat.cs" />
     <Compile Include="Network\Heartbeat\Heartbeat.cs" />
     <Compile Include="Modules\Relay\IRC\IRCBot.cs" />
-    <Compile Include="Network\IGameSession.cs" />
     <Compile Include="Network\Listeners.cs" />
     <Compile Include="Network\Packets\Opcode.cs" />
     <Compile Include="Network\Packets\Packet.cs" />
@@ -592,7 +686,8 @@
     <Compile Include="Network\Utils\LevelChunkStream.cs" />
     <Compile Include="Network\Utils\NetUtils.cs" />
     <Compile Include="Network\Utils\PingList.cs" />
-    <Compile Include="Player\Group.cs" />
+    <Compile Include="Player\Group\Group.cs" />
+    <Compile Include="Player\Group\GroupProperties.cs" />
     <Compile Include="Player\List\PlayerExtList.cs" />
     <Compile Include="Player\List\PlayerList.cs" />
     <Compile Include="Player\List\PlayerMetaList.cs" />
@@ -609,17 +704,19 @@
     <Compile Include="Database\Undo\UndoFormat.cs" />
     <Compile Include="Network\Player.Networking.cs" />
     <Compile Include="Scripting\Backends.cs" />
+    <Compile Include="Server\Authentication\Authenticator.cs" />
+    <Compile Include="Server\Authentication\AuthService.cs" />
     <Compile Include="Scripting\Plugin.cs" />
     <Compile Include="Scripting\Scripting.cs" />
     <Compile Include="Player\Ban.cs" />
     <Compile Include="Database\SqlTransaction.cs" />
     <Compile Include="Database\Database.cs" />
+    <Compile Include="Games\CTF\CtfGame.cs" />
     <Compile Include="Levels\BlockQueue.cs" />
     <Compile Include="Levels\Level.cs" />
     <Compile Include="Scripting\ScriptingOperations.cs" />
-    <Compile Include="Server\Authentication\LoginAuthenticator.cs" />
+    <Compile Include="Server\Authentication\Authenticator.cs" />
     <Compile Include="Server\Authentication\AuthService.cs" />
-    <Compile Include="Server\Authentication\PassAuthenticator.cs" />
     <Compile Include="Server\FileLogger.cs" />
     <Compile Include="Server\Logger.cs" />
     <Compile Include="Player\Player.cs" />
@@ -627,15 +724,6 @@
     <Compile Include="Server\Maintenance\Updater.cs" />
     <Compile Include="Server\Maintenance\ZipReader.cs" />
     <Compile Include="Server\Maintenance\ZipWriter.cs" />
-    <Compile Include="sharkbite.thresher\Listener.cs" />
-    <Compile Include="sharkbite.thresher\NameGenerator.cs" />
-    <Compile Include="sharkbite.thresher\ReplyCode.cs" />
-    <Compile Include="sharkbite.thresher\Rfc2812Util.cs" />
-    <Compile Include="sharkbite.thresher\UserInfo.cs" />
-    <Compile Include="util\Formatting\MultiPageOutput.cs" />
-    <Compile Include="util\Formatting\Wildcard.cs" />
-    <Compile Include="util\ImageUtils.cs" />
-    <Compile Include="util\OperatingSystem.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Server\Server.DB.cs" />
     <Compile Include="Server\Server.Fields.cs" />
@@ -652,25 +740,30 @@
     <Compile Include="util\FastList.cs" />
     <Compile Include="util\Formatting\Formatter.cs" />
     <Compile Include="util\Formatting\Matcher.cs" />
+    <Compile Include="util\Formatting\MultiPageOutput.cs" />
     <Compile Include="util\Formatting\Paginator.cs" />
     <Compile Include="util\IO\FileIO.cs" />
-    <Compile Include="Server\Paths.cs" />
+    <Compile Include="util\IO\Paths.cs" />
     <Compile Include="util\IO\TextFile.cs" />
     <Compile Include="util\Math\AABB.cs" />
     <Compile Include="util\Math\DirUtils.cs" />
     <Compile Include="util\Math\Vectors.cs" />
     <Compile Include="util\SparseBitSet.cs" />
     <Compile Include="util\Threading\IReaderWriterLock.cs" />
-    <Compile Include="util\Threading\AsyncWorker.cs" />
     <Compile Include="util\Threading\Scheduler.cs" />
     <Compile Include="util\Threading\ThreadSafeCache.cs" />
     <Compile Include="util\Threading\VolatileArray.cs" />
     <Compile Include="util\UIHelpers.cs" />
     <Compile Include="util\Utils.cs" />
     <Compile Include="sharkbite.thresher\Connection.cs" />
-    <Compile Include="sharkbite.thresher\Utils.cs" />
+    <Compile Include="sharkbite.thresher\Listener.cs" />
+    <Compile Include="sharkbite.thresher\NameGenerator.cs" />
+    <Compile Include="sharkbite.thresher\ReplyCode.cs" />
+    <Compile Include="sharkbite.thresher\Rfc2812Util.cs" />
+    <Compile Include="sharkbite.thresher\UserInfo.cs" />
     <Compile Include="util\ExtrasCollection.cs" />
     <Compile Include="properties\AssemblyInfo.cs" />
+    <Compile Include="Player\Player.CPE.cs" />
     <Compile Include="Database\PlayerDB.cs" />
     <Compile Include="Modules\GlobalRelay\GlobalBotControllersCmd.cs" />
     <Compile Include="Modules\GlobalRelay\GlobalDiscord\GlobalDiscordApiClient.cs" />
@@ -694,16 +787,32 @@
     <Compile Include="Scripting\Plugin_simple\Scripting_Simple.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Changelog.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4 Client Profile %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="..\LICENSE.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\sqlite3_x32.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\sqlite3_x64.dll">
+    <Content Include="sqlite3.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

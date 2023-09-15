@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,13 +17,13 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Data;
 using GoldenSparks.DB;
 using GoldenSparks.SQL;
 
-namespace GoldenSparks.Eco 
-{
-    public static partial class Economy 
-    {
+namespace GoldenSparks.Eco {
+    public static partial class Economy {
+        
         static ColumnDesc[] ecoTable = new ColumnDesc[] {
             new ColumnDesc("player", ColumnType.VarChar, 20, priKey: true),
             new ColumnDesc("money", ColumnType.Int32),
@@ -34,10 +34,11 @@ namespace GoldenSparks.Eco
             new ColumnDesc("fine", ColumnType.VarChar, 255),
         };
         
-        static EcoStats ParseOld(ISqlRecord record) {
+        static object ListOld(IDataRecord record, object arg) {
             EcoStats stats = ParseStats(record);
-            stats.__unused = record.GetInt("money");
-            return stats;
+            stats.__unused = record.GetInt("money");            
+            ((List<EcoStats>)arg).Add(stats);
+            return arg;
         }
         
         public static void LoadDatabase() {
@@ -45,9 +46,7 @@ namespace GoldenSparks.Eco
             
             // money used to be in the Economy table, move it back to the Players table
             List<EcoStats> outdated = new List<EcoStats>();
-            Database.ReadRows("Economy", "*", 
-                                record => outdated.Add(ParseOld(record)), 
-                                "WHERE money > 0");
+            Database.ReadRows("Economy", "*", outdated, ListOld, "WHERE money > 0");
             
             if (outdated.Count == 0) return;            
             Logger.Log(LogType.SystemActivity, "Upgrading economy stats..");   
@@ -79,7 +78,7 @@ namespace GoldenSparks.Eco
                                      stats.Payment, stats.Salary, stats.Fine);
         }
         
-        static EcoStats ParseStats(ISqlRecord record) {
+        static EcoStats ParseStats(IDataRecord record) {
             EcoStats stats;
             stats.Player = record.GetText("player");
             stats.Payment  = Parse(record.GetText("payment"));
@@ -97,13 +96,12 @@ namespace GoldenSparks.Eco
             return raw.CaselessEq("%cNone") ? null : raw;
         }
         
+        static object ReadStats(IDataRecord record, object arg) { return ParseStats(record); }
         public static EcoStats RetrieveStats(string name) {
-            EcoStats stats = default(EcoStats);
+            EcoStats stats = default;
             stats.Player   = name;
-            Database.ReadRows("Economy", "*", 
-                                record => stats = ParseStats(record),
-                                "WHERE player=@0", name);
-            return stats;
+            return (EcoStats)Database.ReadRows("Economy", "*", stats, ReadStats,
+                                               "WHERE player=@0", name);
         }
     }
 }

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.osedu.org/licenses/ECL-2.0
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,13 +21,13 @@ using GoldenSparks.Commands;
 using GoldenSparks.Eco;
 using GoldenSparks.Modules.Awards;
 
-namespace GoldenSparks.DB 
-{
+namespace GoldenSparks.DB {
+
     public delegate void OnlineStatPrinter(Player p, Player who);
     
     /// <summary> Prints stats for an online player in /info. </summary>
-    public static class OnlineStat 
-    {
+    public static class OnlineStat {
+
         /// <summary> List of stats that can be output to /info. </summary>
         public static List<OnlineStatPrinter> Stats = new List<OnlineStatPrinter>() {
             CoreLine,
@@ -49,8 +49,8 @@ namespace GoldenSparks.DB
             string fullName = prefix + who.ColoredName;
             CommonCoreLine(p, fullName, who.name, who.group, who.TotalMessagesSent);
         }
-        
-        internal static void CommonCoreLine(Player p, string fullName, string name, Group grp, int messages) {
+
+        public static void CommonCoreLine(Player p, string fullName, string name, Group grp, int messages) {
             p.Message("{0} &S({1}) has:", fullName, name);
             p.Message("  Rank of {0}&S, wrote &a{1} &Smessages", grp.ColoredName, messages);
         }
@@ -115,7 +115,7 @@ namespace GoldenSparks.DB
         
         public static void IPLine(Player p, string name, string ip) {
             ItemPerms seeIpPerms = CommandExtraPerms.Find("WhoIs", 1);
-            if (!seeIpPerms.UsableBy(p)) return;
+            if (!seeIpPerms.UsableBy(p.Rank)) return;
             
             string ipMsg = ip;
             if (Server.bannedIP.Contains(ip)) ipMsg = "&8" + ip + ", which is banned";
@@ -135,7 +135,7 @@ namespace GoldenSparks.DB
         }
         
         public static void EntityLine(Player p, Player who) {
-            bool hasSkin  = !who.SkinName.CaselessEq(who.truename);
+            bool hasSkin = !who.SkinName.CaselessEq(who.truename);
             // TODO remove hardcoding
             bool hasModel = !(who.Model.CaselessEq("humanoid") || who.Model.CaselessEq("human"));
             

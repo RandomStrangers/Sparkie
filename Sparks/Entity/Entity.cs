@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,19 +17,19 @@
  */
 using System;
 using System.Threading;
+using GoldenSparks.Events.EntityEvents;
 using GoldenSparks.Maths;
 
-namespace GoldenSparks 
-{
-    public abstract class Entity 
-    {
+namespace GoldenSparks {
+    public abstract class Entity {
+        
         // Raw orientation/position - access must be threadsafe
         volatile uint _rot;
         long _pos;
-        
+
         // Last sent orientation/position, for delta calculation
-        public Orientation _lastRot;
-        public Position _lastPos;
+        public Orientation lastRot;
+        public Position lastPos;
         internal bool hasExtPositions;
         
         public string Model = "humanoid";
@@ -48,7 +48,7 @@ namespace GoldenSparks
         }
         
         public void SetInitialPos(Position pos) {
-            Pos = pos; _lastPos = pos;
+            Pos = pos; lastPos = pos;
         }
         
         public void SetYawPitch(byte yaw, byte pitch) {
@@ -64,10 +64,10 @@ namespace GoldenSparks
         public abstract Level Level { get; }
         /// <summary> Whether maximum model scale is limited. </summary>
         public abstract bool RestrictsScale { get; }
-        
-        protected virtual void OnSetPos() { }
-        
-        protected virtual void OnSetRot() { }
+
+        public virtual void OnSetPos() { }
+
+        public virtual void OnSetRot() { }
         
         
         /// <summary> Sets new model and updates internal state. </summary>  

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -35,6 +35,10 @@ namespace GoldenSparks.Commands.Building {
         }
         
         public override void Use(Player p, string message, CommandData data) {
+            if (p.CurrentCopy == null) { 
+                p.Message("You haven't copied anything yet"); return; 
+            }
+            
             BrushArgs args = new BrushArgs(p, message, Block.Air);
             if (!BrushFactory.Find("Paste").Validate(args)) return;
             
@@ -43,15 +47,15 @@ namespace GoldenSparks.Commands.Building {
         }
 
         bool DoPaste(Player p, Vec3S32[] m, object state, BlockID block) {
+            CopyState cState = p.CurrentCopy;
+            m[0] += cState.Offset;
+            
             BrushArgs args = (BrushArgs)state;
             Brush brush = BrushFactory.Find("Paste").Construct(args);
             if (brush == null) return false;
 
-            CopyState cState = p.CurrentCopy;
-            PasteDrawOp op   = new PasteDrawOp();
-            op.CopyState     = cState;
-
-            m[0] += cState.Offset;
+            PasteDrawOp op = new PasteDrawOp();
+            op.CopyState = cState;
             DrawOpPerformer.Do(op, brush, p, m);
             return true;
         }

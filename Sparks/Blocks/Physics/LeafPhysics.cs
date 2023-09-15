@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,10 +22,9 @@ namespace GoldenSparks.Blocks.Physics {
     public unsafe static class LeafPhysics {
         
         public static void DoLeaf(Level lvl, ref PhysInfo C) {
+            // Decaying disabled? Then just remove from the physics list
             if (!lvl.Config.LeafDecay) {
-                if (lvl.physics > 1) ActivateablePhysics.CheckNeighbours(lvl, C.X, C.Y, C.Z);
-                C.Data.Data = PhysicsArgs.RemoveFromChecks; 
-                return;
+                C.Data.Data = PhysicsArgs.RemoveFromChecks; return;
             }
             
             // Delay checking for leaf decay for a random amount of time
@@ -76,7 +75,6 @@ namespace GoldenSparks.Blocks.Physics {
                     dists[idx] = -1;
             }
 
-            // TODO optimisable?
             for (int dist = 1; dist <= range; dist++) {
                 idx = 0;
                 

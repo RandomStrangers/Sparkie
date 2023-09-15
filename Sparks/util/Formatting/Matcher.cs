@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,16 +16,20 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
+using GoldenSparks.Eco;
 using GoldenSparks.Modules.Awards;
 
-namespace GoldenSparks 
-{  
+namespace GoldenSparks {
+    
     /// <summary> Finds partial matches of a 'name' against the names of the items in an enumerable. </summary>
     /// <remarks> returns number of matches found, and the matching item if only 1 match is found. </remarks>
-    public static class Matcher 
-    {
+    public static class Matcher {
+
         /// <summary> Finds partial matches of 'name' against the list of all awards. </summary>
         public static string FindAwards(Player p, string name) {
             int matches;
@@ -53,7 +57,7 @@ namespace GoldenSparks
         public static Level FindLevels(Player p, string name) {
             int matches;
             return Find(p, name, out matches, LevelInfo.Loaded.Items,
-                        null, l => l.name, l => l.ColoredName, "loaded levels");
+                        null, l => l.name, "loaded levels");
         }
 
         /// <summary> Find partial matches of 'name' against the list of all map files. </summary>
@@ -69,7 +73,7 @@ namespace GoldenSparks
             Group.MapName(ref name);
             int matches;
             return Find(p, name, out matches, Group.GroupList,
-                        null, g => Colors.Strip(g.Name), g => g.ColoredName, "ranks");
+                        null, g => Colors.Strip(g.Name), "ranks");
         }
         
         /// <summary> Find partial matches of 'name' against a list of warps. </summary>
@@ -92,21 +96,11 @@ namespace GoldenSparks
         /// <returns> If exactly one match, the matching item. </returns>
         public static T Find<T>(Player p, string name, out int matches, IEnumerable<T> items,
                                 Predicate<T> filter, StringFormatter<T> nameGetter, string group, int limit = 5)  {
-            return Find<T>(p, name, out matches, items, filter, nameGetter, nameGetter, group, limit);
-        }
-        
-        
-        /// <summary> Finds partial matches of 'name' against the names of the items in the 'items' enumerable. </summary>
-        /// <returns> If exactly one match, the matching item. </returns>
-        public static T Find<T>(Player p, string name, out int matches, IEnumerable<T> items,
-                                Predicate<T> filter, StringFormatter<T> nameGetter, 
-                                StringFormatter<T> itemFormatter, string group, int limit = 5)  {
             T match = default(T); matches = 0;
-            StringBuilder output = new StringBuilder();
+            StringBuilder nameMatches = new StringBuilder();
             const StringComparison comp = StringComparison.OrdinalIgnoreCase;
 
-            foreach (T item in items)
-            {
+            foreach (T item in items) {
                 if (filter != null && !filter(item)) continue;
                 string itemName = nameGetter(item);
                 if (itemName.Equals(name, comp)) { matches = 1; return item; }
@@ -114,23 +108,109 @@ namespace GoldenSparks
                 
                 match = item; matches++;
                 if (matches <= limit) {
-                    output.Append(itemFormatter(item)).Append("&S, ");
+                    nameMatches.Append(itemName).Append(", ");
                 } else if (matches == limit + 1) {
-                    output.Append("(and more), ");
+                    nameMatches.Append("(and more)").Append(", ");
                 }
             }
             
             if (matches == 1) return match;
             if (matches == 0) {
-                p.Message("No {0} match \"{1}\".", group, name); return default(T);
+                p.Message("No " + group + " match \"" + name + "\".");
+            } else {
+                OutputMulti(p, name, nameMatches, matches, group, limit);
+            }
+            return default(T);
+        }
+        
+        /// <summary> Finds partial matches of 'name' against the names of the items in the 'items' enumerable. </summary>
+        /// <remarks> Outputs multiple matching entries, as 'items' enumerable may have multiple entries. </remarks>
+        /// <returns> If exactly one match, the matching list of items. </returns>
+        public static List<T> FindMulti<T>(Player p, string name, out int matches, IEnumerable items,
+                                           Predicate<T> filter, StringFormatter<T> nameGetter, string group, int limit = 5)  {
+            List<T> matchItems = null; matches = 0;
+            StringBuilder nameMatches = new StringBuilder();
+            List<string> outputtedNames = new List<string>(limit);
+            string match = null;
+            const StringComparison comp = StringComparison.OrdinalIgnoreCase;
+
+            foreach (T item in items) {
+                if (filter != null && !filter(item)) continue;
+                string itemName = nameGetter(item);
+                
+                // Found an exact name match - only output items now which exactly match
+                if (itemName.Equals(name, comp)) {
+                    if (match == null || !name.Equals(match, comp))
+                        matchItems = new List<T>();
+                    matchItems.Add(item);
+                    
+                    matches = 1; match = name;
+                    continue;
+                }
+                
+                if (itemName.IndexOf(name, comp) < 0) continue;
+                if (matches == 0) { // Found our first partial match - init the list
+                    matchItems = new List<T>();
+                    matchItems.Add(item);
+                    match = itemName;
+                } else if (match != null && itemName.Equals(match, comp)) { // Found same partial match
+                    matchItems.Add(item);
+                }
+                
+                // We do not want to output the same name multiple times
+                if (outputtedNames.CaselessContains(itemName) || matches > (limit + 1)) continue;
+                matches++;
+                
+                if (matches <= limit) {
+                    nameMatches.Append(itemName).Append(", ");
+                } else if (matches == limit + 1) {
+                    nameMatches.Append("(and more)").Append(", ");
+                }
+                outputtedNames.Add(itemName);
             }
             
+            if (matches == 1) return matchItems;
+            if (matches == 0) {
+                p.Message("No " + group + " found for \"" + name + "\".");
+            } else {
+                OutputMulti(p, name, nameMatches, matches, "players", limit);
+            }
+            return null;
+        }
+        
+        static void OutputMulti(Player p, string name, StringBuilder nameMatches,
+                                int matches, string group, int limit = 5) {
             string count = matches > limit ? limit + "+ " : matches + " ";
-            string names = output.ToString(0, output.Length - 2);
+            string names = nameMatches.ToString(0, nameMatches.Length - 2);
             
-            p.Message("{0}{1} match \"{2}\":", count, group, name);
+            p.Message(count + group + " match \"" + name + "\":");
             p.Message(names);
-            return default(T);
+        }
+
+        
+        /// <summary> Filters the given list of items to matching item names. Accepts * and ? wildcard tokens. </summary>
+        public static List<string> Filter<T>(IList<T> input, string keyword, StringFormatter<T> nameGetter,
+                                          Predicate<T> filter = null, StringFormatter<T> listFormatter = null) {
+            List<string> matches = new List<string>();
+            Regex regex = null;
+            // wildcard matching
+            if (keyword.Contains("*") || keyword.Contains("?")) {
+                string pattern = "^" + Regex.Escape(keyword).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+                regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            }
+            
+            foreach (T item in input) {
+                if (filter != null && !filter(item)) continue;
+                string name = nameGetter(item);
+                
+                if (regex != null) { if (!regex.IsMatch(name)) continue; }
+                else { if (!name.CaselessContains(keyword))    continue; }
+                
+                // format this item for display
+                if (listFormatter != null) name = listFormatter(item);
+                matches.Add(name);
+            }
+            return matches;
         }
     }
 }

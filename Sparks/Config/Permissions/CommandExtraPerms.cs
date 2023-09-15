@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,32 +19,31 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace GoldenSparks.Commands 
-{    
+namespace GoldenSparks.Commands {
+    
     /// <summary> Represents additional permissions required to perform a special action in a command. </summary>
     /// <remarks> For example, /color command has an extra permission for changing the color of other players. </remarks>
-    public class CommandExtraPerms : ItemPerms 
-    {
+    public class CommandExtraPerms : ItemPerms {
+
         public string CmdName, Desc = "";
         public int Num;
         public override string ItemName { get { return CmdName + ":" + Num; } }
         
-        static List<CommandExtraPerms> list = new List<CommandExtraPerms>();
-        
-        
-        public CommandExtraPerms(string cmd, int num, string desc, LevelPermission min) : base(min) {
+        public CommandExtraPerms(string cmd, int num, string desc,
+                                 LevelPermission min, List<LevelPermission> allowed,
+                                 List<LevelPermission> disallowed) : base(min, allowed, disallowed) {
             CmdName = cmd; Num = num; Desc = desc;
         }
         
+        
         public CommandExtraPerms Copy() {
-            CommandExtraPerms copy = new CommandExtraPerms(CmdName, Num, Desc, 0);
-            CopyPermissionsTo(copy); return copy;
+            CommandExtraPerms copy = new CommandExtraPerms(CmdName, Num, Desc, 0, null, null);
+            CopyTo(copy); return copy;
         }
         
-        
+        static List<CommandExtraPerms> list = new List<CommandExtraPerms>();
         public static CommandExtraPerms Find(string cmd, int num) {
-            foreach (CommandExtraPerms perms in list) 
-            {
+            foreach (CommandExtraPerms perms in list) {
                 if (perms.CmdName.CaselessEq(cmd) && perms.Num == num) return perms;
             }
             return null;
@@ -52,24 +51,38 @@ namespace GoldenSparks.Commands
         
         public static List<CommandExtraPerms> FindAll(string cmd) {
             List<CommandExtraPerms> all = new List<CommandExtraPerms>();
-            foreach (CommandExtraPerms perms in list) 
-            {
+            foreach (CommandExtraPerms perms in list) {
                 if (perms.CmdName.CaselessEq(cmd) && perms.Desc.Length > 0) all.Add(perms);
             }
             return all;
         }
         
-        
-        /// <summary> Gets or adds the nth extra permission for the given command. </summary>
-        public static CommandExtraPerms GetOrAdd(string cmd, int num, LevelPermission min) {
-            CommandExtraPerms perms = Find(cmd, num);
-            if (perms != null) return perms;
-            
-            perms = new CommandExtraPerms(cmd, num, "", min);
+
+        static CommandExtraPerms Add(string cmd, int num, string desc, LevelPermission min, 
+                                     List<LevelPermission> allowed, List<LevelPermission> disallowed) {
+            CommandExtraPerms perms = new CommandExtraPerms(cmd, num, desc, min, allowed, disallowed);
             list.Add(perms);
             return perms;
         }
-              
+        
+        /// <summary> Sets the nth extra permission for the given command. </summary>
+        public static void Set(string cmd, int num, string desc, LevelPermission min,
+                               List<LevelPermission> allowed, List<LevelPermission> disallowed) {
+            CommandExtraPerms perms = Find(cmd, num);
+            if (perms == null) {
+                Add(cmd, num, desc, min, allowed, disallowed);
+            } else {
+                perms.CmdName = cmd; perms.Num = num;
+                if (!string.IsNullOrEmpty(desc)) perms.Desc = desc;
+                perms.Init(min, allowed, disallowed);
+            }
+        }
+        
+        /// <summary> Gets or adds the nth extra permission for the given command. </summary>
+        public static CommandExtraPerms GetOrAdd(string cmd, int num, LevelPermission min) {
+            return Find(cmd, num) ?? Add(cmd, num, "", min, null, null);
+        }
+        
         public void MessageCannotUse(Player p) {
             p.Message("Only {0} {1}", Describe(), Desc);
         }
@@ -87,7 +100,7 @@ namespace GoldenSparks.Commands
         
         static void SaveCore() {
             using (StreamWriter w = new StreamWriter(Paths.CmdExtraPermsFile)) {
-                WriteHeader(w, "extra command permissions", "extra permissions in some commands",
+                WriteHeader(w, "extra permissions in some commands",
                             "CommandName:ExtraPermissionNumber", "countdown:1");
                 
                 foreach (CommandExtraPerms perms in list) {
@@ -110,7 +123,6 @@ namespace GoldenSparks.Commands
         
         static void ProcessLines(StreamReader r) {
             string[] args = new string[5];
-            CommandExtraPerms perms;
             string line;
             
             while ((line = r.ReadLine()) != null) {
@@ -130,8 +142,7 @@ namespace GoldenSparks.Commands
                         Deserialise(args, 2, out min, out allowed, out disallowed);
                     }
                     
-                    perms = GetOrAdd(args[0], int.Parse(args[1]), min);
-                    perms.Init(min, allowed, disallowed);
+                    Set(args[0], int.Parse(args[1]), "", min, allowed, disallowed);
                 } catch (Exception ex) {
                     Logger.Log(LogType.Warning, "Hit an error on the extra command perms " + line);
                     Logger.LogError(ex);
@@ -140,11 +151,16 @@ namespace GoldenSparks.Commands
         }
         
         static bool IsDescription(string arg) {
-            foreach (char c in arg) 
-            {
+            foreach (char c in arg) {
                 if (c >= 'a' && c <= 'z') return true;
             }
             return false;
+        }
+        
+        static void LoadExtraPerm(string[] args) {
+            string cmdName = args[0];
+            int num = int.Parse(args[1]), minPerm = int.Parse(args[2]);
+            Set(cmdName, num, "", (LevelPermission)minPerm, null, null);
         }
     }
 }

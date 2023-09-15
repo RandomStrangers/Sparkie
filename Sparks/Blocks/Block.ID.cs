@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -23,12 +23,13 @@ namespace GoldenSparks
     {
         /// <summary> Highest block ID supported in Classic </summary>
         public const byte CLASSIC_MAX_BLOCK = Obsidian;
-        /// <summary> Highest block ID supported in Classic + CPE CustomBlocks </summary>
+        /// <summary> Total number of blocks in Classic </summary>
+        public const byte CLASSIC_COUNT     = CLASSIC_MAX_BLOCK + 1;
+        /// <summary> Highest block ID supported in Classic + CPE custom blocks </summary>
         public const byte CPE_MAX_BLOCK     = StoneBrick;
         /// <summary> Total number of blocks in Classic + CPE CustomBlocks </summary>
         public const byte CPE_COUNT         = CPE_MAX_BLOCK + 1;
-        /// <summary> Total number of blocks in Classic + CPE CustomBlocks + physics blocks </summary>
-        public const int  CORE_COUNT = 256;
+        public const int Count = 256;
 
         // 10 bit block ids are broken down into: 2 bits of class/type, 8 bits value
         // class | value meaning
@@ -44,14 +45,13 @@ namespace GoldenSparks
         // 11    | Extended custom blocks:
         //       |    0 to 255 are custom blocks 512 to 767
         //
-        // E.g. 0x080 = class 00, value 128 = physics block 128
-        // E.g. 0x180 = class 01, value 128 =  custom block 128
+        // E.g. 0x080 = class 01, value 128 = physics block 128
+        // E.g. 0x180 = class 00, value 128 =  custom block 128
         
-        #if TEN_BIT_BLOCKS
         public const ushort MaxRaw = 767;
-        internal const int SUPPORTED_COUNT = 256 * 4;
-        internal static ushort[] ExtendedBase = new ushort[CORE_COUNT];
-        internal static byte[] ExtendedClass  = new byte[4];
+        public const int ExtendedCount = 256 * 4;
+        public static ushort[] ExtendedBase = new ushort[Block.Count];
+        public static byte[] ExtendedClass = new byte[4];
         
         static Block() {
             ExtendedBase[custom_block]   = Extended;
@@ -63,13 +63,7 @@ namespace GoldenSparks
             ExtendedClass[2] = custom_block_2;
             ExtendedClass[3] = custom_block_3;
         }
-        #else
-        public const ushort MaxRaw = 255;
-        internal const int SUPPORTED_COUNT = 256 * 2;
-        #endif
 
-        // non-const for external code (SUPPORTED_COUNT value differs when TEN_BIT_BLOCKS)
-        public static readonly int ExtendedCount = SUPPORTED_COUNT;
         
         // Original blocks
         public const byte Air = 0;
@@ -305,10 +299,8 @@ namespace GoldenSparks
         public const byte Geyser = 196;
         
         public const byte Checkpoint = 197;
-        #if TEN_BIT_BLOCKS
         public const byte custom_block_2 = 198;
         public const byte custom_block_3 = 199;
-        #endif
         
         // Air type blocks
         public const byte Air_Flood = 200;
@@ -373,6 +365,7 @@ namespace GoldenSparks
         public const byte Door_Gold = 253;
         //public const byte Door_Gold_air = 254;       // unused in core
         
+        public const byte Zero = 0xff; // backwards compatibility
         public const byte Invalid = 0xff;
         
         public const ushort Extended = 256;

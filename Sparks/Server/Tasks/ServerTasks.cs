@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     Copyright 2011 MCForge
     
     Dual-licensed under the Educational Community License, Version 2.0 and
@@ -7,8 +7,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,21 +17,27 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using GoldenSparks.Commands.Chatting;
+using GoldenSparks.Network;
+using GoldenSparks.Maths;
 
 namespace GoldenSparks.Tasks {
-    internal static class ServerTasks {
+    public static class ServerTasks {
 
-        internal static void QueueTasks() {
+        public static void QueueTasks() {
             Server.MainScheduler.QueueRepeat(CheckState, null, TimeSpan.FromSeconds(3));
             Server.Background.QueueRepeat(AutoSave, 1, Server.Config.BackupInterval);
             Server.Background.QueueRepeat(BlockUpdates, null, Server.Config.BlockDBSaveInterval);
         }
-        
-        
-        internal static void TickPlayers(SchedulerTask task) {
+
+
+        public static void TickPlayers(SchedulerTask task) {
             Player[] players = PlayerInfo.Online.Items;
-            int delay  = players.Length == 0 ? 100 : 20;
+            players = PlayerInfo.Online.Items;
+            int delay = players.Length == 0 ? 100 : 20;
             task.Delay = TimeSpan.FromMilliseconds(delay);
             
             for (int i = 0; i < players.Length; i++) {
@@ -74,16 +80,16 @@ namespace GoldenSparks.Tasks {
                 p.CriticalTasks.Remove(task);
             }
         }
-        
-        internal static void UpdateEntityPositions(SchedulerTask task) {
+
+        public static void UpdateEntityPositions(SchedulerTask task) {
             Entities.GlobalUpdate();
             PlayerBot.GlobalUpdatePosition();
             task.Delay = TimeSpan.FromMilliseconds(Server.Config.PositionUpdateInterval);
         }
-        
-        internal static void CheckState(SchedulerTask task) {
+
+        public static void CheckState(SchedulerTask task) {
             Player[] players = PlayerInfo.Online.Items;
-            foreach (Player p in players)
+            foreach (Player p in players) 
             {
                 p.Session.SendPing();
                 if (Server.Config.AutoAfkTime.Ticks <= 0) return;
@@ -108,8 +114,8 @@ namespace GoldenSparks.Tasks {
                 }
             }
         }
-        
-        internal static void BlockUpdates(SchedulerTask task) {
+
+        public static void BlockUpdates(SchedulerTask task) {
             Level[] loaded = LevelInfo.Loaded.Items;
             task.Delay = Server.Config.BlockDBSaveInterval;
             
@@ -122,8 +128,8 @@ namespace GoldenSparks.Tasks {
                 }
             }
         }
-        
-        internal static void AutoSave(SchedulerTask task) {
+
+        public static void AutoSave(SchedulerTask task) {
             int count = (int)task.State;
             count--;
             Level[] levels = LevelInfo.Loaded.Items;

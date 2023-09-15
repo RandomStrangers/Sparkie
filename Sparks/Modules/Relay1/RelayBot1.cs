@@ -522,7 +522,7 @@ namespace GoldenSparks.Modules.Relay1
                 SuperName = bot.RelayName;
             }
             
-            public override void Message2(byte type, string message) {
+            public override void Message(byte type, string message) {
                 Bot.SendMessage(ChannelID, message);
             }
         }

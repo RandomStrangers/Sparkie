@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,16 +17,16 @@
  */
 using System;
 
-namespace GoldenSparks.Eco 
-{    
-    public sealed class TitleItem : SimpleItem 
-    {    
+namespace GoldenSparks.Eco {
+    
+    public sealed class TitleItem : SimpleItem {
+        
         public TitleItem() {
             Aliases = new string[] { "titles", "title" };
         }
         
         public override string Name { get { return "Title"; } }
-        
+
         public override void OnPurchase(Player p, string title) {
             if (title.Length == 0) {
                 PlayerOperations.SetTitle(p, p.name, "");
@@ -43,14 +43,14 @@ namespace GoldenSparks.Eco
         }
     }
     
-    public sealed class NickItem : SimpleItem 
-    {    
+    public sealed class NickItem : SimpleItem {
+        
         public NickItem() {
             Aliases = new string[] { "nickname", "nick", "name" };
         }
         
         public override string Name { get { return "Nickname"; } }
-        
+
         public override void OnPurchase(Player p, string nick) {
             if (nick.Length == 0) {
                 PlayerOperations.SetNick(p, p.name, "");
@@ -61,8 +61,8 @@ namespace GoldenSparks.Eco
             if (nick == p.DisplayName) {
                 p.Message("&WYou already have that nickname."); return;
             }
-            if (nick.Length >= 30) {
-                p.Message("&WNicknames must be under 30 characters."); return;
+            if (nick.Length >= 128) {
+                p.Message("&WNicknames must be under 128 characters."); return;
             }
             
             if (!PlayerOperations.SetNick(p, p.name, nick)) return;
@@ -70,14 +70,14 @@ namespace GoldenSparks.Eco
         }
     }
     
-    public sealed class TitleColorItem : SimpleItem 
-    {    
+    public sealed class TitleColorItem : SimpleItem {
+        
         public TitleColorItem() {
             Aliases = new string[] { "tcolor", "tcolour", "titlecolor", "titlecolour" };
         }
         
         public override string Name { get { return "TitleColor"; } }
-        
+
         public override void OnPurchase(Player p, string args) {
             if (args.Length == 0) { OnStoreCommand(p); return; }
             string color = Matcher.FindColor(p, args);
@@ -95,8 +95,8 @@ namespace GoldenSparks.Eco
         }
     }
     
-    public sealed class ColorItem : SimpleItem 
-    {    
+    public sealed class ColorItem : SimpleItem {
+        
         public ColorItem() {
             Aliases = new string[] { "color", "colour" };
         }

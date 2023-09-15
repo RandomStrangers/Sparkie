@@ -298,7 +298,7 @@ namespace GoldenSparks.Modules.Relay1.Discord1
         }
         
         string GetStatusMessage() {
-            string online = PlayerInfo.Count().ToString();
+            string online = PlayerInfo.NonHiddenCount().ToString();
             return Config.StatusMessage.Replace("{PLAYERS}", online);
         }
         

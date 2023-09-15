@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,6 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Collections.Generic;
 
 // kept in this namespace for backwards compatbility
 namespace GoldenSparks 
@@ -39,7 +40,7 @@ namespace GoldenSparks.Events
     /// This is because the static event lists are unique to each new generic type instantiation, not each new subclass. </remarks>
     public class IEvent<IMethod> 
     {
-        protected internal static VolatileArray<IEvent<IMethod>> handlers = new VolatileArray<IEvent<IMethod>>();
+        public static VolatileArray<IEvent<IMethod>> handlers = new VolatileArray<IEvent<IMethod>>();
         public IMethod method;
         public Priority priority;
         
@@ -68,8 +69,7 @@ namespace GoldenSparks.Events
             Delegate methodDel = (Delegate)((object)method);
             IEvent<IMethod>[] items = handlers.Items;
             
-            foreach (var p in items) 
-            {
+            foreach (var p in items) {
                 Delegate pMethodDel = (Delegate)((object)p.method);
                 if (pMethodDel == methodDel) return p;
             }
@@ -91,19 +91,18 @@ namespace GoldenSparks.Events
                 handlers.Items = items;
             }
         }
-        
-        protected static void CallCommon(Action<IMethod> action) {
+
+        public static void CallCommon(Action<IMethod> action) {
             IEvent<IMethod>[] items = handlers.Items;
-            for (int i = 0; i < items.Length; i++) 
-            {
+            for (int i = 0; i < items.Length; i++) {
                 IEvent<IMethod> handler = items[i];
                 
                 try { action(handler.method); } 
                 catch (Exception ex) { LogHandlerException(ex, handler); }
             }
         }
-        
-        protected static void LogHandlerException(Exception ex, IEvent<IMethod> handler) {
+
+        public static void LogHandlerException(Exception ex, IEvent<IMethod> handler) {
             string msg = MethodFormat("Method {0} errored when calling {1} event", handler.method);
             Logger.LogError(msg, ex);
         }

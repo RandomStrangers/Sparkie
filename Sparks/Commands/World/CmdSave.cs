@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -60,7 +60,7 @@ namespace GoldenSparks.Commands.World {
             if (!force && !lvl.Changed) return false;
             
             if (!lvl.SaveChanges) {
-                p.Message("Saving {0} &Sis currently disabled (most likely because a game is or was running on the level)", lvl.ColoredName);
+                p.Message("Level {0} &Sis running a game, skipping save", lvl.ColoredName);
                 return false;
             }
             
@@ -69,11 +69,20 @@ namespace GoldenSparks.Commands.World {
             return saved;
         }
         
-        static void Save(Player p, Level lvl, string backup) {
+        static void Save(Player p, Level lvl, string restoreName) {
             if (!TrySave(p, lvl, true)) return;
             p.Message("Level {0} &Ssaved", lvl.ColoredName);
             
-            LevelOperations.Backup(p, lvl, backup);
+            string backup = lvl.Backup(true, restoreName);
+            if (backup == null) return;
+            
+            if (restoreName.Length == 0) {
+                Logger.Log(LogType.SystemActivity, "Backup {1} saved for {0}", lvl.name, backup);
+                lvl.Message("Backup " + backup + " saved for " + lvl.ColoredName);
+            } else {
+                Logger.Log(LogType.SystemActivity, "{0} had a backup created named &b{1}", lvl.name, backup);
+                lvl.Message(lvl.ColoredName + " &Shad a backup created named &b" + backup);
+            }
         }
         
         public override void Help(Player p) {

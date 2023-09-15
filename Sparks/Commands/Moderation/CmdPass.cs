@@ -7,8 +7,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-        https://opensource.org/license/ecl-2-0/
-        https://www.gnu.org/licenses/gpl-3.0.html
+        http://www.opensource.org/licenses/ecl2.php
+        http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,6 +20,7 @@
 using System;
 using GoldenSparks.Authentication;
 
+
 namespace GoldenSparks.Commands.Moderation {
     public sealed class CmdPass : Command2 {
         public override string name { get { return "Pass"; } }
@@ -27,9 +28,6 @@ namespace GoldenSparks.Commands.Moderation {
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
         public override bool LogUsage { get { return false; } }
         public override bool UpdatesLastCmd { get { return false; } }
-        public override CommandPerm[] ExtraPerms {
-            get { return new[] { new CommandPerm(LevelPermission.Owner, "can reset passwords") }; }
-        }
         public override CommandAlias[] Aliases {
             get { return new[] { new CommandAlias("SetPass", "set"), new CommandAlias("ResetPass", "reset") }; }
         }
@@ -46,7 +44,7 @@ namespace GoldenSparks.Commands.Moderation {
             if (args.Length == 2 && args[0].CaselessEq("set")) {
                 SetPassword(p, args[1]);
             } else if (args.Length == 2 && args[0].CaselessEq("reset")) {
-                ResetPassword(p, args[1], data);
+                ResetPassword(p, args[1]);
             } else {
                 VerifyPassword(p, message);
             }
@@ -57,59 +55,68 @@ namespace GoldenSparks.Commands.Moderation {
             if (p.passtries >= 3) { p.Kick("Did you really think you could keep on guessing?"); return; }
             if (password.IndexOf(' ') >= 0) { p.Message("Your password must be &Wone &Sword!"); return; }
 
-            if (!PassAuthenticator.Current.HasPassword(p.name)) {
+            if (!Authenticator.Current.HasPassword(p.name)) {
                 p.Message("You have not &Wset a password, &Suse &T/SetPass [Password] &Wto set one!");
                 return;
             } 
             
-            if (PassAuthenticator.VerifyPassword(p, password)) return;
-            
-             p.passtries++;
-             p.Message("&WWrong Password. &SRemember your password is &Wcase sensitive.");
-             p.Message("Forgot your password? Contact &W{0} &Sto &Wreset it.", Server.Config.OwnerName);
+            if (Authenticator.Current.VerifyPassword(p.name, password)) {
+                p.Message("You are now &averified &Sand can now &ause commands, modify blocks, and chat.");
+                p.verifiedPass = true;
+                p.Unverified   = false;
+            } else {
+                p.passtries++;
+                p.Message("&WWrong Password. &SRemember your password is &Wcase sensitive.");
+                p.Message("Forgot your password? Contact &W{0} &Sto &Wreset it.", Server.Config.OwnerName);
+            }
         }
         
         static void SetPassword(Player p, string password) {
-            if (p.Unverified && PassAuthenticator.Current.HasPassword(p.name)) {
-                PassAuthenticator.Current.RequiresVerification(p, "can change your password");
+            if (p.Unverified && Authenticator.Current.HasPassword(p.name)) {
+                Authenticator.Current.RequiresVerification(p, "can change your password");
                 p.Message("Forgot your password? Contact &W{0} &Sto &Wreset it.", Server.Config.OwnerName);
                 return;
             }
-            
+
             if (password.IndexOf(' ') >= 0) { p.Message("&WPassword must be one word."); return; }
-            PassAuthenticator.Current.StorePassword(p.name, password);
+            Authenticator.Current.StorePassword(p.name, password);
             p.Message("Your password was &aset to: &c" + password);
         }
         
-        void ResetPassword(Player p, string name, CommandData data) {
-            string target = PlayerInfo.FindMatchesPreferOnline(p, name);
+        void ResetPassword(Player p, string name) {
+            if (name.Length == 0) { Help(p); return; }
+            Player target = PlayerInfo.FindMatches(p, name);
             if (target == null) return;
-            
-            if (p.Unverified) {
-                PassAuthenticator.Current.RequiresVerification(p, "can reset passwords");
+            if (!p.IsSparkie && p.Unverified)
+            {
+                Authenticator.Current.RequiresVerification(p, "can reset passwords");
                 return;
             }
-            if (!CheckResetPerms(p, data)) return;
-            
-            if (PassAuthenticator.Current.ResetPassword(target)) {
+            if (!p.IsSparkie && !Server.Config.OwnerName.CaselessEq(p.name))
+            {
+                p.Message("&WOnly GoldenSparks and the server owner may reset passwords."); return;
+            }
+
+            if (Authenticator.Current.ResetPassword(target.name))
+            {
                 p.Message("Reset password for {0}", p.FormatNick(target));
-            } else {
+            }
+            else
+            {
                 p.Message("{0} &Sdoes not have a password.", p.FormatNick(target));
             }
         }
 
-        bool CheckResetPerms(Player p, CommandData data) {
-            // check server owner name for permissions backwards compatibility
-            return Server.Config.OwnerName.CaselessEq(p.name) || CheckExtraPerm(p, data, 1);
-        }
-        
-        public override void Help(Player p) {
+        public override void Help(Player p)
+        {
             p.Message("&T/Pass reset [player] &H- Resets the password for that player");
+            p.Message("&H Note: Can only be used by Sparks and the server owner.");
             p.Message("&T/Pass set [password] &H- Sets your password to [password]");
-            p.Message("&H Note: &WDo NOT set this as your Minecraft password!");
+            p.Message("&H Note: &WDo NOT set this as your ClassiCube password!");
             p.Message("&T/Pass [password]");
             p.Message("&HIf you are an admin, use this command to verify your login.");
             p.Message("&H You must be verified to use commands, modify blocks, and chat");
         }
     }
 }
+

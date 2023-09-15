@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,10 +20,8 @@ using System.Collections.Generic;
 using System.IO;
 using GoldenSparks.Bots;
 
-namespace GoldenSparks.Commands.Bots
-{
-    public sealed class CmdBotAI : Command2 
-    {
+namespace GoldenSparks.Commands.Bots{
+    public sealed class CmdBotAI : Command2 {
         public override string name { get { return "BotAI"; } }
         public override string shortcut { get { return "bai"; } }
         public override string type { get { return CommandTypes.Other; } }
@@ -42,7 +40,7 @@ namespace GoldenSparks.Commands.Bots
             if (args.Length < 2) { Help(p); return; }
             string ai = args[1].ToLower();
 
-            if (!Formatter.ValidFilename(p, ai)) return;
+            if (!Formatter.ValidName(p, ai, "bot AI")) return;
             if (ai == "hunt" || ai == "kill") { p.Message("Reserved for special AI."); return; }
 
             if (IsCreateCommand(cmd)) {
@@ -112,8 +110,8 @@ namespace GoldenSparks.Commands.Bots
         
         void HandleList(Player p, string modifier) {
             string[] files = Directory.GetFiles("bots");
-            Paginator.Output(p, files, f => Path.GetFileName(f),
-                             "BotAI list", "bot AIs", modifier);
+            MultiPageOutput.Output(p, files, f => Path.GetFileName(f),
+                                   "BotAI list", "bot AIs", modifier, false);
         }
         
         void HandleInfo(Player p, string ai) {

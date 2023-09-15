@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,6 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using GoldenSparks.DB;
@@ -28,12 +29,11 @@ namespace GoldenSparks {
         
         /// <summary> Array of all current loaded levels. </summary>
         /// <remarks> Note this field is highly volatile, you should cache references to the items array. </remarks>
-        public static VolatileArray<Level> Loaded = new VolatileArray<Level>();
+        public static VolatileArray<Level> Loaded = new VolatileArray<Level>(true);
 
         public static Level FindExact(string name) {
             Level[] loaded = Loaded.Items;
-            foreach (Level lvl in loaded) 
-            {
+            foreach (Level lvl in loaded) {
                 if (lvl.name.CaselessEq(name)) return lvl;
             }
             return null;
@@ -57,8 +57,7 @@ namespace GoldenSparks {
         
         public static string[] AllMapNames() {
             string[] files = AllMapFiles();
-            for (int i = 0; i < files.Length; i++) 
-            {
+            for (int i = 0; i < files.Length; i++) {
                 files[i] = Path.GetFileNameWithoutExtension(files[i]);
             }
             return files;
@@ -93,13 +92,12 @@ namespace GoldenSparks {
             return path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
         }
         
-        public static int LatestBackup(string map) {
-            string root = BackupBasePath(map);
-            string[] backups = Directory.GetDirectories(root);
+        public static int LatestBackup(string name) {
+            string dir = BackupBasePath(name);
+            string[] backups = Directory.GetDirectories(dir);
             int latest = 0;
             
-            foreach (string path in backups) 
-            {
+            foreach (string path in backups) {
                 string backupName = BackupNameFrom(path);
                 int num;
                 
@@ -109,11 +107,30 @@ namespace GoldenSparks {
             return latest;
         }
         
-        public static string NextBackup(string map) {
-            string root = BackupBasePath(map);
-            Directory.CreateDirectory(root);
-            
-            return (LatestBackup(map) + 1).ToString();
+        public static void OutputBackups(Player p, string map) {
+            map = map.ToLower();
+            string backupPath = BackupBasePath(map);
+            if (!Directory.Exists(backupPath)) {
+                p.Message(map + " has no backups yet."); return;
+            }
+
+            string[] dirs = Directory.GetDirectories(backupPath);
+            p.Message(map + " has &b" + dirs.Length + " &Sbackups.");
+            int count = 0;
+            StringBuilder custom = new StringBuilder();
+
+            foreach (string path in dirs) {
+                string name = BackupNameFrom(path);
+                int num;
+                if (int.TryParse(name, out num)) continue;
+
+                count++;
+                custom.Append(", " + name);
+            }
+
+            if (count == 0) return;
+            p.Message("&b" + count + " &Sof these are custom-named restores:");
+            p.Message(custom.ToString(2, custom.Length - 2));
         }
 
         /// <summary> Relative path of a level's property file </summary>
@@ -124,8 +141,8 @@ namespace GoldenSparks {
         public static LevelConfig GetConfig(string map) {
             Level lvl; return GetConfig(map, out lvl);
         }
-        
-        internal static LevelConfig GetConfig(string map, out Level lvl) {
+
+        public static LevelConfig GetConfig(string map, out Level lvl) {
             lvl = FindExact(map);
             if (lvl != null) return lvl.Config;
             
@@ -138,6 +155,7 @@ namespace GoldenSparks {
         public static bool Check(Player p, LevelPermission plRank, string map, string action, out LevelConfig cfg) {
             Level lvl; cfg = GetConfig(map, out lvl);
             if (p.IsSparkie) return true;
+
             if (lvl != null) return Check(p, plRank, lvl, action);
             
             AccessController visit = new LevelAccessController(cfg, map, true);
@@ -181,8 +199,7 @@ namespace GoldenSparks {
         public static bool IsRealmOwner(string map, LevelConfig cfg, string name) {
             string[] owners = cfg.RealmOwner.SplitComma();
             if (owners.Length > 0) {
-                foreach (string owner in owners) 
-                {
+                foreach (string owner in owners) {
                     if (owner.CaselessEq(name)) return true;
                 }
                 return false;
@@ -192,8 +209,8 @@ namespace GoldenSparks {
             // If no + though, don't use because otherwise people can register accounts and claim maps
             return Server.Config.ClassicubeAccountPlus && map.CaselessStarts(name);
         }
-        
-        internal static string DefaultRealmOwner(string map) {
+
+        public static string DefaultRealmOwner(string map) {
             bool plus = Server.Config.ClassicubeAccountPlus;
             // Early out when either
             //  1) accounts aren't using +

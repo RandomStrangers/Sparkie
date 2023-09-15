@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,13 +16,15 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Threading;
 using GoldenSparks.Drawing;
 using GoldenSparks.Drawing.Ops;
+using GoldenSparks.Generator;
 using GoldenSparks.Maths;
 using GoldenSparks.Network;
-using GoldenSparks.Util;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Commands.Building {
@@ -63,7 +65,8 @@ namespace GoldenSparks.Commands.Building {
             
             if (parts.Length > 2) {
                 string mode = parts[2];
-                if (!ParseMode(mode, dArgs)) { p.Message("&WUnknown print mode \"{0}\".", mode); return; }
+                if (mode.CaselessEq("horizontal"))     dArgs.Layer = true;
+                if (mode.CaselessEq("vertical2layer")) dArgs.Dual  = true;
             }
             
             if (parts.Length > 4) {
@@ -82,23 +85,6 @@ namespace GoldenSparks.Commands.Building {
 
             p.Message("Place or break two blocks to determine direction.");
             p.MakeSelection(2, "Selecting direction for &SImagePrint", dArgs, DoImage);
-        }
-
-        bool ParseMode(string mode, DrawArgs args) {
-            // Dithered and 2 layer mode are mutually exclusive because dithering is not visually effective when the (dark) sides of blocks are visible all over the image.
-            if (mode.CaselessEq("wall")) {
-                // default arguments are fine
-            } else if (mode.CaselessEq("walldither")) {
-                args.Dithered = true;
-            } else if (mode.CaselessEq("wall2layer") || mode.CaselessEq("vertical2layer")) {
-                args.TwoLayer = true; 
-            } else if (mode.CaselessEq("floor") || mode.CaselessEq("horizontal")) { 
-                args.Floor = true; 
-            } else if (mode.CaselessEq("floordither")) { 
-                args.Floor = true; args.Dithered = true; 
-            } else { return false; }
-
-            return true;
         }
         
         bool DoImage(Player p, Vec3S32[] m, object state, BlockID block) {
@@ -120,11 +106,11 @@ namespace GoldenSparks.Commands.Building {
         }
         
         void DoDrawImageCore(Player p, Vec3S32[] marks, DrawArgs dArgs) {
-            IBitmap2D bmp = ImageUtils.DecodeImage(dArgs.Data, p);
+            Bitmap bmp = HeightmapGen.DecodeImage(dArgs.Data, p);
             if (bmp == null) return;
 
-            ImagePrintDrawOp op = dArgs.Dithered ? new ImagePrintDitheredDrawOp() : new ImagePrintDrawOp();
-            op.LayerMode = dArgs.Floor; op.DualLayer = dArgs.TwoLayer;
+            ImagePrintDrawOp op = new ImagePrintDrawOp();
+            op.LayerMode = dArgs.Layer; op.DualLayer = dArgs.Dual;
             op.CalcState(marks);
             
             int width  = dArgs.Width  == 0 ? bmp.Width  : dArgs.Width;
@@ -132,10 +118,11 @@ namespace GoldenSparks.Commands.Building {
             Clamp(p, marks, op, ref width, ref height);
             
             if (width < bmp.Width || height < bmp.Height) {
-                bmp.Resize(width, height, true);
+                bmp = Resize(bmp, width, height);
             }
             
-            op.Source = bmp; op.Palette = dArgs.Pal;
+            op.SetLevel(p.level);
+            op.Player = p; op.Source = bmp; op.Palette = dArgs.Pal;
             DrawOpPerformer.Do(op, null, p, marks, false);
         }
         
@@ -158,6 +145,19 @@ namespace GoldenSparks.Commands.Building {
             width = resizedWidth; height = resizedHeight;
         }
         
+        static Bitmap Resize(Bitmap bmp, int width, int height) {
+            Bitmap resized = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(resized)) {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode     = SmoothingMode.HighQuality;
+                g.PixelOffsetMode   = PixelOffsetMode.HighQuality;
+                g.DrawImage(bmp, 0, 0, width, height);
+            }
+            
+            bmp.Dispose();
+            return resized;
+        }
+        
         static int LargestDelta(Level lvl, Vec3S32 point) {
             Vec3S32 clamped = lvl.ClampPos(point);
             int dx = Math.Abs(point.X - clamped.X);
@@ -170,15 +170,11 @@ namespace GoldenSparks.Commands.Building {
             p.Message("&T/ImagePrint [file/url] [palette] <mode> <width height>");
             p.Message("&HPrints image from given URL, or from a .bmp file in /extra/images/ folder");
             p.Message("&HPalettes: &f{0}", ImagePalette.Palettes.Join(pal => pal.Name));
-            p.Message("&HModes: &fWall, WallDither, Wall2Layer, Floor, FloorDither");
+            p.Message("&HModes: &fVertical, Vertical2Layer, Horizontal");
             p.Message("&H  <width height> optionally resize the printed image");
         }
 
-        class DrawArgs {
-            public bool Floor, TwoLayer, Dithered;
-            public ImagePalette Pal;
-            public byte[] Data;
-            public int Width, Height; }
+        class DrawArgs { public bool Layer, Dual; public ImagePalette Pal; public byte[] Data; public int Width, Height; }
     }
 }
 

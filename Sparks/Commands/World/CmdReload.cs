@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -33,10 +33,11 @@ namespace GoldenSparks.Commands.World {
 
         public override void Use(Player p, string message, CommandData data) {
             if (CheckSuper(p, message, "level name")) return;
+            IGame game = IGame.GameOn(p.level);
             
             if (message.Length == 0) {
-                if (!IGame.CheckAllowed(p, "use &T/Reload")) {
-                    // messaging handled in CheckAllowed
+                if (game != null) {
+                    p.Message("You cannot use &T/Reload &Swhile a game is running");
                 } else if (!Hacks.CanUseNoclip(p)) {
                     p.Message("You cannot use &T/Reload &Son this level");
                 } else {

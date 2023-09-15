@@ -8,8 +8,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -33,8 +33,8 @@ namespace GoldenSparks.Commands.Moderation {
             
             bool own = args.Length >= 2 && args[1].CaselessEq("myrank");
             if (!own) data.Rank = target.Rank;
-            
-            Command.Find("Hide").Use(target, "", data);
+
+            Find("Hide").Use(target, "", data);
             p.Message("Hidden {0} &Sfrom players ranked below {1}",
                       p.FormatNick(target), Group.GetColoredName(data.Rank));
         }

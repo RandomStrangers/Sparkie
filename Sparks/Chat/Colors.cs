@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the License is distributed on an "AS IS"
@@ -142,12 +142,16 @@ namespace GoldenSparks {
             if (col == 'H') return Server.Config.HelpDescriptionColor[1];
             if (col == 'T') return Server.Config.HelpSyntaxColor[1];
             if (col == 'I') return Server.Config.IRCColor[1];
+            if (col == 'L') return Server.Config.IRCColor1[1];
+            if (col == 'M') return Server.Config.IRCColor2[1];
+            if (col == 'G') return Server.Config.GlobalChatColor[1];
             if (col == 'W') return Server.Config.WarningErrorColor[1];
             return IsDefined(col) ? col : '\0';
         }
         
         public static bool IsSystem(char col) {
-            return col == 'S' || col == 'H' || col == 'T' || col == 'I'|| col == 'W';
+            return col == 'S' || col == 'H' || col == 'T' || col == 'I'|| col == 'W' || col == 'L' 
+                || col == 'M' || col == 'G';
         }
         
         
@@ -340,8 +344,8 @@ namespace GoldenSparks {
             Code = '\0'; Fallback = '\0'; Name = null;
             R = r; G = g; B = b; A = 255;
         }
-        
-        internal ColorDesc(char code, string name) {
+
+        public ColorDesc(char code, string name) {
             Code = code; Fallback = code; Name = name; A = 255;
             
             if (code >= '0' && code <= '9') {

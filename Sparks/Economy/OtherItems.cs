@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,19 +16,20 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using GoldenSparks.Eco;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.Eco 
-{
-    public sealed class SnackItem : SimpleItem 
-    {
+namespace GoldenSparks.Eco {
+    
+    public sealed class SnackItem : SimpleItem {
+        
         public SnackItem() {
             Aliases = new string[] { "snack" };
             Price = 0;
         }
         
         public override string Name { get { return "Snack"; } }
-        
+
         public override void OnPurchase(Player p, string args) {
             if (DateTime.UtcNow < p.NextEat) {
                 p.Message("You're still full - you need to wait at least " +

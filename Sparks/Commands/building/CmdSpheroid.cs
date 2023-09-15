@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -24,7 +24,7 @@ namespace GoldenSparks.Commands.Building {
         public override string name { get { return "Spheroid"; } }
         public override string shortcut { get { return "e"; } }
         public override CommandAlias[] Aliases {
-            get { return new[] { new CommandAlias("eh", "hollow"), new CommandAlias("Cone", "cone"), new CommandAlias("Cylinder", "cylinder") }; }
+            get { return new[] { new CommandAlias("eh", "hollow"), new CommandAlias("cylinder", "vertical") }; }
         }
         
         protected override void GetBrush(DrawArgs dArgs) {
@@ -37,8 +37,6 @@ namespace GoldenSparks.Commands.Building {
             if (msg == "solid")    return DrawMode.solid;
             if (msg == "hollow")   return DrawMode.hollow;
             if (msg == "vertical") return DrawMode.vertical;
-            if (msg == "cylinder") return DrawMode.vertical;
-            if (msg == "cone")     return DrawMode.cone;
             return DrawMode.normal;
         }
         
@@ -46,7 +44,6 @@ namespace GoldenSparks.Commands.Building {
             switch (dArgs.Mode) {
                 case DrawMode.hollow:   return new EllipsoidHollowDrawOp();
                 case DrawMode.vertical: return new CylinderDrawOp();
-                case DrawMode.cone:     return new ConeDrawOp();
             }
             return new EllipsoidDrawOp();
         }
@@ -55,7 +52,7 @@ namespace GoldenSparks.Commands.Building {
             p.Message("&T/Spheroid <brush args>");
             p.Message("&HDraws a spheroid between two points.");
             p.Message("&T/Spheroid [mode] <brush args>");
-            p.Message("&HModes: &fsolid/hollow/cylinder/cone");    
+            p.Message("&HModes: &fsolid/hollow/vertical(a vertical tube)");    
             p.Message(BrushHelpLine);
         }
     }

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,10 +18,8 @@
 using System;
 using GoldenSparks.Games;
 
-namespace GoldenSparks.Commands.Info 
-{
-    public sealed class CmdWhere : Command2 
-    {
+namespace GoldenSparks.Commands.Info {
+    public sealed class CmdWhere : Command2 {
         public override string name { get { return "Where"; } }
         public override string type { get { return CommandTypes.Information; } }
         
@@ -37,11 +35,11 @@ namespace GoldenSparks.Commands.Info
             int x = target.Pos.X, y = target.Pos.Y - Entities.CharacterHeight, z = target.Pos.Z;
             p.Message("{0} &Sis on {1}", p.FormatNick(target), target.level.ColoredName);
             p.Message("   X: &b{0:F5} &SY: &b{1:F5} &SZ: &b{2:F5}",
-                      x / 32.0, y / 32.0, z / 32.0);
+                           x / 32.0, y / 32.0, z / 32.0);
             
             p.Message("   Yaw: &b{0} &Sdegrees, Pitch: &b{1} &Sdegrees",
-                      Orientation.PackedToDegrees(target.Rot.RotY),
-                      Orientation.PackedToDegrees(target.Rot.HeadX));
+                           Orientation.PackedToDegrees(p.Rot.RotY),
+                           Orientation.PackedToDegrees(p.Rot.HeadX));
         }      
 
         public override void Help(Player p) {

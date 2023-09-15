@@ -24,10 +24,8 @@ using GoldenSparks.Modules.Relay1.IRC1;
 using GoldenSparks.Modules.Relay2.IRC2;
 using GoldenSparks.Modules.GlobalRelay.GlobalIRC;
 
-namespace GoldenSparks
-{
-    public sealed class ServerConfig : EnvConfig
-    {
+namespace GoldenSparks {
+    public sealed class ServerConfig : EnvConfig {
 
         [ConfigString("server-name", "Server", "[GoldenSparks] Default", false, " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")]
         public string Name = "[GoldenSparks] Default";
@@ -51,9 +49,9 @@ namespace GoldenSparks
         public bool AllowIPForwarding = true;
         [ConfigString("default-rank", "Server", "guest")]
         public string DefaultRankName = "guest";
-
+        
         [ConfigBool("autoload", "Level", true)]
-        public bool AutoLoadMaps = true;
+        public bool AutoLoadMaps = true;        
         /// <summary> true if maps sees server-wide chat, false if maps have level-only/isolated chat </summary>
         [ConfigBool("world-chat", "Level", true)]
         public bool ServerWideChat = true;
@@ -63,7 +61,7 @@ namespace GoldenSparks
         public string DefaultTerrain = "";
         [ConfigString("default-texture-pack-url", "Level", "", true)]
         public string DefaultTexture = "";
-
+        
         [ConfigString("ssl-certificate-path", "Other", "", true)]
         public string SslCertPath = "";
         [ConfigString("ssl-certificate-password", "Other", "", true)]
@@ -79,7 +77,7 @@ namespace GoldenSparks
         public bool restartOnError = true;
         [ConfigBool("software-staff-prefixes", "Other", true)]
         public bool SoftwareStaffPrefixes = true;
-
+        
         [ConfigInt("position-interval", "Other", 100, 20, 2000)]
         public int PositionUpdateInterval = 100;
         [ConfigBool("classicube-account-plus", "Server", false)]
@@ -88,14 +86,14 @@ namespace GoldenSparks
         public bool AgreeToRulesOnEntry = false;
         [ConfigBool("admins-join-silent", "Other", false)]
         public bool AdminsJoinSilently = false;
-
+        
         [ConfigBool("check-updates", "Update", false)]
         public bool CheckForUpdates = false;
         [ConfigBool("enable-cpe", "Server", true)]
         public bool EnableCPE = true;
         [ConfigBool("checkpoints-respawn-clientside", "Other", true)]
         public bool CheckpointsRespawnClientside = true;
-
+        
         [ConfigInt("rplimit", "Other", 500, 0, 50000)]
         public int PhysicsRestartLimit = 500;
         [ConfigInt("rplimit-norm", "Other", 10000, 0, 50000)]
@@ -104,14 +102,14 @@ namespace GoldenSparks
         public bool PhysicsRestart = true;
         [ConfigInt("physics-undo-max", "Other", 50000)]
         public int PhysicsUndo = 50000;
-
+        
         [ConfigTimespan("backup-time", "Backup", 300, false)]
         public TimeSpan BackupInterval = TimeSpan.FromSeconds(300);
         [ConfigTimespan("blockdb-backup-time", "Backup", 60, false)]
         public TimeSpan BlockDBSaveInterval = TimeSpan.FromSeconds(60);
         [ConfigString("backup-location", "Backup", "")]
         public string BackupDirectory = "levels/backups";
-
+        
         [ConfigTimespan("afk-minutes", "Other", 10, true)]
         public TimeSpan AutoAfkTime = TimeSpan.FromMinutes(10);
 
@@ -126,10 +124,10 @@ namespace GoldenSparks
         [ConfigTimespan("announcement-interval", "Other", 5, true)]
         public TimeSpan AnnouncementInterval = TimeSpan.FromMinutes(5);
         [ConfigString("money-name", "Other", "moneys")]
-        public string Currency = "moneys";
+        public string Currency = "moneys";        
         [ConfigString("server-owner", "Other", "the owner")]
         public string OwnerName = "the owner";
-
+        
         [ConfigBool("guest-limit-notify", "Other", false)]
         public bool GuestLimitNotify = false;
         [ConfigBool("guest-join-notify", "Other", true)]
@@ -153,9 +151,9 @@ namespace GoldenSparks
         public bool HigherRankTP = true;
 
         [ConfigPerm("os-perbuild-default", "Other", LevelPermission.Nobody)]
-        public LevelPermission OSPerbuildDefault = LevelPermission.Nobody;
+        public LevelPermission OSPerbuildDefault = LevelPermission.Nobody;  
 
-
+        
         [ConfigBool("irc", "IRC bot", false)]
         public bool UseIRC = false;
         [ConfigInt("irc-port", "IRC bot", 6667, 0, 65535)]
@@ -287,7 +285,7 @@ namespace GoldenSparks
         public bool TablistBots = false;
 
         [ConfigBool("parse-emotes", "Chat", true)]
-        public bool ParseEmotes = true;
+        public bool ParseEmotes = true;        
         [ConfigBool("dollar-before-dollar", "Chat", true)]
         public bool DollarNames = true;
         [ConfigStringList("disabledstandardtokens", "Chat")]
@@ -299,7 +297,7 @@ namespace GoldenSparks
         [ConfigString("Core-State", "Chat", "&6S&ep&6a&er&6k&ei&6e")]
         public string CoreState = "&6S&ep&6a&er&6k&ei&6e";
 
-
+        
         [ConfigColor("defaultColor", "Colors", "&e")]
         public string DefaultColor = "&e";
         [ConfigColor("irc-color", "Colors", "&4")]
@@ -316,11 +314,11 @@ namespace GoldenSparks
         public string HelpDescriptionColor = "&e";
         [ConfigColor("warning-error-color", "Colors", "&c")]
         public string WarningErrorColor = "&c";
-
+        
         [ConfigBool("cheapmessage", "Other", true)]
-        public bool ShowInvincibleMessage = true;
+        public bool ShowInvulnerableMessage = true;        
         [ConfigString("cheap-message-given", "Messages", " is now invulnerable")]
-        public string InvincibleMessage = " is now invulnerable";
+        public string InvulnerableMessage = " is now invulnerable";
         [ConfigString("custom-ban-message", "Messages", "You're banned!")]
         public string DefaultBanMessage = "You're banned!";
         [ConfigString("custom-shutdown-message", "Messages", "Server shutdown. Rejoin in 10 seconds.")]
@@ -328,14 +326,14 @@ namespace GoldenSparks
         [ConfigString("custom-promote-message", "Messages", "&6Congratulations for working hard and getting &2PROMOTED!")]
         public string DefaultPromoteMessage = "&6Congratulations for working hard and getting &2PROMOTED!";
         [ConfigString("custom-demote-message", "Messages", "&4DEMOTED! &6We're sorry for your loss. Good luck on your future endeavors! &1:'(")]
-        public string DefaultDemoteMessage = "&4DEMOTED! &6We're sorry for your loss. Good luck on your future endeavors! &1:'(";
+        public string DefaultDemoteMessage = "&4DEMOTED! &6We're sorry for your loss. Good luck on your future endeavors! &1:'(";       
         [ConfigString("custom-restart-message", "Messages", "Server restarted. Sign in again and rejoin.")]
         public string DefaultRestartMessage = "Server restarted. Sign in again and rejoin.";
         [ConfigString("custom-whitelist-message", "Messages", "This is a private server!")]
         public string DefaultWhitelistMessage = "This is a private server!";
-
-        static readonly bool[] defLogLevels = new bool[] {
-            true,true,true,true,true,true, true,true,true,
+        
+        static readonly bool[] defLogLevels = new bool[] { 
+            true,true,true,true,true,true, true,true,true, 
             true,true,true,true,true,true, true,true };
         [ConfigBool("log-notes", "Logging", true)]
         public bool LogNotes = true;
@@ -350,7 +348,7 @@ namespace GoldenSparks
         public bool verifyadmins = false;
         [ConfigPerm("verify-admin-perm", "Admin", LevelPermission.Operator)]
         public LevelPermission VerifyAdminsRank = LevelPermission.Operator;
-
+        
         [ConfigBool("mute-on-spam", "Spam control", false)]
         public bool ChatSpamCheck = false;
         [ConfigInt("spam-messages", "Spam control", 8, 0, 10000)]
@@ -359,7 +357,7 @@ namespace GoldenSparks
         public TimeSpan ChatSpamMuteTime = TimeSpan.FromSeconds(60);
         [ConfigTimespan("spam-counter-reset-time", "Spam control", 5, false)]
         public TimeSpan ChatSpamInterval = TimeSpan.FromSeconds(5);
-
+        
         [ConfigBool("cmd-spam-check", "Spam control", true)]
         public bool CmdSpamCheck = true;
         [ConfigInt("cmd-spam-count", "Spam control", 25, 0, 10000)]
@@ -368,14 +366,14 @@ namespace GoldenSparks
         public TimeSpan CmdSpamBlockTime = TimeSpan.FromSeconds(30);
         [ConfigTimespan("cmd-spam-interval", "Spam control", 1, false)]
         public TimeSpan CmdSpamInterval = TimeSpan.FromSeconds(1);
-
+        
         [ConfigBool("block-spam-check", "Spam control", true)]
         public bool BlockSpamCheck = true;
         [ConfigInt("block-spam-count", "Spam control", 200, 0, 10000)]
         public int BlockSpamCount = 200;
         [ConfigTimespan("block-spam-interval", "Spam control", 5, false)]
         public TimeSpan BlockSpamInterval = TimeSpan.FromSeconds(5);
-
+        
         [ConfigBool("ip-spam-check", "Spam control", true)]
         public bool IPSpamCheck = true;
         [ConfigInt("ip-spam-count", "Spam control", 25, 0, 10000)]

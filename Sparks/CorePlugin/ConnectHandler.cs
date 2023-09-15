@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,12 +16,16 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.IO;
+using GoldenSparks;
 using GoldenSparks.Commands;
+using GoldenSparks.Network;
+using GoldenSparks.Events;
 
 namespace GoldenSparks.Core {
-    internal static class ConnectHandler {
-        
-        internal static void HandleConnect(Player p) {
+    public static class ConnectHandler {
+
+        public static void HandleConnect(Player p) {
             CheckReviewList(p);
             if (p.CanUse("ReachDistance")) LoadReach(p);
             
@@ -32,7 +36,7 @@ namespace GoldenSparks.Core {
         static void CheckReviewList(Player p) {
             if (!p.CanUse("Review")) return;
             ItemPerms checkPerms = CommandExtraPerms.Find("Review", 1);
-            if (!checkPerms.UsableBy(p)) return;
+            if (!checkPerms.UsableBy(p.Rank)) return;
             
             int count = Server.reviewlist.Count;
             if (count == 0) return;
@@ -42,8 +46,8 @@ namespace GoldenSparks.Core {
         }
         
         static void LoadReach(Player p) {
-            string reach = Server.reach.Get(p.name);
-            if (String.IsNullOrEmpty(reach)) return;
+            string reach = Server.reach.FindData(p.name);
+            if (reach == null) return;
             
             short reachDist;
             if (!short.TryParse(reach, out reachDist)) return;

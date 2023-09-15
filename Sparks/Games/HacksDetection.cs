@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.osedu.org/licenses/ECL-2.0
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,13 +21,13 @@ using System.Collections.Generic;
 namespace GoldenSparks.Games {
     
     public abstract class HacksDetector {
-        protected List<DateTime> log = new List<DateTime>(5);
-        protected DateTime lastWarn;
-        protected Player player;
+        public List<DateTime> log = new List<DateTime>(5);
+        public DateTime lastWarn;
+        public Player player;
         
         public HacksDetector(Player p) { player = p; }
-        
-        protected void Warn(string action) {
+
+        public void Warn(string action) {
             DateTime now = DateTime.UtcNow;
             if (now < lastWarn) return;
             
@@ -36,8 +36,8 @@ namespace GoldenSparks.Games {
             Logger.Log(LogType.SuspiciousActivity, "{0} appears to be {1}ing", player.name, action);
             lastWarn = now.AddSeconds(5);
         }
-        
-        protected static TimeSpan interval = TimeSpan.FromSeconds(5);
+
+        public static TimeSpan interval = TimeSpan.FromSeconds(5);
     }
     
     public sealed class SpeedhackDetector : HacksDetector {   

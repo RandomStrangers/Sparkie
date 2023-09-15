@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
 
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
 
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,7 +19,7 @@
 namespace GoldenSparks.Commands {
     public abstract class EntityPropertyCmd : Command2 {
         
-        protected void UseBotOrOnline(Player p, CommandData data, string message, string type) {
+        public void UseBotOrOnline(Player p, CommandData data, string message, string type) {
             if (message.CaselessStarts("bot ")) {
                 UseBot(p,    data, message, type);
             } else {
@@ -27,7 +27,7 @@ namespace GoldenSparks.Commands {
             }
         }
         
-        protected void UseBotOrPlayer(Player p, CommandData data, string message, string type) {
+        public void UseBotOrPlayer(Player p, CommandData data, string message, string type) {
             if (message.CaselessStarts("bot ")) {
                 UseBot(p,    data, message, type);
             } else {
@@ -47,7 +47,7 @@ namespace GoldenSparks.Commands {
             SetBotData(p, bot, args.Length > 2 ? args[2] : "");
         }
         
-        protected void UseOnline(Player p, CommandData data, string message, string type) {
+        public void UseOnline(Player p, CommandData data, string message, string type) {
             if (message.Length == 0) { Help(p); return; }
             string[] args = message.SplitSpaces(2);
             string name   = CheckOwn(p, args[0], "player name");
@@ -61,7 +61,7 @@ namespace GoldenSparks.Commands {
             SetOnlineData(p, who, args.Length > 1 ? args[1] : "");
         }
         
-        protected void UsePlayer(Player p, CommandData data, string message, string type) {
+        public void UsePlayer(Player p, CommandData data, string message, string type) {
             if (message.Length == 0) { Help(p); return; }
             string[] args = message.SplitSpaces(2);
             string target = CheckOwn(p, args[0], "player name");
@@ -76,8 +76,8 @@ namespace GoldenSparks.Commands {
             SetPlayerData(p, target, args.Length > 1 ? args[1] : "");
         }
 
-        protected virtual void SetBotData(Player p, PlayerBot bot,    string args) { }      
-        protected virtual void SetOnlineData(Player p, Player who,    string args) { }       
-        protected virtual void SetPlayerData(Player p, string target, string args) { }
+        public virtual void SetBotData(Player p, PlayerBot bot,    string args) { }      
+        public virtual void SetOnlineData(Player p, Player who,    string args) { }       
+        public virtual void SetPlayerData(Player p, string target, string args) { }
     }
 }

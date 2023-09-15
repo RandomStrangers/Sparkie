@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,6 +17,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using GoldenSparks.Drawing.Brushes;
 using GoldenSparks.Maths;
 
@@ -25,9 +26,12 @@ namespace GoldenSparks.Drawing.Ops
     public class MazeDrawOp : CuboidHollowsDrawOp 
     {
         public override string Name { get { return "Maze"; } }
-        
-        public Random rng;
+
+        public int randomizer = 0;
         bool[,] wall;
+        RNGCryptoServiceProvider rng1;
+        Random rng2;
+        byte[] r = new byte[1];
         int width, length;
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
@@ -58,7 +62,7 @@ namespace GoldenSparks.Drawing.Ops
                 for (ushort z = 0; z <= length; z++)
                     if (wall[x, z])
             {
-                output(Place((ushort)(min.X + x + 1),               y, (ushort)(min.Z + z + 1), Block.DoubleSlab));
+                output(Place((ushort)(min.X + x + 1), y, (ushort)(min.Z + z + 1), Block.DoubleSlab));
                 output(Place((ushort)(min.X + x + 1), (ushort)(y + 1), (ushort)(min.Z + z + 1), Block.Leaves));
                 output(Place((ushort)(min.X + x + 1), (ushort)(y + 2), (ushort)(min.Z + z + 1), Block.Leaves));
             }
@@ -76,6 +80,7 @@ namespace GoldenSparks.Drawing.Ops
             QuadZ(max.Z, (ushort)(y + 1), min.X, (ushort)(y + 2), max.X, brush, output);
             
             Player.Message("Maze painted. Build the entrance and exit yourself");
+            randomizer = 0;
         }
         
         void GenerateMaze() {
@@ -86,6 +91,8 @@ namespace GoldenSparks.Drawing.Ops
             {
                 wall[w, h] = true;
             }
+            rng1 = new RNGCryptoServiceProvider();
+            rng2 = new Random();
             
             Stack<GridNode> stack = new Stack<GridNode>(width * length);
             stack.Push(new GridNode(0, 0));
@@ -111,9 +118,15 @@ namespace GoldenSparks.Drawing.Ops
         
         void MoveRandomDir(GridNode P, out GridNode P1, out GridNode P2) {        
             while (true) {
-                int dir = rng.Next(4);
-        		
-                switch (dir) {
+                r[0] = 0;
+                if (randomizer == 0) {
+                    rng1.GetBytes(r);
+                    r[0] /= (255 / 4);
+                } else {
+                    r[0] = (byte)rng2.Next(4);
+                }
+
+                switch (r[0]) {
                     case 0: //go up
                         if (IsWall(P.X, P.Y + 2)) {
                             P1 = new GridNode(P.X, (ushort)(P.Y + 1));

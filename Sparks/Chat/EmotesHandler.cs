@@ -20,7 +20,7 @@ namespace GoldenSparks {
             { "inversecircle", '◙' },
             { "male", '♂' }, { "mars", '♂' },
             { "female", '♀' }, { "venus", '♀' },
-            { "note", '♪' }, { "quaver", '♪' },
+            { "8", '♪' }, { "note", '♪' }, { "quaver", '♪' },
             { "notes", '♫' }, { "music", '♫' },
             { "sun", '☼' }, { "celestia", '☼' },
             { ">>", '►' }, { "right", '►' },

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -30,33 +30,27 @@ namespace GoldenSparks.Commands.Moderation {
         
         /// <summary> Expands @[rule number] to the actual rule with that number. </summary>
         public static string ExpandReason(Player p, string reason) {
-            int ruleNum;
-            string expanded = TryExpandReason(reason, out ruleNum);
-            if (expanded != null) return expanded;
-            
-            Dictionary<int, string> sections = GetRuleSections();            
-            p.Message("No rule has number \"{0}\". Current rule numbers are: {1}",
-                      ruleNum, sections.Keys.Join(n => n.ToString()));
-            return null;
-        }
-        
-        public static string TryExpandReason(string reason, out int ruleNum) {
-            ruleNum = 0;
             if (reason.Length == 0 || reason[0] != '@') return reason;
             
             reason = reason.Substring(1);
-            if (!int.TryParse(reason, out ruleNum)) return "@" + reason;
+            int num;
+            if (!int.TryParse(reason, out num)) return "@" + reason;
             
             // Treat @num as a shortcut for rule #num
-            Dictionary<int, string> sections = GetRuleSections();          
-            string rule; sections.TryGetValue(ruleNum, out rule); return rule;
+            Dictionary<int, string> sections = GetRuleSections();
+            string rule;
+            if (sections.TryGetValue(num, out rule)) return rule;
+            
+            p.Message("No rule has number \"{0}\". Current rule numbers are: {1}",
+                           num, sections.Keys.Join(n => n.ToString()));
+            return null;
         }
         
         static Dictionary<int, string> GetRuleSections() {
             Dictionary<int, string> sections = new Dictionary<int, string>();
             if (!File.Exists(Paths.RulesFile)) return sections;
             
-            List<string> rules = Utils.ReadAllLinesList(Paths.RulesFile);
+            string[] rules = File.ReadAllLines(Paths.RulesFile);
             foreach (string rule in rules)
                 ParseRule(rule, sections);
             return sections;
@@ -66,8 +60,7 @@ namespace GoldenSparks.Commands.Moderation {
             int ruleNum = -1;
             rule = Colors.Strip(rule);
             
-            for (int i = 0; i < rule.Length; i++) 
-            {
+            for (int i = 0; i < rule.Length; i++) {
                 char c = rule[i];
                 bool isNumber = c >= '0' && c <= '9';
                 bool isLetter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
@@ -105,7 +98,7 @@ namespace GoldenSparks.Commands.Moderation {
         }
         
         /// <summary> Changes the rank of the given player from the old to the new rank. </summary>
-        internal static void ChangeRank(string name, Group oldRank, Group newRank,
+        public static void ChangeRank(string name, Group oldRank, Group newRank,
                                         Player who, bool saveToNewRank = true) {
             if (who != null) ChangeOnlineRank(who, newRank);
             Server.reviewlist.Remove(name);
@@ -138,7 +131,7 @@ namespace GoldenSparks.Commands.Moderation {
             }
         }
         
-        internal static Group CheckTarget(Player p, CommandData data, string action, string target) {
+        public static Group CheckTarget(Player p, CommandData data, string action, string target) {
             if (p.name.CaselessEq(target)) {
                 p.Message("You cannot {0} yourself", action); return null; 
             }
@@ -151,7 +144,7 @@ namespace GoldenSparks.Commands.Moderation {
         
         /// <summary> Finds the matching name(s) for the input name,
         /// and requires a confirmation message for non-existent players. </summary>
-        internal static string FindName(Player p, string action, string cmd,
+        public static string FindName(Player p, string action, string cmd,
                                         string cmdSuffix, string name, ref string reason) {
             if (!Formatter.ValidPlayerName(p, name)) return null;
             string match = MatchName(p, ref name);
@@ -203,17 +196,15 @@ namespace GoldenSparks.Commands.Moderation {
         /// or finds the IP of the account whose name matches the message. </summary>
         /// <remarks> "@input" can be used to always find IP by matching account name. <br/>
         /// Warns the player if the input matches both an IP and an account name. </remarks>
-        internal static string FindIP(Player p, string message, string cmd, out string name) {
+        public static string FindIP(Player p, string message, string cmd, out string name) {
             IPAddress ip;
             name = null;
             
             if (IPAddress.TryParse(message, out ip) && ValidIP(message)) {
                 string account = Server.FromRawUsername(message);
-                // TODO ip.ToString()
                 if (PlayerDB.FindName(account) == null) return message;
 
-                // ClassiCube.net used to allow registering accounts with . anywhere in name,
-                //  so some older names can be parsed as valid IPs. Warn in this case
+                // Some classicube.net accounts can be parsed as valid IPs, so warn in this case.
                 p.Message("Note: \"{0}\" is both an IP and an account name. "
                           + "If you meant the account, use &T/{1} @{0}", message, cmd);
                 return message;

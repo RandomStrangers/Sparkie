@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -25,8 +25,8 @@ namespace GoldenSparks.Drawing.Brushes
     {
         public override string Name { get { return "Rainbow"; } }
         public RainbowBrush() : base(blocks) {}
-        
-        internal static BlockID[] blocks = new BlockID[] { 
+
+        public static BlockID[] blocks = new BlockID[] { 
             Block.Red,   Block.Orange,  Block.Yellow,
             Block.Lime,  Block.Green,   Block.Teal,
             Block.Aqua,  Block.Cyan,    Block.Blue,
@@ -39,23 +39,23 @@ namespace GoldenSparks.Drawing.Brushes
         public override string Name { get { return "BWRainbow"; } }
         public BWRainbowBrush() : base(blocks) {}
         
-        internal static BlockID[] blocks = new BlockID[] { 
+        static BlockID[] blocks = new BlockID[] { 
             Block.Iron,  Block.White,    Block.Gray,
             Block.Black, Block.Obsidian, Block.Black, 
             Block.Gray,  Block.White };
     }
-    
+
     public sealed class RandomRainbowBrush : Brush 
     {
-        readonly Random rnd = new Random();
-        readonly BlockID[] blocks;
-
+        readonly Random rnd;
+        
         public override string Name { get { return "RandomRainbow"; } }
         
-        public RandomRainbowBrush(BlockID[] list) { blocks = list; }      
+        public RandomRainbowBrush() { rnd = new Random(); }        
+        public RandomRainbowBrush(int seed) { rnd = new Random(seed); }
         
         public override BlockID NextBlock(DrawOp op) {
-            return blocks[rnd.Next(blocks.Length)];
+            return RainbowBrush.blocks[rnd.Next(RainbowBrush.blocks.Length)];
         }
     }
 }

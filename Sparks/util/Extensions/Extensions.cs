@@ -8,8 +8,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -23,13 +23,13 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace GoldenSparks 
-{   
+namespace GoldenSparks {
+    
     /// <summary> Converts an object into a string. </summary>
     public delegate string StringFormatter<T>(T value);
     
-    public static class Extensions 
-    {       
+    public static class Extensions {
+        
         static char[] space = new char[] { ' ' };
         
         /// <summary> Same as value.Split(' '), but doesn't allocate ' ' each time. </summary>
@@ -96,9 +96,8 @@ namespace GoldenSparks
             return str.Split(comma);
         }
         
-        public static void Separate(this string str, char splitter,
-                                    out string prefix, out string suffix) {
-            int index = str.IndexOf(splitter);
+        public static void Separate(this string str, out string prefix, out string suffix) {
+            int index = str.IndexOf(' ');
             prefix = index == -1 ? str : str.Substring(0, index);
             suffix = index == -1 ? ""  : str.Substring(index + 1);
         }
@@ -117,15 +116,14 @@ namespace GoldenSparks
             }
         }
         
-        public static byte[] Decompress(this byte[] gzip, int capacity) {
+        public static byte[] Decompress(this byte[] gzip, int capacity = 16) {
             using (GZipStream src = new GZipStream(new MemoryStream(gzip), CompressionMode.Decompress)) {
                 const int size = 4096;
-                byte[] buffer  = new byte[size];
+                byte[] buffer = new byte[size];
                 
                 using (MemoryStream dst = new MemoryStream(capacity)) {
                     int count = 0;
-                    while ((count = src.Read(buffer, 0, size)) > 0) 
-                    {
+                    while ((count = src.Read(buffer, 0, size)) > 0) {
                         dst.Write(buffer, 0, count);
                     }
                     return dst.ToArray();

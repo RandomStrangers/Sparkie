@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,10 +17,8 @@
  */
 using System;
 
-namespace GoldenSparks.Commands.Info 
-{
-    public sealed class CmdLoaded : Command2 
-    {
+namespace GoldenSparks.Commands.Info {   
+    public sealed class CmdLoaded : Command2 {       
         public override string name { get { return "Loaded"; } }
         public override string type { get { return CommandTypes.Information; } }
         public override bool UseableWhenFrozen { get { return true; } }
@@ -28,8 +26,8 @@ namespace GoldenSparks.Commands.Info
         public override void Use(Player p, string message, CommandData data) {
             Level[] loaded = LevelInfo.Loaded.Items;
             p.Message("Loaded levels [physics level] (&c[no] &Sif not visitable): ");
-            Paginator.Output(p, loaded, (lvl) => FormatMap(p, lvl),
-                             "Levels", "levels", message);
+            MultiPageOutput.Output(p, loaded, (lvl) => FormatMap(p, lvl),
+                                   "Levels", "levels", message, false);
             p.Message("Use &T/Levels &Sfor all levels.");
         }
         

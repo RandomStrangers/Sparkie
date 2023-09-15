@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -31,12 +31,12 @@ namespace GoldenSparks {
         public abstract List<string> Whitelisted { get; }
         /// <summary> List of players who are never allowd to access. </summary>
         public abstract List<string> Blacklisted { get; }
-        
-        protected abstract string ColoredName { get; }
-        protected abstract string Action { get; }
-        protected abstract string ActionIng { get; }
-        protected abstract string Type { get; }
-        protected abstract string MaxCmd { get; }
+
+        public abstract string ColoredName { get; }
+        public abstract string Action { get; }
+        public abstract string ActionIng { get; }
+        public abstract string Type { get; }
+        public abstract string MaxCmd { get; }
         
         
         /// <summary> Replaces this instance's access permissions 
@@ -90,13 +90,13 @@ namespace GoldenSparks {
             }
             return false;
         }
-        
-        public void Describe(Player p, StringBuilder perms) {
+
+            public void Describe(Player p, StringBuilder perms) {
             perms.Append(Group.GetColoredName(Min) + "&S+");
-            if (Max < LevelPermission.Owner) {
+            if (Max != LevelPermission.Nobody) {
                 perms.Append(" up to " + Group.GetColoredName(Max));
             }
-            
+
             List<string> whitelist = Whitelisted;
             foreach (string name in whitelist) {
                 perms.Append(", " + p.FormatNick(name));
@@ -177,20 +177,20 @@ namespace GoldenSparks {
             }
             ApplyChanges(p, lvl, msg);
         }
-        
-        protected abstract void ApplyChanges(Player p, Level lvl, string msg);
+
+        public abstract void ApplyChanges(Player p, Level lvl, string msg);
         
         bool CheckRank(Player p, LevelPermission plRank, LevelPermission perm, bool max) {
             string mode = max ? "max" : "min";
             if (!CheckDetailed(p, plRank)) {                
                 p.Message("&WHence you cannot change the {1} {0} rank.", Type, mode); return false;
             }
-            
-            if (perm <= plRank || max && perm == LevelPermission.Nobody) return true;          
+            if (perm <= plRank || max && perm == LevelPermission.Sparkie) return true;
             p.Message("&WYou cannot change the {1} {0} rank of {2} &Wto a rank higher than yours.",
                       Type, mode, ColoredName);
             return false;
         }
+
         
         bool CheckList(Player p, LevelPermission plRank, string name, bool whitelist) {
             if (!CheckDetailed(p, plRank)) {
@@ -248,38 +248,37 @@ namespace GoldenSparks {
         public override List<string> Blacklisted {
             get { return isVisit ? cfg.VisitBlacklist : cfg.BuildBlacklist; }
         }
-        
-        protected override string ColoredName { get { return cfg.Color + lvlName; } }
-        protected override string Action { get { return isVisit ? "go to" : "build in"; } }
-        protected override string ActionIng { get { return isVisit ? "going to" : "building in"; } }
-        protected override string Type { get { return isVisit ? "visit" : "build"; } }
-        protected override string MaxCmd { get { return isVisit ? "PerVisit" : "PerBuild"; } }
 
-        
-        protected override void ApplyChanges(Player p, Level lvl, string msg) {
+        public override string ColoredName { get { return cfg.Color + lvlName; } }
+        public override string Action { get { return isVisit ? "go to" : "build in"; } }
+        public override string ActionIng { get { return isVisit ? "going to" : "building in"; } }
+        public override string Type { get { return isVisit ? "visit" : "build"; } }
+        public override string MaxCmd { get { return isVisit ? "PerVisit" : "PerBuild"; } }
+
+
+        public override void ApplyChanges(Player p, Level lvl, string msg) {
             Update(lvl);
             Logger.Log(LogType.UserActivity, "{0} &Son {1}", msg, lvlName);            
             if (lvl != null) lvl.Message(msg);
-            
-            if (p != Player.Sparks && p.level != lvl) {
+            if (p != Player.Sparks && p.level != lvl)
+            {
                 p.Message("{0} &Son {1}", msg, ColoredName);
             }
         }
-        
+
         void Update(Level lvl) {
             cfg.SaveFor(lvlName);
             if (lvl == null) return;
             if (isVisit && lvl == Server.mainLevel) return;
             Player[] players = PlayerInfo.Online.Items;
             
-            foreach (Player p in players) 
-            {
+            foreach (Player p in players) {
                 if (p.level != lvl) continue;
                 bool allowed = CheckAllowed(p);
                 
                 if (!isVisit) {
                     p.AllowBuild = allowed;
-                } else if (!allowed) {
+                } else if (!allowed) {                    
                     p.Message("&WNo longer allowed to visit &S{0}", ColoredName);
                     PlayerActions.ChangeMap(p, Server.mainLevel);
                 }

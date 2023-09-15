@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -27,11 +27,10 @@ namespace GoldenSparks.Drawing.Transforms
         public override string[] Help { get { return HelpString; } }
         
         static string[] HelpString = new string[] {
-            "&TArguments: [angleX] [angleY] [angleZ]",
-            "&HRotates the output of the draw operation around its bottom left corner",
-            "&TArguments: [angleX] [angleY] [angleZ] centre",
-            "&HRotates the output of the draw operation around its centre",
-            "&H  Note: [angle] values are in degrees",
+            "&TArguments: [angleX] [angleY] [angleZ] <centre>",
+            "&H[angle] values are values in degrees.",
+            "&H[centre] if given, indicates to scale from the centre of a draw operation, " +
+            "instead of outwards from the first mark. Recommended for cuboid and cylinder.",
         };
         
         public override Transform Construct(Player p, string message) {
@@ -46,10 +45,9 @@ namespace GoldenSparks.Drawing.Transforms
             rotater.SetAngles(angleX, angleY, angleZ);
 
             if (args.Length == 3) return rotater; // no centre argument
-            if (!IsCentre(args[args.Length - 1])) {
+            if (!args[args.Length - 1].CaselessEq("centre")) {
                 p.Message("The mode must be either \"centre\", or not given."); return null;
             }
-            
             rotater.CentreOrigin = true;
             return rotater;
         }
@@ -59,10 +57,6 @@ namespace GoldenSparks.Drawing.Transforms
                 p.MessageLines(HelpString); return false;
             }
             return true;
-        }
-        
-        static bool IsCentre(string input) {
-            return input.CaselessEq("centre") || input.CaselessEq("center");
         }
     }
 }

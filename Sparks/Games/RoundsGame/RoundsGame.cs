@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,19 +18,17 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using GoldenSparks.Commands.World;
 using GoldenSparks.Events.GameEvents;
 
-namespace GoldenSparks.Games 
-{    
-    public abstract partial class RoundsGame : IGame 
-    {
+namespace GoldenSparks.Games {
+    
+    public abstract partial class RoundsGame : IGame {
         public int RoundsLeft;
         public bool RoundInProgress;
         public DateTime RoundStart;
         public string LastMap = "";
         public LevelPicker Picker;
-
-        //public abstract string WelcomeMessage { get; }
         
         /// <summary> Messages general info about current round and players. </summary>
         /// <remarks> e.g. who is alive, points of each team, etc. </remarks>
@@ -48,11 +46,8 @@ namespace GoldenSparks.Games
         public virtual void SaveStats(Player pl) { }
         
         public override bool HandlesChatMessage(Player p, string message) {
+            if (!Running || p.level != Map) return false;
             return Picker.HandlesMessage(p, message);
-        }
-        
-        public override bool ClaimsMap(string map) {
-            return GetConfig().Maps.CaselessContains(map);
         }
 
         public abstract void StartGame();
@@ -91,6 +86,7 @@ namespace GoldenSparks.Games
             if (!GetConfig().StartImmediately) return;
             try {
                 Start(Player.Sparks, "", int.MaxValue);
+
             } catch (Exception ex) { 
                 Logger.LogError("Error auto-starting " + GameName, ex); 
             }
@@ -109,8 +105,7 @@ namespace GoldenSparks.Games
                 while (Running && RoundsLeft > 0) {
                     RoundInProgress = false;
                     if (RoundsLeft != int.MaxValue) RoundsLeft--;
-
-                    if (Map != null) Logger.Log(LogType.GameActivity, "[{0}] Round started on {1}", GameName, Map.ColoredName);
+                    
                     DoRound();
                     if (Running) EndRound();
                     if (Running) VoteAndMoveToNextMap();
@@ -130,6 +125,7 @@ namespace GoldenSparks.Games
             Picker.QueuedMap = null;
             Level next = LevelInfo.FindExact(map);
             if (next == null) next = LevelActions.Load(Player.Sparks, map, false);
+
             if (next == null) return false;
             
             Map = next;
@@ -141,23 +137,17 @@ namespace GoldenSparks.Games
         }
 
         public void DoCountdown(string format, int delay, int minThreshold) {
-            for (int i = delay; i > 0 && Running; i--) 
-            {
-                MessageCountdown(format, i, minThreshold);
+            const CpeMessageType type = CpeMessageType.Announcement;
+            for (int i = delay; i > 0 && Running; i--) {
+                if (i == 1) {
+                    MessageMap(type, String.Format(format, i)
+                               .Replace("seconds", "second"));
+                } else if (i < minThreshold || (i % 10) == 0) {
+                    MessageMap(type, String.Format(format, i));
+                }
                 Thread.Sleep(1000);
             }
-            MessageMap(CpeMessageType.Announcement, "");
-        }
-
-        public void MessageCountdown(string format, int i, int minThreshold) {
-            const CpeMessageType type = CpeMessageType.Announcement;
-            
-            if (i == 1) {
-                MessageMap(type, String.Format(format, i)
-                           .Replace("seconds", "second"));
-            } else if (i < minThreshold || (i % 10) == 0) {
-                MessageMap(type, String.Format(format, i));
-            }
+            MessageMap(type, "");
         }
 
         public List<Player> DoRoundCountdown(int delay) {
@@ -193,7 +183,7 @@ namespace GoldenSparks.Games
                 ContinueOnSameMap();
             } else {
                 TransferPlayers(lastMap);
-                lastMap.Unload(true);
+                lastMap.Unload();
             }
         }
 
@@ -215,10 +205,10 @@ namespace GoldenSparks.Games
             
             // Try to reset changes made to this map, if possible
             // TODO: do this in a nicer way
-            // TODO this doesn't work properly with physics either
-            Map.blocks       = old.blocks;
+            Map.blocks = old.blocks;
             Map.CustomBlocks = old.CustomBlocks;
             LevelActions.ReloadAll(Map, Player.Sparks, false);
+
             Map.Message("Reset map to latest backup");
         }
         
@@ -229,6 +219,7 @@ namespace GoldenSparks.Games
             
             foreach (Player pl in online) {
                 pl.Game.RatedMap = false;
+                pl.Game.PledgeSurvive = false;
                 if (pl.level != Map && pl.level == lastMap) transfers.Add(pl);
             }
             
@@ -262,10 +253,10 @@ namespace GoldenSparks.Games
             RoundInProgress = false;
             
             Player[] players = PlayerInfo.Online.Items;
-            foreach (Player pl in players) 
-            {
+            foreach (Player pl in players) {
                 if (pl.level != Map) continue;
                 pl.Game.RatedMap = false;
+                pl.Game.PledgeSurvive = false;
                 PlayerLeftGame(pl);
                 
                 TabList.Update(pl, true);

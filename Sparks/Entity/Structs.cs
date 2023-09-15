@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,11 +18,11 @@
 using System;
 using GoldenSparks.Maths;
 
-namespace GoldenSparks 
-{  
+namespace GoldenSparks {
+    
     /// <summary> Represents the position of an entity in the world. </summary>
-    public struct Position : IEquatable<Position> 
-    {       
+    public struct Position : IEquatable<Position> {
+        
         /// <summary> X fixed-point location in the world. </summary>
         public int X;
         
@@ -74,11 +74,11 @@ namespace GoldenSparks
         
         
         const long mask = 0x1FFFFF;
-        internal long Pack() {
+        public long Pack() {
             return (X & mask) | ((Y & mask) << 21) | ((Z & mask) << 42);
         }
-        
-        internal static Position Unpack(long raw) {
+
+        public static Position Unpack(long raw) {
             Position pos;
             pos.X = SignExtend(raw);
             pos.Y = SignExtend(raw >> 21);
@@ -122,13 +122,13 @@ namespace GoldenSparks
         public static byte DegreesToPacked(int degrees) {
             return (byte)(degrees * 256 / 360);
         }
-        
-        
-        internal uint Pack() {
+
+
+        public uint Pack() {
             return (uint)(RotX | (RotY << 8) | (RotZ << 16) | (HeadX << 24));
         }
-        
-        internal static Orientation Unpack(uint raw) {
+
+        public static Orientation Unpack(uint raw) {
             Orientation rot;
             rot.RotX = (byte)raw; rot.RotY = (byte)(raw >> 8);
             rot.RotZ = (byte)(raw >> 16); rot.HeadX = (byte)(raw >> 24);

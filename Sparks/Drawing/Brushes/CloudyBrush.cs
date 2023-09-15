@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,7 +16,6 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Collections.Generic;
 using GoldenSparks.Drawing.Ops;
 using GoldenSparks.Generator;
 using BlockID = System.UInt16;
@@ -30,17 +29,17 @@ namespace GoldenSparks.Drawing.Brushes
         readonly float[] thresholds;
         readonly ImprovedNoise noise;
         
-        public CloudyBrush(List<BlockID> blocks, List<int> counts, NoiseArgs n) {
-            this.blocks = blocks.ToArray();
-            this.counts = counts.ToArray();
-            this.thresholds = new float[counts.Count];
+        public CloudyBrush(BlockID[] blocks, int[] counts, NoiseArgs n) {
+            this.blocks = blocks;
+            this.counts = counts;
+            this.thresholds = new float[counts.Length];
             Random r = n.Seed == int.MinValue ? new Random() : new Random(n.Seed);
             noise = new ImprovedNoise(r);
             
-            noise.Frequency   = n.Frequency;
-            noise.Amplitude   = n.Amplitude;
-            noise.Octaves     = n.Octaves;
-            noise.Lacunarity  = n.Lacunarity;
+            noise.Frequency = n.Frequency;
+            noise.Amplitude = n.Amplitude;
+            noise.Octaves = n.Octaves;
+            noise.Lacunarity = n.Lacunarity;
             noise.Persistence = n.Persistence;
         }
         
@@ -83,7 +82,8 @@ namespace GoldenSparks.Drawing.Brushes
             }
             
             // Map noise distribution to block coverage
-            int volume = op.SizeX * op.SizeY * op.SizeZ;
+            int volume = (op.Max.X - op.Min.X + 1)
+                * (op.Max.Y - op.Min.Y + 1) * (op.Max.Z - op.Min.Z + 1);
             float sum = 0;
             for (int i = 0; i < accuracy; i++) {
                 // Update the thresholds
@@ -91,11 +91,10 @@ namespace GoldenSparks.Drawing.Brushes
                 //   then the threshold for all blocks is set to this.
                 // If sum was say 0.8 instead, then only the threshold for the
                 //   very last block would be increased.
-                // TODO rewrite to be single pass (only need to update current instead of all counts)
                 for (int j = 0; j < counts.Length; j++) {
                     if (sum <= coverage[j])
                         thresholds[j] = i / (float)accuracy;
-                }              
+                }
                 sum += values[i] / (float)volume;
             }
             thresholds[blocks.Length - 1] = 1;
@@ -113,8 +112,7 @@ namespace GoldenSparks.Drawing.Brushes
             N = N > 1 ? 1 : N;
             
             next = blocks.Length - 1;
-            for (int i = 0; i < thresholds.Length; i++) 
-            {
+            for (int i = 0; i < thresholds.Length; i++) {
                 if (N <= thresholds[i]) { next = i; break; }
             }
             return blocks[next];

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,14 +19,14 @@ using System;
 using System.Collections.Generic;
 
 namespace GoldenSparks {
-    internal sealed class EnvPreset {
+    public sealed class EnvPreset {
         public string Fog, Sky, Clouds, Sun, Shadow;
         
         public EnvPreset(string raw) {
             string[] args = raw.SplitSpaces();
             Fog = args[0]; Sky = args[1]; Clouds = args[2]; Sun = args[3]; Shadow = args[4];
         }
-            
+
         public static Dictionary<string, string> Presets = new Dictionary<string, string>() {
                         //   fog   sky   clouds   sun   shadow
             { "Cartoon",  "00FFFF 1E90FF 00BFFF F5DEB3 F4A460" },

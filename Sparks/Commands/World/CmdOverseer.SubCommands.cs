@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -101,7 +101,7 @@ namespace GoldenSparks.Commands.World {
             } else if (cmd == "RESIZE") {
                 value = p.level.name + " " + value;
                 string[] args = value.SplitSpaces();
-                if (args.Length < 4) { Command.Find("ResizeLvl").Help(p); return; }
+                if (args.Length < 4) { Find("ResizeLvl").Help(p); return; }
 
                 bool needConfirm;
                 if (CmdResizeLvl.DoResize(p, args, p.DefaultCmdData, out needConfirm)) return;
@@ -113,6 +113,7 @@ namespace GoldenSparks.Commands.World {
                 // Older realm maps didn't put you on visit whitelist, so make sure we put the owner here
                 AccessController access = p.level.VisitAccess;
                 if (!access.Whitelisted.CaselessContains(p.name)) {
+
                     access.Whitelist(Player.Sparks, LevelPermission.Sparkie, p.level, p.name);
                 }
                 
@@ -138,23 +139,25 @@ namespace GoldenSparks.Commands.World {
         }
         
         static bool DisallowedMapOption(string opt) {
-            return opt == LevelOptions.Speed || opt == LevelOptions.Overload || opt == LevelOptions.RealmOwner;
+            return opt ==  LevelOptions.Overload || opt == LevelOptions.RealmOwner;
         }
         
         static void AddMap(Player p, string value) {
             if (p.group.OverseerMaps == 0) {
                 p.Message("Your rank is not allowed to create any /os maps."); return;
             }
-			
-            string level  = NextLevel(p);
+            string level = NextLevel(p);
             if (level == null) return;
-            string[] bits = value.SplitSpaces();
-            
-            if (value.Length == 0)    value = "128 128 128";
-            else if (bits.Length < 3) value = "128 128 128 " + value;
-            string[] args = (level + " " + value.TrimEnd()).SplitSpaces(6);
 
-            CmdNewLvl newLvl = (CmdNewLvl)Command.Find("NewLvl"); // TODO: this is a nasty hack, find a better way
+            if (value.Length == 0) value = "128 128 128 flat";
+            else if (value.IndexOf(' ') == -1) value = "128 128 128 " + value;
+            
+            string[] args = value.TrimEnd().SplitSpaces();
+            if (args.Length == 3) value += " flat";
+
+            CmdNewLvl newLvl = (CmdNewLvl)Find("NewLvl"); // TODO: this is a nasty hack, find a better way
+            args = (level + " " + value).SplitSpaces();
+            
             Level lvl = newLvl.GenerateMap(p, args, p.DefaultCmdData);
             if (lvl == null) return;
             

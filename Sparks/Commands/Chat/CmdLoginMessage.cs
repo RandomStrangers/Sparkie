@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.osedu.org/licenses/ECL-2.0
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -15,11 +15,10 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
+using GoldenSparks.DB;
 
-namespace GoldenSparks.Commands.Chatting 
-{
-    public sealed class CmdLoginMessage : EntityPropertyCmd
-    {
+namespace GoldenSparks.Commands.Chatting {
+    public sealed class CmdLoginMessage : EntityPropertyCmd {
         public override string name { get { return "LoginMessage"; } }
         public override string shortcut { get { return "LoginMsg"; } }
         public override string type { get { return CommandTypes.Chat; } }
@@ -32,7 +31,7 @@ namespace GoldenSparks.Commands.Chatting
             UsePlayer(p, data, message, "login message");
         }
         
-        protected override void SetPlayerData(Player p, string target, string msg) {
+        public override void SetPlayerData(Player p, string target, string msg) {
             PlayerOperations.SetLoginMessage(p, target, msg);
         }
         

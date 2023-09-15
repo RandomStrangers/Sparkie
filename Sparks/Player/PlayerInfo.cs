@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-https://opensource.org/license/ecl-2-0/
-https://www.gnu.org/licenses/gpl-3.0.html
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -15,7 +15,7 @@ permissions and limitations under the Licenses.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Data;
 using GoldenSparks.DB;
 using GoldenSparks.SQL;
 
@@ -25,7 +25,7 @@ namespace GoldenSparks
     {
         /// <summary> Array of all currently online players. </summary>
         /// <remarks> Note this field is highly volatile, you should cache references to the items array. </remarks>
-        public static VolatileArray<Player> Online = new VolatileArray<Player>();
+        public static VolatileArray<Player> Online = new VolatileArray<Player>(true);
         
         public static Group GetGroup(string name) {
             Player target = FindExact(name);
@@ -41,6 +41,14 @@ namespace GoldenSparks
             return col.Length > 0 ? col : p.group.Color;
         }
         
+        /// <summary> Returns the number of non-hidden players that are currently online </summary>
+        public static int NonHiddenCount() {
+            Player[] players = Online.Items;
+            int count = 0;
+            foreach (Player p in players) { if (!p.hidden) count++; }
+            return count;
+        }
+        
         public static int NonHiddenUniqueIPCount() {
             Player[] players = Online.Items;
             Dictionary<string, bool> uniqueIPs = new Dictionary<string, bool>();
@@ -50,12 +58,8 @@ namespace GoldenSparks
             }
             return uniqueIPs.Count;
         }
-        public static int Count()
-        {
-            return Player.players.Count;
-        }
         // TODO: remove _useless parameter. but this breaks backwards compatibility with plugins
-
+        
         /// <summary> Matches given name against the names of all online players that the given player can see </summary>
         /// <returns> A Player instance if exactly one match was found </returns>
         public static Player FindMatches(Player pl, string name, bool _useless = false) {
@@ -74,7 +78,7 @@ namespace GoldenSparks
             if (exact != null && pl.CanSee(exact)) { matches = 1; return exact; }
             
             return Matcher.Find(pl, name, out matches, Online.Items,
-                                p => pl.CanSee(p), p => p.name, p => p.color + p.name, "online players");
+                                p => pl.CanSee(p), p => p.name, "online players");
         }
         
         public static string FindMatchesPreferOnline(Player p, string name) {
@@ -94,26 +98,26 @@ namespace GoldenSparks
             Player[] players = PlayerInfo.Online.Items;
             name = Server.ToRawUsername(name);
             
-            foreach (Player p in players) 
-            {
+            foreach (Player p in players) {
                 if (p.truename.CaselessEq(name)) return p;
             }
             return null;
         }
 
         
-        static void ReadAccounts(ISqlRecord record, List<string> names) {
-            string name = record.GetText(0);         
+        static object ReadAccounts(IDataRecord record, object arg) {
+            List<string> names = (List<string>)arg;
+            string name = record.GetText(0);
+            
             if (!names.CaselessContains(name)) names.Add(name);
+            return arg;
         }
         
         /// <summary> Retrieves names of all players whose IP address matches the given IP address. </summary>
         /// <remarks> This is current IP for online players, last IP for offline players from the database. </remarks>
         public static List<string> FindAccounts(string ip) {
             List<string> names = new List<string>();
-            Database.ReadRows("Players", "Name", 
-                                record => ReadAccounts(record, names), 
-                                "WHERE IP=@0", ip);
+            Database.ReadRows("Players", "Name", names, ReadAccounts, "WHERE IP=@0", ip);
             
             // TODO: should we instead do save() when the player logs in
             // by checking online players we avoid a DB write though
@@ -124,20 +128,15 @@ namespace GoldenSparks
             }
             return names;
         }
-        
+
         /// <summary> Filters input list to only players that the source player can see. </summary>
         public static List<Player> OnlyCanSee(Player p, LevelPermission plRank, 
                                                 IEnumerable<Player> players) {
             List<Player> list = new List<Player>();
-            foreach (Player pl in players) 
-            {
+            foreach (Player pl in players) {
                 if (p.CanSee(pl, plRank)) list.Add(pl);
             }
             return list;
-        }
-
-        public static List<Player> GetOnlineCanSee(Player p, LevelPermission plRank) {
-            return OnlyCanSee(p, plRank, Online.Items);
         }
         
         
@@ -168,19 +167,6 @@ namespace GoldenSparks
                 entry.players.Add(pl);
             }
             return entry;
-        }
-
-
-        public static string GetLoginMessage(Player p) {
-            string msg = PlayerDB.GetLoginMessage(p.name);
-            return msg;
-        }
-
-        public static string GetLogoutMessage(Player p) {
-            if (p.name == null) return "disconnected";
-
-            string msg = PlayerDB.GetLogoutMessage(p.name);
-            return msg;
         }
     }
     

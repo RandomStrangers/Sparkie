@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -28,7 +28,8 @@ namespace GoldenSparks.Levels.IO
     public unsafe sealed class LvlImporter : IMapImporter 
     {
         public override string Extension { get { return ".lvl"; } }
-        public override string Description { get { return "MCDzienny/MCForge/GoldenSparks map"; } }
+        public override string Description { get { return "MCDzienny/MCForge/MCGalaxy/" +
+                    "SuperNova/DeadNova/RandomStrangers/RelaySoftware/GoldenSparks map"; } }
         const int HEADER_SIZE = 18;
         
         public override Vec3U16 ReadDimensions(Stream src) {

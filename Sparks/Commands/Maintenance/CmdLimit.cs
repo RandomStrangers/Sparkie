@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -37,7 +37,7 @@ namespace GoldenSparks.Commands.Maintenance {
             }
             
             int limit = 0;
-            if (hasLimit && !CommandParser.GetInt(p, args[1], "Limit", ref limit, 0)) return;
+            if (hasLimit && !CommandParser.GetInt(p, args[1], "Limit", ref limit, 1)) return;
             
             switch (args[0].ToLower()) {
                 case "rp":

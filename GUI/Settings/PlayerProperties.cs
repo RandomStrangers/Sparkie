@@ -25,8 +25,8 @@ namespace GoldenSparks.Gui {
         readonly Player p;
         string inMsg, outMsg;
         
-        public PlayerProperties(Player p) {
-           string player = p.name;
+        public PlayerProperties(Player player) {
+            this.p = player;
             inMsg  = PlayerDB.GetLoginMessage(player);
             outMsg = PlayerDB.GetLogoutMessage(player);
         }

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,10 +21,10 @@ using GoldenSparks.Commands.Moderation;
 using GoldenSparks.Events;
 
 namespace GoldenSparks.Tasks {
-    internal static class ModerationTasks {
+    public static class ModerationTasks {
 
         static SchedulerTask temprankTask, freezeTask, muteTask;
-        internal static void QueueTasks() {
+        public static void QueueTasks() {
             temprankTask = Server.MainScheduler.QueueRepeat(
                 TemprankCheckTask, null, NextRun(Server.tempRanks));
             freezeTask = Server.MainScheduler.QueueRepeat(
@@ -33,42 +33,45 @@ namespace GoldenSparks.Tasks {
                 MuteCheckTask, null, NextRun(Server.muted));
         }
 
-        
-        internal static void TemprankCheckTask(SchedulerTask task) {
+
+        public static void TemprankCheckTask(SchedulerTask task) {
             DoTask(task, Server.tempRanks, TemprankCallback);
         }
-        
-        internal static void TemprankCalcNextRun() { CalcNextRun(temprankTask, Server.tempRanks); }
+
+        public static void TemprankCalcNextRun() { CalcNextRun(temprankTask, Server.tempRanks); }
         
         static void TemprankCallback(string[] args) {
             CmdTempRank.Delete(Player.Sparks, args[0], Player.Sparks.DefaultCmdData);
+
             // Handle case of old rank no longer existing
             if (Server.tempRanks.Remove(args[0])) {
                 Server.tempRanks.Save();
             }
         }
-        
-        
-        internal static void FreezeCheckTask(SchedulerTask task) {
+
+
+        public static void FreezeCheckTask(SchedulerTask task) {
             DoTask(task, Server.frozen, FreezeCallback);
         }
-        
-        internal static void FreezeCalcNextRun() { CalcNextRun(freezeTask, Server.frozen); }
+
+        public static void FreezeCalcNextRun() { CalcNextRun(freezeTask, Server.frozen); }
         
         static void FreezeCallback(string[] args) {
             ModAction action = new ModAction(args[0], Player.Sparks, ModActionType.Unfrozen, "auto unfreeze");
+
             OnModActionEvent.Call(action);
         }
-        
-        
-        internal static void MuteCheckTask(SchedulerTask task) {
+
+
+        public static void MuteCheckTask(SchedulerTask task) {
             DoTask(task, Server.muted, MuteCallback);
         }
-        
-        internal static void MuteCalcNextRun() { CalcNextRun(muteTask, Server.muted); }
+
+        public static void MuteCalcNextRun() { CalcNextRun(muteTask, Server.muted); }
         
         static void MuteCallback(string[] args) {
             ModAction action = new ModAction(args[0], Player.Sparks, ModActionType.Unmuted, "auto unmute");
+
             OnModActionEvent.Call(action);
         }
         

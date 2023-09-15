@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,14 +17,15 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using GoldenSparks.Bots;
 using GoldenSparks.SQL;
 
 namespace GoldenSparks.Tasks {
-    internal static class UpgradeTasks {
+    public static class UpgradeTasks {
 
-        internal static void UpgradeOldAgreed() {
+        public static void UpgradeOldAgreed() {
             // agreed.txt format used to be names separated by spaces, we need to fix that up.
             if (!File.Exists("ranks/agreed.txt")) return;
             
@@ -36,8 +37,8 @@ namespace GoldenSparks.Tasks {
             }
             File.WriteAllText("ranks/agreed.txt", data);
         }
-        
-        internal static void UpgradeOldTempranks(SchedulerTask task) {
+
+        public static void UpgradeOldTempranks(SchedulerTask task) {
             if (!File.Exists(Paths.TempRanksFile)) return;
 
             // Check if empty, or not old form
@@ -68,8 +69,8 @@ namespace GoldenSparks.Tasks {
             File.WriteAllLines(Paths.TempRanksFile, lines);
         }
 
-        
-        internal static void UpgradeDBTimeSpent(SchedulerTask task) {
+
+        public static void UpgradeDBTimeSpent(SchedulerTask task) {
             string time = Database.ReadString("Players", "TimeSpent", "LIMIT 1");
             if (time == null) return; // no players at all in DB
             if (time.IndexOf(' ') == -1) return; // already upgraded
@@ -87,20 +88,21 @@ namespace GoldenSparks.Tasks {
         static void DumpPlayerTimeSpents() {
             playerIds = new List<int>();
             playerSeconds = new List<long>();
-            Database.ReadRows("Players", "ID,TimeSpent", ReadTimeSpent);
+            Database.ReadRows("Players", "ID,TimeSpent", null, ReadTimeSpent);
         }
         
-        static void ReadTimeSpent(ISqlRecord record) {
+        static object ReadTimeSpent(IDataRecord record, object arg) {
             playerCount++;
             try {
                 int id = record.GetInt32(0);
-                TimeSpan span = Database.ParseOldDBTimeSpent(record.GetString(1));
+                TimeSpan span = record.GetString(1).ParseOldDBTimeSpent();
                 
                 playerIds.Add(id);
                 playerSeconds.Add((long)span.TotalSeconds);
             } catch {
                 playerFailed++;
             }
+            return arg;
         }
         
         static void UpgradePlayerTimeSpents() {

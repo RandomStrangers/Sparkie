@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,111 +18,94 @@
 using System;
 using System.Collections.Generic;
 using GoldenSparks.Blocks;
+using GoldenSparks.Commands.Building;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 using BlockRaw = System.Byte;
 
-namespace GoldenSparks.Commands.CPE 
-{
-    internal static class CustomBlockCommand 
-    {
-        class BlockDefinitionsArgs
-        {
-            public bool global;
-            public Level level;
-            public string cmd;
-            public string scope;
-            public BlockDefinition[] defs;
-            public BlockDefinition curDef;
-        }
-
+namespace GoldenSparks.Commands.CPE {
+    public static class CustomBlockCommand {
+        
         public static void Execute(Player p, string message, CommandData data, bool global, string cmd) {
             string[] parts = message.SplitSpaces(4);
             Level lvl = p.IsSuper ? null : p.level;
-
-            BlockDefinitionsArgs args = new BlockDefinitionsArgs();
-            args.global = global;
-            args.level  = lvl;
-            args.cmd    = cmd;
-            args.scope  = global ? "global" : "level";
-            args.defs   = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
-            args.curDef = global ? p.gbBlock : p.lbBlock;
             
             for (int i = 0; i < Math.Min(parts.Length, 3); i++)
                 parts[i] = parts[i].ToLower();
             
             if (message.Length == 0) {
-                if (args.curDef != null) {
-                    SendStepHelp(p, args);
+                if (GetBD(p, global) != null) {
+                    SendStepHelp(p, global, cmd);
                 } else {
                     Help(p, cmd);
                 }
                 return;
             }
             
-            switch (parts[0]) { // TODO IsCreateCommand
+            switch (parts[0]) {
                 case "add":
                 case "create":
-                    AddHandler(p, parts, args); break;
+                    AddHandler(p, lvl, parts, global, cmd); break;
                 case "copyall":
                 case "copyfrom":
-                    CopyAllHandler(p, parts, args, data); break;
+                    CopyAllHandler(p, lvl, parts, data, global, cmd); break;
                 case "copy":
                 case "clone":
                 case "duplicate":
-                    CopyHandler(p, parts, args, data); break;
+                    CopyHandler(p, lvl, parts, data, global, cmd); break;
                 case "delete":
                 case "remove":
-                    RemoveHandler(p, parts, args); break;
+                    RemoveHandler(p, lvl, parts, global, cmd); break;
                 case "info":
                 case "about":
-                    InfoHandler(p, parts, args); break;
+                    InfoHandler(p, lvl, parts, global, cmd); break;
                 case "list":
                 case "ids":
-                    ListHandler(p, parts, args); break;
+                    ListHandler(p, lvl, parts, global, cmd); break;
                 case "abort":
                     p.Message("Aborted the custom block creation process.");
-                    SetBD(p, args, null); break;
+                    SetBD(p, global, null); break;
                 case "edit":
-                    EditHandler(p, parts, args); break;
+                    EditHandler(p, lvl, parts, global, cmd); break;
                 default:
-                    if (args.curDef != null)
-                        DefineBlockStep(p, message, args);
+                    if (GetBD(p, global) != null)
+                        DefineBlockStep(p, lvl, message, global, cmd);
                     else
                         Help(p, cmd);
                     break;
             }
         }
         
-        static void AddHandler(Player p, string[] parts, BlockDefinitionsArgs args) {
+        static void AddHandler(Player p, Level lvl, string[] parts, 
+                               bool global, string cmd) {
             BlockID target;
-            if (parts.Length >= 2) {
-                string id = parts[1];                
-                if (!CheckBlock(p, id, args, out target)) return;
-                BlockDefinition old = args.defs[target];
+            if (parts.Length >= 2 ) {
+                string id = parts[1];
+                if (!CheckBlock(p, id, out target)) return;
+                BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+                BlockDefinition old = defs[target];
                 
-                if (ExistsInScope(old, target, args)) {
-                    p.Message("There is already a custom block with the id {0}" +
-                              ", you must either use a different id or use \"{1} remove {0}\"", id, args.cmd);
+                if (ExistsInScope(old, target, global)) {
+                    p.Message("There is already a custom block with the id " + id +
+                              ", you must either use a different id or use \"" + cmd + " remove " + id + "\"");
                     return;
                 }
             } else {
-                target = GetFreeBlock(p, args);
+                target = GetFreeBlock(p, global, lvl, cmd);
                 if (target == Block.Invalid) return;
             }
-
-            BlockDefinition def = new BlockDefinition();
+            
+            SetBD(p, global, new BlockDefinition());
+            BlockDefinition def = GetBD(p, global);
             def.SetBlock(target);
-            SetBD(p, args, def);
-            args.curDef = def;
-
-            p.Message("  Use &T{0} abort &Sat any time to stop making the block.", args.cmd);
-            p.Message("  Use &T{0} revert &Sto go back a step", args.cmd);
-            p.Message("  Use &T{0} [input] &Sto provide input", args.cmd);
+            
+            p.Message("  Use &T{0} abort &Sat any time to stop making the block.", cmd);
+            p.Message("  Use &T{0} revert &Sto go back a step", cmd);
+            p.Message("  Use &T{0} [input] &Sto provide input", cmd);
             p.Message("&f----------------------------------------------------------");
             
-            SetStep(p, args, 2);
-            SendStepHelp(p, args);
+            SetStep(p, global, 2);
+            SendStepHelp(p, global, cmd);
         }
         
         static BlockDefinition[] GetDefs(Player p, CommandData data, string map, ref string coloredMap) {
@@ -142,100 +125,91 @@ namespace GoldenSparks.Commands.CPE
             return BlockDefinition.Load(path);
         }
 
-        
-        static void CopyAllHandler(Player p, string[] parts, BlockDefinitionsArgs args, CommandData data) {
-            if (parts.Length < 2) { Help(p, args.cmd); return; }
-            string coloredMap = null;
-            int copied = 0;
-            
-            BlockDefinition[] srcDefs = GetDefs(p, data, parts[1], ref coloredMap);
-            if (srcDefs == null) return;        
-            
-            for (int i = 0; i < srcDefs.Length; i++) 
-            {
-                if (srcDefs[i] == null) continue;
-                
-                BlockID b = (BlockID)i;
-                if (!DoCopy(p, args, true, srcDefs[i], b, b)) continue;
-                copied++;
-                
-                p.Message("Copied the {0} custom block with id \"{1}\".", args.scope, Block.ToRaw(b));
-            }
-            
-            p.Message("{0} custom blocks were copied from level {1}", 
-                      copied > 0 ? copied.ToString() : "No", coloredMap);
-            if (copied > 0) BlockDefinition.Save(args.global, args.level);
-        }
-        
-        static void CopyHandler(Player p, string[] parts, BlockDefinitionsArgs args, CommandData data) {
-            if (parts.Length < 2) { Help(p, args.cmd); return; }
-            BlockDefinition[] srcDefs = args.defs;
-
-            BlockID dst;
-            int min, max;           
-            if (!CheckRawBlocks(p, parts[1], args, out min, out max, true)) return;
-            
-            if (parts.Length > 2) {
-                if (!CheckBlock(p, parts[2], args, out dst)) return;
-                
-                if (parts.Length > 3) {
-                    string coloredMap = null;
-                    srcDefs = GetDefs(p, data, parts[3], ref coloredMap);
-                    if (srcDefs == null) return;
-                }
-            } else {
-                dst = GetFreeBlock(p, args);
-                if (dst == Block.Invalid) return;
-            }
-            bool changed = false;
-            
-            for (int i = min; i <= max && Block.ToRaw(dst) <= Block.MaxRaw; i++, dst++) 
-            {
-                BlockID src = Block.FromRaw((BlockID)i);
-                if (!DoCopy(p, args, false, srcDefs[src], src, dst)) continue;
-                
-                p.Message("Duplicated the {0} custom block with id \"{1}\" to \"{2}\".", 
-                          args.scope, i, Block.ToRaw(dst));
-                changed = true;
-            }
-            if (changed) BlockDefinition.Save(args.global, args.level);
-        }  
-
-        static bool DoCopy(Player p, BlockDefinitionsArgs args, bool keepOrder, 
+        static bool DoCopy(Player p, Level lvl, bool global, string cmd, bool keepOrder, 
                            BlockDefinition srcDef, BlockID src, BlockID dst) {
             if (srcDef == null && src < Block.CPE_COUNT) {
                 srcDef = DefaultSet.MakeCustomBlock(src);
             }
-            if (srcDef == null) { MessageNoBlock(p, src, args); return false; }
+            if (srcDef == null) { MessageNoBlock(p, src, global, cmd); return false; }
             
-            BlockDefinition dstDef = args.defs[dst];
-            if (ExistsInScope(dstDef, dst, args)) { MessageAlreadyBlock(p, dst, args); return false; }
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            BlockDefinition dstDef = defs[dst];
+            if (ExistsInScope(dstDef, dst, global)) { MessageAlreadyBlock(p, dst, global, cmd); return false; }
             
             dstDef = srcDef.Copy();
             dstDef.SetBlock(dst);
             if (!keepOrder) dstDef.InventoryOrder = -1;
             
-            UpdateBlock(p, args, dstDef);
+            UpdateBlock(p, lvl, dstDef, global);
             return true;
         }
         
-        
-        static void InfoHandler(Player p, string[] parts, BlockDefinitionsArgs args) {
-            if (parts.Length == 1) { Help(p, args.cmd); return; }
-            int min, max;
-            if (!CheckRawBlocks(p, parts[1], args, out min, out max)) return;
+        static void CopyAllHandler(Player p, Level lvl, string[] parts, CommandData data, 
+                                   bool global, string cmd) {
+            if (parts.Length < 2) { Help(p, cmd); return; }
+            string coloredMap = null;
+            int copied = 0;
             
-            for (int i = min; i <= max; i++) 
-            {
-                DoInfo(p, args, Block.FromRaw((BlockID)i));
+            BlockDefinition[] defs = GetDefs(p, data, parts[1], ref coloredMap);
+            if (defs == null) return;        
+            
+            for (int i = 0; i < defs.Length; i++) {
+                if (defs[i] == null) continue;
+                
+                BlockID b = (BlockID)i;
+                if (!DoCopy(p, lvl, global, cmd, true, defs[i], b, b)) continue;
+                copied++;
+                
+                string scope = global ? "global" : "level";
+                p.Message("Copied the {0} custom block with id \"{1}\".", scope, Block.ToRaw(b));
             }
-        }
-
-        static void DoInfo(Player p, BlockDefinitionsArgs args, BlockID block) {
-            BlockDefinition def = args.defs[block];
-            if (def == null) { MessageNoBlock(p, block, args); return; }
             
-            p.Message("About {0} ({1})", def.Name, def.RawID);
+            p.Message("{0} custom blocks were copied from level {1}", 
+                      copied > 0 ? copied.ToString() : "No", coloredMap);
+            if (copied > 0) BlockDefinition.Save(global, lvl);
+        }
+        
+        static void CopyHandler(Player p, Level lvl, string[] parts, CommandData data, 
+                                bool global, string cmd) {
+            if (parts.Length < 2) { Help(p, cmd); return; }
+            int min, max;           
+            if (!CheckRawBlocks(p, parts[1], out min, out max, true)) return;
+            
+            BlockID dst;
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;          
+            if (parts.Length > 2) {
+                if (!CheckBlock(p, parts[2], out dst)) return;
+                
+                if (parts.Length > 3) {
+                    string coloredMap = null;
+                    defs = GetDefs(p, data, parts[3], ref coloredMap);
+                    if (defs == null) return;
+                }
+            } else {
+                dst = GetFreeBlock(p, global, lvl, cmd);
+                if (dst == Block.Invalid) return;
+            }
+            bool changed = false;
+            
+            for (int i = min; i <= max && Block.ToRaw(dst) <= Block.MaxRaw; i++, dst++) {
+                BlockID src = Block.FromRaw((BlockID)i);
+                if (!DoCopy(p, lvl, global, cmd, false, defs[src], src, dst)) continue;
+                string scope = global ? "global" : "level";
+                
+                p.Message("Duplicated the {0} custom block with id \"{1}\" to \"{2}\".", 
+                          scope, i, Block.ToRaw(dst));
+                changed = true;
+            }
+            if (changed) BlockDefinition.Save(global, lvl);
+        }        
+        
+        static void DoInfo(Player p, Level lvl, BlockID block, 
+                           bool global, string cmd) {
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            BlockDefinition def = defs[block];
+            if (def == null) { MessageNoBlock(p, block, global, cmd); return; }
+            
+            p.Message("About {0} ({1})", def.Name, Block.ToRaw(block));
             p.Message("  Draw type: {0}, Blocks light: {1}, collide type: {2}",
                            def.BlockDraw, def.BlocksLight, def.CollideType);
             p.Message("  Fallback ID: {0}, Sound: {1}, Speed: {2}",
@@ -271,163 +245,177 @@ namespace GoldenSparks.Commands.CPE
                 p.Message("  Order: " + def.InventoryOrder);
             }
         }
-
         
-        static void ListHandler(Player p, string[] parts, BlockDefinitionsArgs args) {
-            string modifier = parts.Length > 1 ? parts[1] : "";
-            List<BlockDefinition> defsInScope = new List<BlockDefinition>();
-            BlockDefinition[] defs = args.defs;
+        static void InfoHandler(Player p, Level lvl, string[] parts, 
+                                bool global, string cmd) {
+            if (parts.Length == 1) { Help(p, cmd); return; }
+            int min, max;
+            if (!CheckRawBlocks(p, parts[1], out min, out max)) return;
             
-            for (int i = 0; i < defs.Length; i++) 
-            {
+            for (int i = min; i <= max; i++) {
+                DoInfo(p, lvl, Block.FromRaw((BlockID)i), global, cmd);
+            }
+        }
+        
+        static void ListHandler(Player p, Level lvl, string[] parts, 
+                                bool global, string cmd) {
+            string modifier = parts.Length > 1 ? parts[1] : "";
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            List<BlockDefinition> defsInScope = new List<BlockDefinition>();
+            
+            for (int i = 0; i < defs.Length; i++) {
                 BlockDefinition def = defs[i];
                 if (def == null) continue;
                 BlockID block = def.GetBlock();
                 
-                if (!ExistsInScope(def, block, args)) continue;
+                if (!ExistsInScope(def, block, global)) continue;
                 defsInScope.Add(def);
             }
-            Paginator.Output(p, defsInScope, PrintBlock,
-                             args.cmd.Substring(1) + " list", "custom blocks", modifier);
+            MultiPageOutput.Output(p, defsInScope, FormatBlock, cmd.Substring(1) + " list",
+                                   "custom blocks", modifier, true);
         }
         
-        static void PrintBlock(Player p, BlockDefinition def) {
-            p.Message("Custom block &T{0} &Shas name &T{1}", def.RawID, def.Name);
+        static string FormatBlock(BlockDefinition def) {
+            return "Custom block &T" + def.RawID + " &Shas name &T" + def.Name;
         }
-
         
-        static void RemoveHandler(Player p, string[] parts, BlockDefinitionsArgs args) {
-            if (parts.Length <= 1) { Help(p, args.cmd); return; }
+        static bool DoRemove(Player p, Level lvl, BlockID block, 
+                             bool global, string cmd) {
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            BlockDefinition def = defs[block];
+            if (!ExistsInScope(def, block, global)) { MessageNoBlock(p, block, global, cmd); return false; }
             
-            int min, max;
-            if (!CheckRawBlocks(p, parts[1], args, out min, out max)) return;
-            bool changed = false;
+            BlockDefinition.Remove(def, defs, lvl);
+            ResetProps(global, lvl, block, p);          
             
-            for (int i = min; i <= max; i++)
-            {
-                changed |= DoRemove(p, args, Block.FromRaw((BlockID)i));
-            }
-            if (changed) BlockDefinition.Save(args.global, args.level);
-        }
-
-        static bool DoRemove(Player p, BlockDefinitionsArgs args, BlockID block) {
-            BlockDefinition def = args.defs[block];
-            if (!ExistsInScope(def, block, args)) { MessageNoBlock(p, block, args); return false; }
-            
-            BlockDefinition.Remove(def, args.defs, args.level);
-            ResetProps(args, block);
-            p.Message("Removed {0} custom block {1}({2})", args.scope, def.Name, def.RawID);
+            string scope = global ? "global" : "level";
+            p.Message("Removed " + scope + " custom block " + def.Name + "(" + def.RawID + ")");
             
             BlockDefinition globalDef = BlockDefinition.GlobalDefs[block];
-            if (!args.global && globalDef != null)
-                BlockDefinition.Add(globalDef, args.defs, args.level);
+            if (!global && globalDef != null)
+                BlockDefinition.Add(globalDef, defs, lvl);
             return true;
         }
-
         
-        static void DefineBlockStep(Player p, string value, BlockDefinitionsArgs args) {
+        static void RemoveHandler(Player p, Level lvl, string[] parts, 
+                                  bool global, string cmd) {
+            if (parts.Length <= 1) { Help(p, cmd); return; }
+            int min, max;
+            if (!CheckRawBlocks(p, parts[1], out min, out max)) return;
+            bool changed = false;
+            
+            for (int i = min; i <= max; i++) {
+                changed |= DoRemove(p, lvl, Block.FromRaw((BlockID)i), global, cmd);
+            }
+            if (changed) BlockDefinition.Save(global, lvl);
+        }
+        
+        static void DefineBlockStep(Player p, Level lvl, string value, 
+                                    bool global, string cmd) {
             string opt = value.ToLower();
-            int step = GetStep(p, args);
-            BlockDefinition def = args.curDef;
+            int step = GetStep(p, global);
+            BlockDefinition bd = GetBD(p, global);
             bool temp = false;
             
             if (opt == "revert" && step > 2) {
-                if (step == 17 && def.FogDensity == 0) step -= 2;
-                else if (step == 9 && def.Shape == 0) step -= 5;
+                if (step == 17 && bd.FogDensity == 0) step -= 2;
+                else if (step == 9 && bd.Shape == 0) step -= 5;
                 else step--;
 
-                SetStep(p, args, step);
-                SendStepHelp(p, args);
+                SetStep(p, global, step);
+                SendStepHelp(p, global, cmd);
                 return;
             }
 
             if (step == 2) {
-                def.Name = value;
+                bd.Name = value;
                 step++;
             } else if (step == 3) {
                 if (CommandParser.GetBool(p, value, ref temp)) {
-                    def.Shape = temp ? (byte)0 : (byte)16;
+                    bd.Shape = temp ? (byte)0 : (byte)16;
                     step++;
                 }
             } else if (step == 4) {
-                if (CommandParser.GetUShort(p, value, "Texture ID", ref def.TopTex)) {
-                    step += (def.Shape == 0 ? 5 : 1); // skip other texture steps for sprites
-                    if (def.Shape == 0) def.SetAllTex(def.TopTex);
+                if (CommandParser.GetUShort(p, value, "Texture ID", ref bd.TopTex)) {
+                    step += (bd.Shape == 0 ? 5 : 1); // skip other texture steps for sprites
+                    if (bd.Shape == 0) bd.SetAllTex(bd.TopTex);
                 }
             } else if (step == 5) {
-                if (CommandParser.GetUShort(p, value, "Texture ID", ref def.RightTex)) {
-                    def.SetSideTex(def.RightTex);
+                if (CommandParser.GetUShort(p, value, "Texture ID", ref bd.RightTex)) {
+                    bd.SetSideTex(bd.RightTex);
                     step++;
                 }
             } else if (step == 6) {
-                if (CommandParser.GetUShort(p, value, "Texture ID", ref def.BottomTex))
+                if (CommandParser.GetUShort(p, value, "Texture ID", ref bd.BottomTex))
                     step++;
             } else if (step == 7) {
-                if (ParseCoords(p, value, ref def.MinX, ref def.MinY, ref def.MinZ))
+                if (ParseCoords(p, value, ref bd.MinX, ref bd.MinY, ref bd.MinZ))
                     step++;
             } else if (step == 8) {
-                if (ParseCoords(p, value, ref def.MaxX, ref def.MaxY, ref def.MaxZ))
+                if (ParseCoords(p, value, ref bd.MaxX, ref bd.MaxY, ref bd.MaxZ))
                     step++;
-                def.Shape = def.MaxY;
+                bd.Shape = bd.MaxY;
             } else if (step == 9) {
-                if (CommandParser.GetByte(p, value, "Collide type", ref def.CollideType, 0, 7))
+                if (CommandParser.GetByte(p, value, "Collide type", ref bd.CollideType, 0, 7))
                     step++;
             } else if (step == 10) {
-                if (CommandParser.GetReal(p, value, "Movement speed", ref def.Speed, 0.25f, 3.96f))
+                if (CommandParser.GetReal(p, value, "Movement speed", ref bd.Speed, 0.25f, 3.96f))
                     step++;
             } else if (step == 11) {
                 if (CommandParser.GetBool(p, value, ref temp)) {
-                    def.BlocksLight = temp;
+                    bd.BlocksLight = temp;
                     step++;
                 }
             } else if (step == 12) {
-                if (CommandParser.GetByte(p, value, "Walk sound", ref def.WalkSound, 0, 11))
+                if (CommandParser.GetByte(p, value, "Walk sound", ref bd.WalkSound, 0, 11))
                     step++;
             } else if (step == 13) {
-                if (CommandParser.GetBool(p, value, ref def.FullBright))
+                if (CommandParser.GetBool(p, value, ref bd.FullBright))
                     step++;
             } else if (step == 14) {
-                if (CommandParser.GetByte(p, value, "Block draw", ref def.BlockDraw, 0, 4))
+                if (CommandParser.GetByte(p, value, "Block draw", ref bd.BlockDraw, 0, 4))
                     step++;
             } else if (step == 15) {
-                if (CommandParser.GetByte(p, value, "Fog density", ref def.FogDensity)) {
-                    step += (def.FogDensity == 0 ? 2 : 1);
+                if (CommandParser.GetByte(p, value, "Fog density", ref bd.FogDensity)) {
+                    step += (bd.FogDensity == 0 ? 2 : 1);
                 }
             } else if (step == 16) {
                 ColorDesc rgb = default(ColorDesc);
                 if (CommandParser.GetHex(p, value, ref rgb)) {
-                    def.FogR = rgb.R; def.FogG = rgb.G; def.FogB = rgb.B;
+                    bd.FogR = rgb.R; bd.FogG = rgb.G; bd.FogB = rgb.B;
                     step++;
                 }
             } else if (step == 17) {
                 byte fallback = GetFallback(p, value);
-                if (fallback == Block.Invalid) { SendStepHelp(p, args); return; }
-                def.FallBack = fallback;
+                if (fallback == Block.Invalid) { SendStepHelp(p, global, cmd); return; }
+                bd.FallBack = fallback;
                 
-                if (!AddBlock(p, args, def)) return;
-                BlockDefinition.Save(args.global, args.level);
+                if (!AddBlock(p, lvl, bd, global, cmd)) return;
+                BlockDefinition.Save(global, lvl);
                 
-                SetBD(p, args, null);
-                SetStep(p, args, 0);
+                SetBD(p, global, null);
+                SetStep(p, global, 0);
                 return;
             }
             
-            SetStep(p, args, step);
-            SendStepHelp(p, args);
+            SetStep(p, global, step);
+            SendStepHelp(p, global, cmd);
         }
         
-        static bool DoEdit(Player p, string[] parts, BlockDefinitionsArgs args, BlockID block) {
-            BlockDefinition def = args.defs[block], globalDef = BlockDefinition.GlobalDefs[block];
+        static bool DoEdit(Player p, Level lvl, BlockID block, string[] parts, 
+                           bool global, string cmd) {
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            BlockDefinition def = defs[block], globalDef = BlockDefinition.GlobalDefs[block];
             
             if (def == null && block < Block.CPE_COUNT) {
                 def = DefaultSet.MakeCustomBlock(block);
-                UpdateBlock(p, args, def);
+                UpdateBlock(p, lvl, def, global);
             }
-            if (def != null && !args.global && def == globalDef) {
+            if (def != null && !global && def == globalDef) {
                 def = globalDef.Copy();
-                UpdateBlock(p, args, def);
+                UpdateBlock(p, lvl, def, global);
             }
-            if (!ExistsInScope(def, block, args)) { MessageNoBlock(p, block, args); return false; }
+            if (!ExistsInScope(def, block, global)) { MessageNoBlock(p, block, global, cmd); return false; }
             
             string value = parts[3], blockName = def.Name;
             bool temp = false, changedFallback = false;
@@ -525,13 +513,10 @@ namespace GoldenSparks.Commands.CPE
                     if (!CommandParser.GetInt(p, value, "Inventory order", ref order, 0, Block.MaxRaw)) {
                         SendEditHelp(p, arg); return false;
                     }
-                    BlockDefinition[] defs = args.defs;
-
+                    
                     // Don't let multiple blocks be assigned to same order
-                    // TODO move out of CustomBlockCommand class
                     if (order != def.RawID && order != 0) {
-                        for (int i = 0; i < defs.Length; i++) 
-                        {
+                        for (int i = 0; i < defs.Length; i++) {
                             if (defs[i] == null || defs[i].InventoryOrder != order) continue;
                             p.Message("Block {0} already had order {1}", defs[i].Name, order);
                             return false;
@@ -539,7 +524,7 @@ namespace GoldenSparks.Commands.CPE
                     }
                     
                     def.InventoryOrder = order == def.RawID ? -1 : order;
-                    BlockDefinition.UpdateOrder(def, args.global, args.level);
+                    BlockDefinition.UpdateOrder(def, global, lvl);
                     p.Message("Set inventory order for {0} to {1}", blockName,
                                    order == def.RawID ? "default" : order.ToString());
                     return true;
@@ -548,61 +533,66 @@ namespace GoldenSparks.Commands.CPE
             }
             
             p.Message("Set {0} for {1} to {2}", arg, blockName, value);
-            BlockDefinition.Add(def, args.defs, args.level);
+            BlockDefinition.Add(def, defs, lvl);
             if (changedFallback) {
-                BlockDefinition.UpdateFallback(args.global, def.GetBlock(), args.level);
+                BlockDefinition.UpdateFallback(global, def.GetBlock(), lvl);
             }
             return true;
         }
         
-        static void EditHandler(Player p, string[] parts, BlockDefinitionsArgs args) {
+        static void EditHandler(Player p, Level lvl, string[] parts, 
+                                bool global, string cmd) {
             if (parts.Length <= 3) {
                 if (parts.Length == 1) {
                     p.Message("Valid properties: " + helpSections.Keys.Join());
                 } else if (parts.Length == 3) {
-                    Help(p, args.cmd, "edit " + parts[2]);
+                    Help(p, cmd, "edit " + parts[2]);
                 } else {
-                    Help(p, args.cmd);
+                    Help(p, cmd);
                 }
                 return;
             }
             
             int min, max;
-            if (!CheckRawBlocks(p, parts[1], args, out min, out max)) return;
+            if (!CheckRawBlocks(p, parts[1], out min, out max)) return;
             bool changed = false;
             
-            for (int i = min; i <= max; i++) 
-            {
-                changed |= DoEdit(p, parts, args, Block.FromRaw((BlockID)i));
+            for (int i = min; i <= max; i++) {
+                changed |= DoEdit(p, lvl, Block.FromRaw((BlockID)i), parts, global, cmd);
             }
-            if (changed) BlockDefinition.Save(args.global, args.level); // TODO SaveChanged(bool changed, bool global, Level lvl) func
+            if (changed) BlockDefinition.Save(global, lvl); // TODO SaveChanged(bool changed, bool global, Level lvl) func
         }
         
         
-        static void UpdateBlock(Player p, BlockDefinitionsArgs args, BlockDefinition def) {
-            p.Message("Created a new {0} custom block {1}({2})", args.scope, def.Name, def.RawID);
+        static void UpdateBlock(Player p, Level lvl, BlockDefinition def, bool global) {
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
+            BlockID block = def.GetBlock();
 
-            BlockID block = def.GetBlock();
-            BlockDefinition.Add(def, args.defs, args.level);
-            ResetProps(args, block);
+            string scope  = global ? "global" : "level";
+            p.Message("Created a new " + scope + " custom block " + def.Name + "(" + def.RawID + ")");
+            
+            block = def.GetBlock();
+            BlockDefinition.Add(def, defs, lvl);
+            ResetProps(global, lvl, block, p);
         }
         
-        static bool AddBlock(Player p, BlockDefinitionsArgs args, BlockDefinition def) {
+        static bool AddBlock(Player p, Level lvl, BlockDefinition def, bool global, string cmd) {
+            BlockDefinition[] defs = global ? BlockDefinition.GlobalDefs : lvl.CustomBlockDefs;
             BlockID block = def.GetBlock();
-            BlockDefinition old = args.defs[block];
-            if (!args.global && old == BlockDefinition.GlobalDefs[block]) old = null; // TODO ExistsInScope
+            BlockDefinition old = defs[block];
+            if (!global && old == BlockDefinition.GlobalDefs[block]) old = null;
             
             // in case the list is modified before we finish the command.
             if (old != null) {
-                block = GetFreeBlock(p, args);
+                block = GetFreeBlock(p, global, lvl, cmd);
                 if (block == Block.Invalid) {
-                    if (!args.global) p.Message("You may also manually specify the same existing id of a global custom block.");
+                    if (!global) p.Message("You may also manually specify the same existing id of a global custom block.");
                     return false;
                 }
                 def.SetBlock(block);
             }
             
-            UpdateBlock(p, args, def);
+            UpdateBlock(p, lvl, def, global);
             return true;
         }
         
@@ -621,37 +611,37 @@ namespace GoldenSparks.Commands.CPE
             return (BlockRaw)block;
         }
         
-        static BlockID GetFreeBlock(Player p, BlockDefinitionsArgs args) {
-            BlockDefinition[] defs = args.defs;
-
+        static BlockID GetFreeBlock(Player p, bool global, Level lvl, string cmd) {
             // Start from opposite ends to avoid overlap
-            if (args.global) {
-                for (BlockID b = Block.CPE_COUNT; b <= Block.MaxRaw; b++) 
-                {
+            if (global) {
+                BlockDefinition[] defs = BlockDefinition.GlobalDefs;
+                for (BlockID b = Block.CPE_COUNT; b <= Block.MaxRaw; b++) {
                     BlockID block = Block.FromRaw(b);
                     if (defs[block] == null) return block;
                 }
             } else {
-                for (BlockID b = Block.MaxRaw; b >= Block.CPE_COUNT; b--) 
-                {
+                BlockDefinition[] defs = lvl.CustomBlockDefs;
+                for (BlockID b = Block.MaxRaw; b >= Block.CPE_COUNT; b--) {
                     BlockID block = Block.FromRaw(b);
                     if (defs[block] == null) return block;
                 }
             }
             
-            p.Message("&WThere are no custom block ids left, you must &T{0} remove &Wa custom block first.", args.cmd);
+            p.Message("&WThere are no custom block ids left, you must &T{0} remove &Wa custom block first.", cmd);
             return Block.Invalid;
         }
         
         
-        static void MessageNoBlock(Player p, BlockID block, BlockDefinitionsArgs args) {
-            p.Message("&WThere is no {1} custom block with the id \"{0}\".", Block.ToRaw(block), args.scope);
-            p.Message("Type &T{0} list &Sto see a list of {1} custom blocks.", args.cmd, args.scope);
+        static void MessageNoBlock(Player p, BlockID block, bool global, string cmd) {
+            string scope = global ? "global" : "level";
+            p.Message("&WThere is no {1} custom block with the id \"{0}\".", Block.ToRaw(block), scope);
+            p.Message("Type &T{0} list &Sto see a list of {1} custom blocks.", cmd, scope);
         }
         
-        static void MessageAlreadyBlock(Player p, BlockID block, BlockDefinitionsArgs args) {
-            p.Message("&WThere is already a {1} custom block with the id \"{0}\".", Block.ToRaw(block), args.scope);
-            p.Message("Type &T{0} list &Sto see a list of {1} custom blocks.", args.cmd, args.scope);
+        static void MessageAlreadyBlock(Player p, BlockID block, bool global, string cmd) {
+            string scope = global ? "global" : "level";
+            p.Message("&WThere is already a {1} custom block with the id \"{0}\".", Block.ToRaw(block), scope);
+            p.Message("Type &T{0} list &Sto see a list of {1} custom blocks.", cmd, scope);
         }
         
         static bool EditByte(Player p, string value, string propName, ref byte target, string help) {
@@ -685,55 +675,36 @@ namespace GoldenSparks.Commands.CPE
             return true;
         }
         
-        static bool CheckRaw(Player p, string arg, BlockDefinitionsArgs args,
-                             out int raw, bool air = false) {
+        static bool CheckRaw(Player p, string arg, out int raw, bool air = false) {
             raw = -1;
             int min = (air ? 0 : 1);
             int max = Block.MaxRaw;
-            
-            // Check for block names (can't use standard parsing behaviour)
-            if (!int.TryParse(arg, out raw)) {
-                BlockDefinition def = BlockDefinition.ParseName(arg, args.defs);
-                
-                if (def == null) {
-                    p.Message("&W{0} is not a valid block {1} custom block name", arg, args.scope);
-                    return false;
-                }
-                raw = def.RawID;
-                return true;
-            }
-            
             return CommandParser.GetInt(p, arg, "Block ID", ref raw, min, max);
         }
         
-        static bool CheckRawBlocks(Player p, string arg, BlockDefinitionsArgs args,
-                                   out int min, out int max, bool air = false) {
-            string[] bits;
+        static bool CheckRawBlocks(Player p, string arg, out int min, out int max, bool air = false) {
             bool success;
-            
             // Either "[id]" or "[min]-[max]"
-            if (CommandParser.IsRawBlockRange(arg, out bits)) {
-                success = CheckRaw(p, bits[0], args, out min, air) 
-                        & CheckRaw(p, bits[1], args, out max, air);                
-            } else {
-                success = CheckRaw(p, arg, args, out min, air);
+            if (arg.IndexOf('-') == -1) {
+                success = CheckRaw(p, arg, out min, air);
                 max     = min;
+            } else {
+                string[] bits = arg.Split(new char[] { '-' }, 2);
+                success = CheckRaw(p, bits[0], out min, air) & CheckRaw(p, bits[1], out max, air);
             }
             return success;
         }
         
-        static bool CheckBlock(Player p, string arg, BlockDefinitionsArgs args,
-                               out BlockID block, bool air = false) {
-            int raw;
-            bool success = CheckRaw(p, arg, args, out raw, air);
+        static bool CheckBlock(Player p, string arg, out BlockID block, bool air = false) {
+            int raw = 0;
+            bool success = CheckRaw(p, arg, out raw, air);
             
             block = Block.FromRaw((BlockID)raw);
             return success;
         }
         
-        static void ResetProps(BlockDefinitionsArgs args, BlockID block) {
-            Level lvl = args.level;
-            BlockProps[] scope = args.global ? Block.Props : lvl.Props;
+        static void ResetProps(bool global, Level lvl, BlockID block, Player p) {
+            BlockProps[] scope = global ? Block.Props : lvl.Props;
             int changed = scope[block].ChangedScope & BlockProps.ScopeId(scope);
             if (changed != 0) return;
             
@@ -742,40 +713,38 @@ namespace GoldenSparks.Commands.CPE
             BlockProps.ApplyChanges(scope, lvl, block, false);
         }
         
-              
-        static int GetStep(Player p, BlockDefinitionsArgs args) {
-            return args.global ? p.gbStep : p.lbStep;
+        
+        static BlockDefinition GetBD(Player p, bool global) { return global ? p.gbBlock : p.lbBlock; }        
+        static int GetStep(Player p, bool global) { return global ? p.gbStep : p.lbStep; }
+        
+        static void SetBD(Player p, bool global, BlockDefinition bd) {
+            if (global) p.gbBlock = bd;
+            else p.lbBlock = bd;
         }
         
-        static void SetBD(Player p, BlockDefinitionsArgs args, BlockDefinition def) {
-            if (args.global) p.gbBlock = def;
-            else p.lbBlock = def;
-        }
-        
-        static void SetStep(Player p, BlockDefinitionsArgs args, int step) {
-            if (args.global) p.gbStep = step;
+        static void SetStep(Player p, bool global, int step) {
+            if (global) p.gbStep = step;
             else p.lbStep = step;
         }
         
-        static bool ExistsInScope(BlockDefinition def, BlockID block, BlockDefinitionsArgs args) {
-            return def != null && (args.global || def != BlockDefinition.GlobalDefs[block]);
+        static bool ExistsInScope(BlockDefinition def, BlockID block, bool global) {
+            return def != null && (global ? true : def != BlockDefinition.GlobalDefs[block]);
         }
         
         
-        static void SendStepHelp(Player p, BlockDefinitionsArgs args) {
-            int step = GetStep(p, args);
-            string[] help = helpSections[stepsHelp[step]];
-            BlockDefinition def = args.curDef;
+        static void SendStepHelp(Player p, bool global, string cmd) {
+            int step = GetStep(p, global);
+            string[] help = helpSections[stepsHelp[step]]; 
+            BlockDefinition bd = GetBD(p, global);       
             
-            for (int i = 0; i < help.Length; i++) 
-            {
+            for (int i = 0; i < help.Length; i++) {
                 string msg = help[i];
                 // TODO: Ugly hardcoding, but not really worth doing properly
-                if (step == 4 && def.Shape == 0) msg = msg.Replace("top texture", "texture");
+                if (step == 4 && bd.Shape == 0) msg = msg.Replace("top texture", "texture");
                 
                 p.Message(msg);
             }
-            if (step == 2) p.Message("Use &T{0} [answer] &Sto type your answers", args.cmd);
+            if (step == 2) p.Message("Use &T{0} [answer] &Sto type your answers", cmd);
             p.Message("&f--------------------------");
         }
         
@@ -858,7 +827,7 @@ namespace GoldenSparks.Commands.CPE
         };
         
         
-        internal static void Help(Player p, string cmd) {
+        public static void Help(Player p, string cmd) {
             p.Message("&H{0} help page 1:", cmd.Substring(1));
             p.Message("&T{0} add [id] &H- begins creating a new custom block", cmd);
             p.Message("&T{0} copy [id] <new id> &H- clones an existing custom block", cmd);
@@ -868,7 +837,7 @@ namespace GoldenSparks.Commands.CPE
             p.Message("&HTo read help page 2, type &T/help {0} 2", cmd.Substring(1));
         }
         
-        internal static void Help(Player p, string cmd, string args) {
+        public static void Help(Player p, string cmd, string args) {
             if (args.CaselessEq("2")) { 
                 p.Message("&H{0} help page 2:", cmd.Substring(1));
                 p.Message("&T{0} copyall [level] &H- clones all custom blocks from [level]", cmd);                

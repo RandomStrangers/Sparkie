@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -28,7 +28,6 @@ namespace GoldenSparks.Commands.World {
         public override CommandAlias[] Aliases {
             get { return new[] { new CommandAlias("Realm"), new CommandAlias("MyRealm") }; }
         }
-        public override CommandParallelism Parallelism { get { return CommandParallelism.NoAndWarn; } }
         
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) { Help(p); return; }
@@ -101,9 +100,9 @@ namespace GoldenSparks.Commands.World {
         
         
         static void UseCommand(Player p, string cmd, string args) {
-            CommandData data = default(CommandData);
-            data.Rank = LevelPermission.Owner;
-            Command.Find(cmd).Use(p, args, data);
+            CommandData data = default;
+            data.Rank = LevelPermission.Nobody;
+            Find(cmd).Use(p, args, data);
         }
         
         static string GetLevelName(Player p, int i) {
@@ -166,6 +165,8 @@ namespace GoldenSparks.Commands.World {
             "&T/os map add [width] [height] [length] [theme]",
             "&H  See &T/Help newlvl themes &Hfor a list of map themes.",
             "&T/os map physics [level] &H- Sets the physics on your map.",
+            "&T/os map speed [number] &H- Sets the delay (in milliseconds) between physics ticks. " +
+            "E.g. a delay of 250 milliseconds means 4 ticks per second.",
             "&T/os map delete &H- Deletes your map",
             "&T/os map restore [num] &H- Restores backup [num] of your map",
             "&T/os map resize [width] [height] [length] &H- Resizes your map",

@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,11 +18,10 @@
 using System;
 using System.IO;
 
-namespace GoldenSparks.Bots 
-{    
+namespace GoldenSparks.Bots {
+    
     /// <summary> Causes the bot to instantly teleport to a position. </summary>
-    public class TeleportInstruction : BotInstruction 
-    {
+    public class TeleportInstruction : BotInstruction {
         public TeleportInstruction() { Name = "teleport"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -50,8 +49,8 @@ namespace GoldenSparks.Bots
         public override void Output(Player p, string[] args, TextWriter w) {
             w.WriteLine(Name + " " + p.Pos.X + " " + p.Pos.Y + " " + p.Pos.Z + " " + p.Rot.RotY + " " + p.Rot.HeadX);
         }
-        
-        protected struct Coords {
+
+        public struct Coords {
             public int X, Y, Z;
             public byte RotX, RotY;
         }
@@ -65,8 +64,7 @@ namespace GoldenSparks.Bots
     }
     
     /// <summary> Causes the bot to gradually move to to a position. </summary>
-    public sealed class WalkInstruction : TeleportInstruction 
-    {
+    public sealed class WalkInstruction : TeleportInstruction {
         public WalkInstruction() { Name = "walk"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -92,8 +90,7 @@ namespace GoldenSparks.Bots
     }
     
     /// <summary> Causes the bot to begin jumping. </summary>
-    public sealed class JumpInstruction : BotInstruction 
-    {
+    public sealed class JumpInstruction : BotInstruction {
         public JumpInstruction() { Name = "jump"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {
@@ -111,8 +108,7 @@ namespace GoldenSparks.Bots
     }
     
     /// <summary> Causes the bot to change how fast it moves. </summary>
-    public sealed class SpeedInstruction : BotInstruction 
-    {
+    public sealed class SpeedInstruction : BotInstruction {
         public SpeedInstruction() { Name = "speed"; }
 
         public override bool Execute(PlayerBot bot, InstructionData data) {

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -55,17 +55,14 @@ namespace GoldenSparks.Levels.IO {
             lvl = new Level(name, width, height, length, blocks);
             
             ReadSpawn(root, lvl);           
-            #if TEN_BIT_BLOCKS
             // Can't use ConvertCustom, as that changes lvl.blocks
             // (aka the array containing the lower 8 bits of block ids)
             if (root.Contains("BlockArray2")) {
                 ReadExtBlocks(root, lvl); return;
             }
-            #endif
             ConvertCustom(lvl);
         }
         
-        #if TEN_BIT_BLOCKS
         static void ReadExtBlocks(NbtCompound root, Level lvl) {
             byte[] lo = root["BlockArray"].ByteArrayValue;
             byte[] hi = root["BlockArray2"].ByteArrayValue;
@@ -79,7 +76,6 @@ namespace GoldenSparks.Levels.IO {
                 lvl.SetBlock(x, y, z, (BlockID)b);
             }
         }
-        #endif
         
         static void ReadSpawn(NbtCompound root, Level lvl) {
             if (!root.Contains("Spawn")) return;
@@ -176,7 +172,7 @@ namespace GoldenSparks.Levels.IO {
                 def.MaxX = coords[3]; def.MaxZ = coords[4]; def.MaxY = coords[5];
                 
                 BlockID block = def.GetBlock();
-                if (block >= Block.SUPPORTED_COUNT) {
+                if (block >= Block.ExtendedCount) {
                     Logger.Log(LogType.Warning, "Cannot import custom block {0} (ID {1})",
                                def.Name, def.RawID);
                     continue;
@@ -185,13 +181,6 @@ namespace GoldenSparks.Levels.IO {
                 // Don't define level custom block if same as global custom block
                 BlockDefinition globalDef = BlockDefinition.GlobalDefs[block];
                 if (PropsEquals(def, globalDef)) continue;
-
-                // Attempt to give this block a better fallback block than air
-                if (globalDef != null) {
-                    def.FallBack = globalDef.FallBack;
-                } else if (def.RawID <= Block.CPE_MAX_BLOCK) {
-                    def.FallBack = (byte)def.RawID;
-                }
                 
                 lvl.UpdateCustomBlock(block, def);
                 hasBlockDefs = true;

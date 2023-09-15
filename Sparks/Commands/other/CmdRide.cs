@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -29,7 +29,7 @@ namespace GoldenSparks.Commands.Misc {
             p.onTrain = !p.onTrain;
             if (!p.onTrain) return;
             
-            p.trainInvincible = true;
+            p.trainInvulnerable = true;
             p.Message("Stand near a train to mount it");
             
             SchedulerTask task = new SchedulerTask(RideCallback, p, TimeSpan.Zero, true);
@@ -76,7 +76,7 @@ namespace GoldenSparks.Commands.Misc {
         
         static void TrainInvincibleCallback(SchedulerTask task) {
             Player p = (Player)task.State;
-            p.trainInvincible = false;
+            p.trainInvulnerable = false;
         }
 
         public override void Help(Player p) {

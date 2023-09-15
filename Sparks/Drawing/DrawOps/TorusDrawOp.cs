@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,19 +21,19 @@ using GoldenSparks.Maths;
 
 namespace GoldenSparks.Drawing.Ops 
 {
-    public class TorusDrawOp : ShapedDrawOp 
+    public class TorusDrawOp : DrawOp 
     {
         public override string Name { get { return "Torus"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            double rx = XRadius, ry = YRadius, rz = ZRadius;
+            double rx = (Max.X - Min.X) / 2.0 + 0.25, ry = (Max.Y - Min.Y) / 2.0 + 0.25, rz = (Max.Z - Min.Z) / 2.0 + 0.25;
             double rTube = ry, rCentre = Math.Min(rx, rz) - rTube;
             return (int)(2 * Math.PI * Math.PI * rTube * rTube * Math.Abs(rCentre));
         }
         
         public override void Perform(Vec3S32[] marks, Brush brush, DrawOpOutput output) {          
-            double cx = XCentre, cy = YCentre, cz = ZCentre;
-            double rx = XRadius, ry = YRadius, rz = ZRadius;
+            double cx = (Min.X + Max.X) / 2.0, cy = (Min.Y + Max.Y) / 2.0, cz = (Min.Z + Max.Z) / 2.0;
+            double rx = (Max.X - Min.X) / 2.0 + 0.25, ry = (Max.Y - Min.Y) / 2.0 + 0.25, rz = (Max.Z - Min.Z) / 2.0 + 0.25;
             double rTube = ry, rCentre = Math.Min(rx, rz) - rTube;
             Vec3U16 p1 = Clamp(Min), p2 = Clamp(Max);
             

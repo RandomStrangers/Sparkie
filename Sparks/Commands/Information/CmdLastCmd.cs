@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,10 +17,8 @@
 */
 using System;
 
-namespace GoldenSparks.Commands.Info 
-{
-    public sealed class CmdLastCmd : Command2 
-    {
+namespace GoldenSparks.Commands.Info {
+    public sealed class CmdLastCmd : Command2 {
         public override string name { get { return "LastCmd"; } }
         public override string shortcut { get { return "Last"; } }
         public override string type { get { return CommandTypes.Information; } }
@@ -30,8 +28,7 @@ namespace GoldenSparks.Commands.Info
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) {
                 Player[] players = PlayerInfo.Online.Items;
-                foreach (Player pl in players) 
-                {
+                foreach (Player pl in players) {
                     if (p.CanSee(pl, data.Rank)) ShowLastCommand(p, pl);
                 }
             } else {

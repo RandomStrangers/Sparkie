@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,7 +19,7 @@ using System;
 using System.Threading;
 using GoldenSparks.Maths;
 
-namespace GoldenSparks.Commands.World {
+namespace GoldenSparks.Commands.Misc {
     public class CmdWarp : Command2 {
         public override string name { get { return "Warp"; } }
         public override string type { get { return CommandTypes.World; } }
@@ -33,10 +33,9 @@ namespace GoldenSparks.Commands.World {
             UseCore(p, message, data, WarpList.Global, "Warp");
         }
         
-        static void PrintWarp(Player p, Warp warp) {
+        static string FormatWarp(Warp warp) {
             Vec3S32 pos = warp.Pos.BlockCoords;
-            p.Message("{0} - ({1}, {2}, {3}) on {4}",
-                      warp.Name, pos.X, pos.Y, pos.Z, warp.Level);
+            return warp.Name + " - (" + pos.X + ", " + pos.Y + ", " + pos.Z + ") on " + warp.Level;
         }
         
         protected void UseCore(Player p, string message, CommandData data,
@@ -48,8 +47,7 @@ namespace GoldenSparks.Commands.World {
             
             if (IsListCommand(cmd)) {
                 string modifier = args.Length > 1 ? args[1] : "";
-                Paginator.Output(p, warps.Items, PrintWarp, 
-                                 group + " list", group + "s", modifier);
+                MultiPageOutput.Output(p, warps.Items, FormatWarp, group + " list", group + "s", modifier, true);
                 return;
             } else if (args.Length == 1) {
                 Warp warp = Matcher.FindWarps(p, warps, cmd);

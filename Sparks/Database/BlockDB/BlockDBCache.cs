@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,11 +19,11 @@ using System;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.DB 
-{
+namespace GoldenSparks.DB {
+    
     /// <summary> Optimised in-memory BlockDB cache. </summary>
-    public sealed class BlockDBCache 
-    {      
+    public sealed class BlockDBCache {
+        
         public BlockDBCacheNode Tail, Head;
         
         /// <summary> Used to synchronise adding to Cache by multiple threads. </summary>
@@ -105,8 +105,8 @@ namespace GoldenSparks.DB
         int nextSize = 10 * 1000;
     }
     
-    public sealed class BlockDBCacheNode 
-    {     
+    public sealed class BlockDBCacheNode {
+        
         public BlockDBCacheNode Prev, Next;
         
         /// <summary> The number of actually used entries within this particular node. </summary>

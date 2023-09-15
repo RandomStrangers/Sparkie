@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -15,16 +15,13 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
 */
-namespace GoldenSparks.Commands.Chatting 
-{
-    public sealed class CmdWhisper : Command2 
-    {
+namespace GoldenSparks.Commands.Chatting {
+    public sealed class CmdWhisper : Command2 {
         public override string name { get { return "Whisper"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool SuperUseable { get { return false; } }
         public override bool UseableWhenFrozen { get { return true; } }
-        public override bool MessageBlockRestricted { get { return true; } }
-
+        
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) {
                 p.whisper = !p.whisper; p.whisperTo = "";

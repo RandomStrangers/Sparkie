@@ -38,7 +38,7 @@ namespace GoldenSparks.Games {
             OnSendingModelEvent.Register(HandleSendingModel, Priority.High);
             
             OnPlayerConnectEvent.Register(HandlePlayerConnect, Priority.High);
-           // OnPlayerMoveEvent.Register(HandlePlayerMove, Priority.High);
+            OnPlayerMoveEvent.Register(HandlePlayerMove, Priority.High);
             OnPlayerSpawningEvent.Register(HandlePlayerSpawning, Priority.High);
             OnJoinedLevelEvent.Register(HandleJoinedLevel, Priority.High);           
             OnPlayerChatEvent.Register(HandlePlayerChat, Priority.High);
@@ -55,7 +55,7 @@ namespace GoldenSparks.Games {
             OnSendingModelEvent.Unregister(HandleSendingModel);
             
             OnPlayerConnectEvent.Unregister(HandlePlayerConnect);
-            //OnPlayerMoveEvent.Unregister(HandlePlayerMove);
+            OnPlayerMoveEvent.Unregister(HandlePlayerMove);
             OnPlayerSpawningEvent.Unregister(HandlePlayerSpawning);
             OnJoinedLevelEvent.Unregister(HandleJoinedLevel);            
             OnPlayerChatEvent.Unregister(HandlePlayerChat);
@@ -127,7 +127,7 @@ namespace GoldenSparks.Games {
             if (p.Game.Speed  == null) p.Game.Speed  = new SpeedhackDetector(p);
             
             bool reverted = p.Game.Noclip.Detect(next) || p.Game.Speed.Detect(next, Config.MaxMoveDist);
-            //if (reverted) p.cancelmove = true;
+            if (reverted) p.cancelmove = true;
         }
         
         void HandlePlayerSpawning(Player p, ref Position pos, ref byte yaw, ref byte pitch, bool respawning) {
@@ -156,7 +156,7 @@ namespace GoldenSparks.Games {
                 p.Message("&a{0} &Sseconds left until the round starts. &aRun!", (int)startLeft);
             }
             
-            //MessageMapInfo(p);
+            MessageMapInfo(p);
             p.Message("This map's win chance is &a{0}&S%", Map.WinChance);
         }
         

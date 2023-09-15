@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -27,7 +27,7 @@ namespace GoldenSparks.Drawing.Ops
         public override string Name { get { return "RestoreSelection"; } }
         
         public override long BlocksAffected(Level lvl, Vec3S32[] marks) {
-            return SizeX * SizeY * SizeZ;
+            return (Max.X - Min.X + 1) * (Max.Y - Min.Y + 1) * (Max.Z - Min.Z + 1);
         }
         
         public RestoreSelectionDrawOp() {

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,10 +20,10 @@ using System.IO;
 using GoldenSparks.Maths;
 using GoldenSparks.Util;
 
-namespace GoldenSparks.DB 
-{   
-    public unsafe abstract class BlockDBFile 
-    {        
+namespace GoldenSparks.DB {
+    
+    public unsafe abstract class BlockDBFile {
+        
         public const byte Version = 1;
         public const int EntrySize = 16;
         public const int HeaderEntries = 1;
@@ -193,8 +193,8 @@ namespace GoldenSparks.DB
             array[index++] = (byte)(value);
             array[index++] = (byte)(value >> 8);
         }
-        
-        internal static void ReadFully(Stream stream, byte[] dst, int offset, int count) {
+
+        public static void ReadFully(Stream stream, byte[] dst, int offset, int count) {
             int total = 0;
             do {
                 int read = stream.Read(dst, offset + total, count - total);

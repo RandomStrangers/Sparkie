@@ -1,13 +1,13 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,8 @@ using GoldenSparks.Blocks;
 using GoldenSparks.Maths;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Commands.Building 
-{
-    public sealed class CmdMark : Command2 
-    {
+namespace GoldenSparks.Commands.Building {
+    public sealed class CmdMark : Command2 {
         public override string name { get { return "Mark"; } }
         public override string shortcut { get { return "click"; } }
         public override string type { get { return CommandTypes.Building; } }
@@ -72,28 +70,16 @@ namespace GoldenSparks.Commands.Building
                 args = new string[] { message, message, message };
             }
             if (args.Length != 3) { Help(p); return false; }
-
-            AdjustArg(ref args[0], ref P.X, "X", p.lastClick.X);
-            AdjustArg(ref args[1], ref P.Y, "Y", p.lastClick.Y);
-            AdjustArg(ref args[2], ref P.Z, "Z", p.lastClick.Z);
-
+            
+            // Hacky workaround for backwards compatibility
+            if (args[0].CaselessEq("X")) args[0] = p.lastClick.X.ToString();
+            if (args[1].CaselessEq("Y")) args[1] = p.lastClick.Y.ToString();
+            if (args[2].CaselessEq("Z")) args[2] = p.lastClick.Z.ToString();
+            
             return CommandParser.GetCoords(p, args, 0, ref P);
         }
-
-        void AdjustArg(ref string arg, ref int value, string axis, int last) {
-            if (!arg.CaselessStarts(axis)) return;
-
-            if (arg.Length == 1) {
-                // just 'X' changes input to coordinate of last click
-                arg   = last.ToString();
-            } else {
-                // assume wanting input relative to last click, e.g. 'X~3'
-                arg   = arg.Substring(1);
-                value = last;
-            }
-        }
         
-        internal static bool DoMark(Player p, int x, int y, int z) {
+       public static bool DoMark(Player p, int x, int y, int z) {
             if (!p.HasBlockChange()) return false;
             if (!p.Ignores.DrawOutput) {
                 p.Message("Mark placed at &b({0}, {1}, {2})", x, y, z);

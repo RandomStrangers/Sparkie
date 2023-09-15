@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,6 +21,8 @@ using System.Threading;
 using GoldenSparks.Blocks;
 using GoldenSparks.Blocks.Physics;
 using GoldenSparks.DB;
+using GoldenSparks.Config;
+using GoldenSparks.Games;
 using GoldenSparks.Maths;
 using GoldenSparks.Network;
 using GoldenSparks.Util;
@@ -37,6 +39,7 @@ namespace GoldenSparks {
         /// </summary>
         public string name;
 
+        public string Color { get { return Config.Color; } }
         public string ColoredName { get { return Config.Color + name; } }
         public LevelConfig Config = new LevelConfig();
         
@@ -44,25 +47,20 @@ namespace GoldenSparks {
         public ushort spawnx, spawny, spawnz;
         public Position SpawnPos { get { return new Position(16 + spawnx * 32, 32 + spawny * 32, 16 + spawnz * 32); } }
             
-        public BlockDefinition[] CustomBlockDefs = new BlockDefinition[Block.SUPPORTED_COUNT];
-        public BlockProps[] Props = new BlockProps[Block.SUPPORTED_COUNT];
+        public BlockDefinition[] CustomBlockDefs = new BlockDefinition[Block.ExtendedCount];
+        public BlockProps[] Props = new BlockProps[Block.ExtendedCount];
         public ExtrasCollection Extras = new ExtrasCollection();
-        public VolatileArray<PlayerBot> Bots = new VolatileArray<PlayerBot>();
+        public VolatileArray<PlayerBot> Bots = new VolatileArray<PlayerBot>(false);
         bool unloadedBots;
         
-        public HandleDelete[] DeleteHandlers = new HandleDelete[Block.SUPPORTED_COUNT];
-        public HandlePlace[] PlaceHandlers = new HandlePlace[Block.SUPPORTED_COUNT];
-        public HandleWalkthrough[] WalkthroughHandlers = new HandleWalkthrough[Block.SUPPORTED_COUNT];
-        public HandlePhysics[] PhysicsHandlers = new HandlePhysics[Block.SUPPORTED_COUNT];
-        internal HandlePhysics[] physicsDoorsHandlers = new HandlePhysics[Block.SUPPORTED_COUNT];
-        internal AABB[] blockAABBs = new AABB[Block.SUPPORTED_COUNT];
+        public HandleDelete[] DeleteHandlers = new HandleDelete[Block.ExtendedCount];
+        public HandlePlace[] PlaceHandlers = new HandlePlace[Block.ExtendedCount];
+        public HandleWalkthrough[] WalkthroughHandlers = new HandleWalkthrough[Block.ExtendedCount];
+        public HandlePhysics[] PhysicsHandlers = new HandlePhysics[Block.ExtendedCount];
+        public HandlePhysics[] physicsDoorsHandlers = new HandlePhysics[Block.ExtendedCount];
+        public AABB[] blockAABBs = new AABB[Block.ExtendedCount];
         
-        /// <summary> The width of this level (Number of blocks across in X dimension) </summary>
-        public ushort Width;
-        /// <summary> The height of this level (Number of blocks tall in Y dimension) </summary>
-        public ushort Height;
-        /// <summary> The length of this level (Number of blocks across in Z dimension) </summary>
-        public ushort Length;
+        public ushort Width, Height, Length;
         /// <summary> Whether this level should be treated as a readonly museum </summary>
         public bool IsMuseum;
 
@@ -84,8 +82,8 @@ namespace GoldenSparks {
         
         /// <summary> Whether players on this level sees server-wide chat. </summary>
         public bool SeesServerWideChat { get { return Config.ServerWideChat && Server.Config.ServerWideChat; } }
-        
-        internal readonly object saveLock = new object(), botsIOLock = new object();
+
+        public readonly object saveLock = new object(), botsIOLock = new object();
         public BlockQueue blockqueue = new BlockQueue();
         BufferedBlockSender bulkSender;
 
@@ -100,17 +98,16 @@ namespace GoldenSparks {
         public int currentUndo;
         
         public int lastCheck, lastUpdate;
-        internal FastList<Check> ListCheck = new FastList<Check>(); //A list of blocks that need to be updated
-        internal FastList<Update> ListUpdate = new FastList<Update>(); //A list of block to change after calculation
-        internal SparseBitSet listCheckExists, listUpdateExists;
+        public FastList<Check> ListCheck = new FastList<Check>(); //A list of blocks that need to be updated
+        public FastList<Update> ListUpdate = new FastList<Update>(); //A list of block to change after calculation
+        public SparseBitSet listCheckExists, listUpdateExists;
         
         public Random physRandom = new Random();
         public bool PhysicsPaused;
         Thread physThread;
         readonly object physThreadLock = new object();
-        internal readonly object physTickLock = new object();
+        public readonly object physTickLock = new object();
         bool physThreadStarted = false;
-        internal DateTime lastBackup;
         
         public List<C4Data> C4list = new List<C4Data>();
 
@@ -120,7 +117,7 @@ namespace GoldenSparks {
         public int WinChance {
             get { return Config.RoundsPlayed == 0 ? 100 : (Config.RoundsHumanWon * 100) / Config.RoundsPlayed; }
         }
-        
-        internal bool hasPortals, hasMessageBlocks;
+
+        public bool hasPortals, hasMessageBlocks;
     }
 }

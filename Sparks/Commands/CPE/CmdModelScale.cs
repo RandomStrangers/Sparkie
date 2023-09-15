@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,10 +18,8 @@
 using System;
 using GoldenSparks.Bots;
 
-namespace GoldenSparks.Commands.CPE 
-{
-    public class CmdModelScale : EntityPropertyCmd 
-    {
+namespace GoldenSparks.Commands.CPE {
+    public class CmdModelScale : EntityPropertyCmd {
         public override string name { get { return "ModelScale"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override LevelPermission defaultRank { get { return LevelPermission.AdvBuilder; } }
@@ -34,7 +32,7 @@ namespace GoldenSparks.Commands.CPE
             UseBotOrOnline(p, data, message, "model scale");
         }
         
-        protected override void SetBotData(Player p, PlayerBot bot, string args) {
+        public override void SetBotData(Player p, PlayerBot bot, string args) {
             string axis;
             if (!ParseArgs(p, bot, args, out axis)) return;
             bot.UpdateModel(bot.Model);
@@ -43,7 +41,7 @@ namespace GoldenSparks.Commands.CPE
             BotsFile.Save(p.level);
         }
         
-        protected override void SetOnlineData(Player p, Player who, string args) {
+        public override void SetOnlineData(Player p, Player who, string args) {
             string axis;
             if (!ParseArgs(p, who, args, out axis)) return;
             who.UpdateModel(who.Model);
@@ -58,7 +56,7 @@ namespace GoldenSparks.Commands.CPE
             Server.modelScales.Save();
         }
         
-        internal static void UpdateSavedScale(Player p) {
+        public static void UpdateSavedScale(Player p) {
             if (p.ScaleX != 0 || p.ScaleY != 0 || p.ScaleZ != 0) {
                 Server.modelScales.Update(p.name, p.ScaleX + " " + p.ScaleY + " " + p.ScaleZ);
             } else {

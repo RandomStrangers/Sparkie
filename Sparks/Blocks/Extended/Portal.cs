@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,6 +17,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Data;
 using GoldenSparks.Maths;
 using GoldenSparks.SQL;
 
@@ -52,17 +53,20 @@ namespace GoldenSparks.Blocks.Extended {
             p.SendPosition(pos, rot);
             return true;
         }
-        
-        
-        internal static Vec3U16 ParseCoords(ISqlRecord record) {
+
+
+        public static object ReadCoords(IDataRecord record, object arg) {
             Vec3U16 pos;
             pos.X = (ushort)record.GetInt32(0);
             pos.Y = (ushort)record.GetInt32(1);
             pos.Z = (ushort)record.GetInt32(2);
-            return pos;
+            
+            ((List<Vec3U16>)arg).Add(pos);
+            return arg;
         }
         
-        static PortalExit ParseExit(ISqlRecord record) {
+        static object ReadExit(IDataRecord record, object arg) { return ParseExit(record); }
+        static PortalExit ParseExit(IDataRecord record) {
             PortalExit data = new PortalExit();
             data.Map = record.GetText(0);
             
@@ -70,6 +74,11 @@ namespace GoldenSparks.Blocks.Extended {
             data.Y = (ushort)record.GetInt32(2);
             data.Z = (ushort)record.GetInt32(3);
             return data;
+        }
+        
+        static object ReadAllExits(IDataRecord record, object arg) {
+            ((List<PortalExit>)arg).Add(ParseExit(record));
+            return arg;
         }
         
         
@@ -81,8 +90,7 @@ namespace GoldenSparks.Blocks.Extended {
             List<Vec3U16> coords = new List<Vec3U16>();
             if (!ExistsInDB(map)) return coords;
             
-            Database.ReadRows("Portals" + map, "EntryX,EntryY,EntryZ",
-                                record => coords.Add(ParseCoords(record)));
+            Database.ReadRows("Portals" + map, "EntryX,EntryY,EntryZ", coords, ReadCoords);
             return coords;
         }
 
@@ -90,14 +98,14 @@ namespace GoldenSparks.Blocks.Extended {
         public static List<PortalExit> GetAllExits(string map) {
             List<PortalExit> exits = new List<PortalExit>();
             if (!ExistsInDB(map)) return exits;
-
-            Database.ReadRows("Portals" + map, "ExitMap,ExitX,ExitY,ExitZ", 
-                                record => exits.Add(ParseExit(record)));
+            
+            Database.ReadRows("Portals" + map, "ExitMap,ExitX,ExitY,ExitZ", exits, ReadAllExits);
             return exits;
         }
         
         /// <summary> Deletes all portals for the given map. </summary>
         public static void DeleteAll(string map) {
+            if (!ExistsInDB(map)) return;
             Database.DeleteTable("Portals" + map);
         }
         
@@ -120,11 +128,9 @@ namespace GoldenSparks.Blocks.Extended {
         /// <summary> Returns the exit details for the given portal in the given map. </summary>
         /// <remarks> Returns null if the given portal does not actually exist. </remarks>
         public static PortalExit Get(string map, ushort x, ushort y, ushort z) {
-            PortalExit exit = null;
-            Database.ReadRows("Portals" + map, "ExitMap,ExitX,ExitY,ExitZ",
-                                record => exit = ParseExit(record),
-                                "WHERE EntryX=@0 AND EntryY=@1 AND EntryZ=@2", x, y, z);
-            return exit;
+            object raw = Database.ReadRows("Portals" + map, "ExitMap,ExitX,ExitY,ExitZ", null, ReadExit,
+                                           "WHERE EntryX=@0 AND EntryY=@1 AND EntryZ=@2", x, y, z);
+            return (PortalExit)raw;
         }
         
         /// <summary> Deletes the given portal from the given map. </summary>
@@ -137,12 +143,16 @@ namespace GoldenSparks.Blocks.Extended {
         public static void Set(string map, ushort x, ushort y, ushort z,
                                ushort exitX, ushort exitY, ushort exitZ, string exitMap) {
             Database.CreateTable("Portals" + map, LevelDB.createPortals);
-            object[] args = new object[] { x, y, z,  exitX, exitY, exitZ,  exitMap };
+            int count = Database.CountRows("Portals" + map,
+                                           "WHERE EntryX=@0 AND EntryY=@1 AND EntryZ=@2", x, y, z);
             
-            int changed = Database.UpdateRows("Portals" + map, "ExitX=@3, ExitY=@4, ExitZ=@5, ExitMap=@6",
-                                              "WHERE EntryX=@0 AND EntryY=@1 AND EntryZ=@2", args);
-            if (changed == 0) {
-                Database.AddRow("Portals" + map, "EntryX,EntryY,EntryZ, ExitX,ExitY,ExitZ, ExitMap", args);
+            if (count == 0) {
+                Database.AddRow("Portals" + map, "EntryX, EntryY, EntryZ, ExitX, ExitY, ExitZ, ExitMap",
+                                x, y, z, exitX, exitY, exitZ, exitMap);
+            } else {
+                Database.UpdateRows("Portals" + map, "ExitMap=@6, ExitX=@3, ExitY=@4, ExitZ=@5",
+                                    "WHERE EntryX=@0 AND EntryY=@1 AND EntryZ=@2", x, y, z,
+                                    exitX, exitY, exitZ, exitMap);
             }
             
             Level lvl = LevelInfo.FindExact(map);

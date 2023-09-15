@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,11 +17,10 @@
  */
 using System;
 using System.IO;
+using GoldenSparks.Config;
 
-namespace GoldenSparks.Commands.CPE 
-{
-    public sealed class CmdEnvironment : Command2 
-    {
+namespace GoldenSparks.Commands.CPE {
+    public sealed class CmdEnvironment : Command2 {
         public override string name { get { return "Environment"; } }
         public override string shortcut { get { return "Env"; } }
         public override string type { get { return CommandTypes.World; } }
@@ -57,7 +56,7 @@ namespace GoldenSparks.Commands.CPE
             if (!Handle(p, lvl, opt, value, cfg, area)) { Help(p); }
         }
         
-        internal static bool Handle(Player p, Level lvl, string type, string value, EnvConfig cfg, string area) {
+        public static bool Handle(Player p, Level lvl, string type, string value, EnvConfig cfg, string area) {
             if (type.CaselessEq("preset")) {
                 EnvPreset preset = FindPreset(value);
                 if (preset == null) { MessagePresets(p); return false; }

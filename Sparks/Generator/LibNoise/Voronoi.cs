@@ -26,14 +26,17 @@ namespace LibNoise
 {
     public sealed class Voronoi : IModule
     {
+        public double Frequency;
         public double Displacement;
+        public int Seed;
 
         public Voronoi()
         {
+            Frequency = 1.0;
             Displacement = 1.0;
         }
 
-        public override double GetValue(double x, double y, double z)
+        public double GetValue(double x, double y, double z)
         {
             x *= Frequency;
             y *= Frequency;
@@ -86,29 +89,37 @@ namespace LibNoise
             int z0 = (zCandidate > 0.0 ? (int)zCandidate : (int)zCandidate - 1);
 
             // Return the calculated distance with the displacement value applied.
-            return Displacement * ValueNoise(x0, y0, z0, 0);
+            return Displacement * (double)ValueNoise(x0, y0, z0);
         }
         
         
-        const int X_NOISE_GEN = 1619;
-        const int Y_NOISE_GEN = 31337;
-        const int Z_NOISE_GEN = 6971;
-        const int SEED_NOISE_GEN = 1013;
+        const int XNoiseGen = 1619;
+        const int YNoiseGen = 31337;
+        const int ZNoiseGen = 6971;
+        const int SeedNoiseGen = 1013;
 
-        static double ValueNoise(int x, int y, int z, int seed)
+        static int IntValueNoise(int x, int y, int z, int seed)
         {
             // All constants are primes and must remain prime in order for this noise
             // function to work correctly.
             int n = (
-                X_NOISE_GEN * x
-              + Y_NOISE_GEN * y
-              + Z_NOISE_GEN * z
-              + SEED_NOISE_GEN * seed)
+                XNoiseGen * x
+              + YNoiseGen * y
+              + ZNoiseGen * z
+              + SeedNoiseGen * seed)
               & 0x7fffffff;
             n = (n >> 13) ^ n;
-            n = (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
+            return (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
+        }
 
-            return 1.0 - ((double)n / 1073741824.0);
+        static double ValueNoise(int x, int y, int z)
+        {
+            return ValueNoise(x, y, z, 0);
+        }
+
+        static double ValueNoise(int x, int y, int z, int seed)
+        {
+            return 1.0 - ((double)IntValueNoise(x, y, z, seed) / 1073741824.0);
         }
     }
 }

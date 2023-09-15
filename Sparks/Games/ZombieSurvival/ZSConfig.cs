@@ -72,21 +72,22 @@ namespace GoldenSparks.Games {
         static ConfigElement[] cfg;
         public override bool AllowAutoload { get { return true; } }
         public override string GameName { get { return "Zombie Survival"; } }
+        public override string PropsPath { get { return "properties/zombiesurvival.properties"; } }
         
         public override void Save() {
             if (cfg == null) cfg = ConfigElement.GetAll(typeof(ZSConfig));
             
-          /*  using (StreamWriter w = new StreamWriter(PropsPath)) {
+            using (StreamWriter w = new StreamWriter(PropsPath)) {
                 w.WriteLine("#   no-pillaring-during-zombie    = Disables pillaring while Zombie Survival is activated.");
                 w.WriteLine("#   zombie-name-while-infected    = Sets the zombies name while actived if there is a value.");
                 w.WriteLine();
                 ConfigElement.Serialise(cfg, w, this);
-            }*/
+            }
         }
         
         public override void Load() {
             if (cfg == null) cfg = ConfigElement.GetAll(typeof(ZSConfig));
-            //PropertiesFile.Read(PropsPath, ProcessConfigLine);
+            PropertiesFile.Read(PropsPath, ProcessConfigLine);
         }
         
         void ProcessConfigLine(string key, string value) {

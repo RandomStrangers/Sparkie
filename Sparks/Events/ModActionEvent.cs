@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,15 +17,15 @@
  */
 using System;
 
-namespace GoldenSparks.Events 
-{ 
+namespace GoldenSparks.Events {
+    
     /// <summary> Represents a moderation action. </summary>
-    public sealed class ModAction 
-    {     
+    public sealed class ModAction {
+        
         /// <summary> Target player name or IP. </summary>
         public string Target;
-        
-        internal Group targetGroup;
+
+        public Group targetGroup;
         /// <summary> Gets the rank/group target is in. </summary>
         public Group TargetGroup {
             get {
@@ -86,8 +86,8 @@ namespace GoldenSparks.Events
     public delegate void OnModAction(ModAction action);
     
     /// <summary> Types of moderation actions that can occur. </summary>
-    public enum ModActionType 
-    {
+    public enum ModActionType {
+        
         /// <summary> Player was banned. </summary>
         Ban,
         /// <summary> Player was unbanned. </summary>
@@ -117,13 +117,10 @@ namespace GoldenSparks.Events
         Rank,
         /// <summary> Player was kicked from the server. </summary>
         Kicked,
-        /// <summary> Player was reported </summary>
-        Reported,
     }
     
     /// <summary> Raised when a moderation action occurs. </summary>
-    public sealed class OnModActionEvent : IEvent<OnModAction> 
-    {
+    public sealed class OnModActionEvent : IEvent<OnModAction> {
         public static void Call(ModAction e) {
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(e));

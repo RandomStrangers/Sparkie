@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -62,8 +62,8 @@ namespace GoldenSparks.Commands.Eco {
             OnEcoTransactionEvent.Call(trans);
         }
 
-        static bool IsLegalPayment(Player p, int payer, int receiver, int amount) {
-            if (receiver + amount > 16777215) { 
+        static bool IsLegalPayment(Player p, long payer, long receiver, long amount) {
+            if (receiver + amount > long.MaxValue) { 
                 p.Message("&WPlayers cannot have over &f16777215 &3" + Server.Config.Currency); return false; 
             }
             if (payer < amount) { 

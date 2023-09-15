@@ -8,8 +8,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -22,7 +22,7 @@ namespace GoldenSparks.Commands.Misc {
     public sealed class CmdSendCmd : Command2 {        
         public override string name { get { return "SendCmd"; } }
         public override string type { get { return CommandTypes.Other; } }
-        public override LevelPermission defaultRank { get { return LevelPermission.Owner; } }
+        public override LevelPermission defaultRank { get { return LevelPermission.Nobody; } }
         
         public override void Use(Player p, string message, CommandData data) {
             string[] args = message.SplitSpaces(3);
@@ -33,9 +33,9 @@ namespace GoldenSparks.Commands.Misc {
             if (args.Length == 1) { p.Message("No command name given."); return; }
             
             string cmdName = args[1], cmdArgs = args.Length > 2 ? args[2] : "";
-            Command.Search(ref cmdName, ref cmdArgs);
+            Search(ref cmdName, ref cmdArgs);
             
-            Command cmd = Command.Find(cmdName);
+            Command cmd = Find(cmdName);
             if (cmd == null) {
                 p.Message("Unknown command \"{0}\".", cmdName); return;
             }

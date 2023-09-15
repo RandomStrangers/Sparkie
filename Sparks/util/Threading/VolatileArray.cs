@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,10 +18,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace GoldenSparks 
-{
-    public sealed class VolatileArray<T> where T : class 
-    {
+namespace GoldenSparks {
+    public sealed class VolatileArray<T> where T : class {
+
         /// <remarks> Note this field is highly volatile, you should cache references to it. </remarks>
         public volatile T[] Items = new T[0];
         
@@ -32,17 +31,24 @@ namespace GoldenSparks
         /// to minimise the amount of time the object is locked for. </remarks>
         public readonly object locker = new object();
         
-        public VolatileArray(bool ignored = false) { } // used to mean 'useList'
+        public List<T> list;
+        
+        readonly bool useList;
+        
+        public VolatileArray(bool useList = false) {
+            this.useList = useList;
+            if (useList) list = new List<T>();
+        }
         
         public bool Add(T value) {
             lock (locker) {
                 T[] newItems = new T[Items.Length + 1];
-                for (int i = 0; i < Items.Length; i++) 
-                {
+                for (int i = 0; i < Items.Length; i++) {
                     if (object.ReferenceEquals(Items[i], value)) return false;
                     newItems[i] = Items[i];
                 }
 
+                if (useList) list.Add(value);
                 newItems[Items.Length] = value;
                 Items = newItems;
             }
@@ -51,8 +57,7 @@ namespace GoldenSparks
         
         public bool Contains(T value) {
             lock (locker) {
-                for (int i = 0; i < Items.Length; i++) 
-                {
+                for (int i = 0; i < Items.Length; i++) {
                     if (object.ReferenceEquals(Items[i], value)) return true;
                 }
             }
@@ -62,11 +67,11 @@ namespace GoldenSparks
         public bool Remove(T value) {
             lock (locker) {
                 if (Items.Length == 0) return false;
+                if (useList) list.Remove(value);
                 
                 T[] newItems = new T[Items.Length - 1];
                 int j = 0;
-                for (int i = 0; i < Items.Length; i++) 
-                {
+                for (int i = 0; i < Items.Length; i++) {
                     if (object.ReferenceEquals(Items[i], value)) continue;
                     
                     // For some reason item wasn't in the list
@@ -90,6 +95,7 @@ namespace GoldenSparks
         public bool RemoveFirst() {
             lock (locker) {
                 if (Items.Length == 0) return false;
+                if (useList) list.RemoveAt(0);
                 
                 T[] newItems = new T[Items.Length - 1];
                 for (int i = 1; i < Items.Length; i++)
@@ -101,6 +107,7 @@ namespace GoldenSparks
         
         public void Clear() {
             lock (locker) {
+                if (useList) list.Clear();
                 Items = new T[0];
             }
         }

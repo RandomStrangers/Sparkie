@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.osedu.org/licenses/ECL-2.0
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,19 +19,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace GoldenSparks.Games 
-{
-    public class LevelPicker 
-    {
+namespace GoldenSparks.Games {
+    public class LevelPicker {
         public string QueuedMap;
         public List<string> RecentMaps = new List<string>();
         public int VoteTime = 20;
         public bool Voting;
 
-        internal string Candidate1 = "", Candidate2 = "", Candidate3 = "";
-        internal int Votes1, Votes2, Votes3;
-        const int MIN_MAPS = 3;
-
+        public string Candidate1 = "", Candidate2 = "", Candidate3 = "";
+        public int Votes1, Votes2, Votes3;
+        const int minMaps = 3;
+        
         public void AddRecentMap(string map) {
             if (RecentMaps.Count >= 20)
                 RecentMaps.RemoveAt(0);
@@ -42,16 +40,12 @@ namespace GoldenSparks.Games
             QueuedMap = null;
             RecentMaps.Clear();
         }
-
+        
         public string ChooseNextLevel(RoundsGame game) {
             if (QueuedMap != null) return QueuedMap;
             
             try {
                 List<string> maps = GetCandidateMaps(game);
-                if (maps.Count < MIN_MAPS) {
-                    Logger.Log(LogType.Warning, "You must have 3 or more maps configured to change levels in " + game.GameName);
-                    return null;
-                }
                 if (maps == null) return null;
                 
                 RemoveRecentLevels(maps);
@@ -76,15 +70,14 @@ namespace GoldenSparks.Games
         void RemoveRecentLevels(List<string> maps) {
             // Try to avoid recently played levels, avoiding most recent
             List<string> recent = RecentMaps;
-            for (int i = recent.Count - 1; i >= 0; i--) 
-            {
-                if (maps.Count > MIN_MAPS) maps.CaselessRemove(recent[i]);
+            for (int i = recent.Count - 1; i >= 0; i--) {
+                if (maps.Count > minMaps) maps.CaselessRemove(recent[i]);
             }
             
             // Try to avoid maps voted last round if possible
-            if (maps.Count > MIN_MAPS) maps.CaselessRemove(Candidate1);
-            if (maps.Count > MIN_MAPS) maps.CaselessRemove(Candidate2);
-            if (maps.Count > MIN_MAPS) maps.CaselessRemove(Candidate3);
+            if (maps.Count > minMaps) maps.CaselessRemove(Candidate1);
+            if (maps.Count > minMaps) maps.CaselessRemove(Candidate2);
+            if (maps.Count > minMaps) maps.CaselessRemove(Candidate3);
         }
         
         void DoLevelVote(IGame game) {
@@ -102,8 +95,7 @@ namespace GoldenSparks.Games
         void VoteCountdown(IGame game) {
             // Show message for non-CPE clients
             Player[] players = PlayerInfo.Online.Items;
-            foreach (Player pl in players) 
-            {
+            foreach (Player pl in players) {
                 if (pl.level != game.Map || pl.Supports(CpeExt.MessageTypes)) continue;
                 pl.Message("You have " + VoteTime + " seconds to vote for the next map");
             }
@@ -113,8 +105,7 @@ namespace GoldenSparks.Games
                 players = PlayerInfo.Online.Items;
                 if (!game.Running) break;
                 
-                foreach (Player pl in players) 
-                {
+                foreach (Player pl in players) {
                     if (pl.level != map || !pl.Supports(CpeExt.MessageTypes)) continue;
                     string timeLeft = "&e" + (VoteTime - i) + "s &Sleft to vote";
                     pl.SendCpeMessage(CpeMessageType.BottomRight1, timeLeft);
@@ -140,8 +131,8 @@ namespace GoldenSparks.Games
                 return Candidate2;
             }
         }
-        
-        internal static string GetRandomMap(Random r, List<string> maps) {
+
+        public static string GetRandomMap(Random r, List<string> maps) {
             int i = r.Next(0, maps.Count);
             string map = maps[i];
             maps.RemoveAt(i);
@@ -149,7 +140,12 @@ namespace GoldenSparks.Games
         }
         
         public virtual List<string> GetCandidateMaps(RoundsGame game) {
-            return new List<string>(game.GetConfig().Maps);
+            List<string> maps = new List<string>(game.GetConfig().Maps);
+            if (maps.Count < minMaps) {
+                Logger.Log(LogType.Warning, "You must have 3 or more maps configured to change levels in " + game.GameName);
+                return null;
+            }
+            return maps;
         }
         
        public void SendVoteMessage(Player p) {

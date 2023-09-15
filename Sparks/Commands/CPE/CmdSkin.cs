@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,10 +19,8 @@ using System;
 using GoldenSparks.Bots;
 using GoldenSparks.Network;
 
-namespace GoldenSparks.Commands.CPE
-{
-    public class CmdSkin : EntityPropertyCmd 
-    {
+namespace GoldenSparks.Commands.CPE {
+    public class CmdSkin : EntityPropertyCmd {
         public override string name { get { return "Skin"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
@@ -39,7 +37,7 @@ namespace GoldenSparks.Commands.CPE
             UseBotOrPlayer(p, data, message, "skin");
         }
 
-        protected override void SetBotData(Player p, PlayerBot bot, string skin) {
+        public override void SetBotData(Player p, PlayerBot bot, string skin) {
             skin = ParseSkin(p, skin, bot.name);
             if (skin == null) return;
             
@@ -51,7 +49,7 @@ namespace GoldenSparks.Commands.CPE
             BotsFile.Save(p.level);
         }
         
-        protected override void SetPlayerData(Player p, string target, string skin) {
+        public override void SetPlayerData(Player p, string target, string skin) {
             string rawName = target.RemoveLastPlus();
             skin = ParseSkin(p, skin, rawName);    
             if (skin == null) return;

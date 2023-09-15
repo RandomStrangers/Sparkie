@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,43 +17,43 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 
-namespace GoldenSparks.SQL 
-{
+namespace GoldenSparks.SQL {
     /// <summary> Callback function invoked on a row returned from an SQL query. </summary>
-    public delegate void ReaderCallback(ISqlRecord record);
+    public delegate object ReaderCallback(IDataRecord record, object arg);
     
     /// <summary> Abstracts a SQL database management engine. </summary>
-    public static class Database 
-    {
+    public static class Database {
         public static IDatabaseBackend Backend;
         public const string DateFormat = "yyyy-MM-dd HH:mm:ss";        
 
+        static object ReadInt(IDataRecord record, object arg) { return record.GetInt32(0); }
         /// <summary> Counts rows in the given table. </summary>
         /// <param name="modifier"> Optional SQL to filter which rows are counted. </param>
         public static int CountRows(string table, string modifier = "", params object[] args) {
-            int value = 0;
-            ReadRows(table, "COUNT(*)", 
-                    record => value = record.GetInt32(0), 
-                    modifier, args);
-            return value;
+            object raw = ReadRows(table, "COUNT(*)", null, ReadInt, modifier, args);
+            return raw == null ? 0 : (int)raw;
         }
         
+        static object ReadString(IDataRecord record, object arg) { return record.GetText(0); }
         /// <summary> Returns value of first column in last row read from the given table. </summary>
         /// <param name="modifier"> Optional SQL to filter which rows are read. </param>
         public static string ReadString(string table, string column,
                                         string modifier = "", params object[] args) {
-            string value = null;
-            ReadRows(table, column, 
-                    record => value = record.GetText(0), 
-                    modifier, args);
-            return value;
+            return (string)ReadRows(table, column, null, ReadString, modifier, args);
         }
-        
-        internal static string[] ParseFields(ISqlRecord record) {
+
+        public static object ReadList(IDataRecord record, object arg) {
+            ((List<string>)arg).Add(record.GetText(0)); return arg;
+        }
+
+        public static object ReadFields(IDataRecord record, object arg) {
             string[] field = new string[record.FieldCount];
             for (int i = 0; i < field.Length; i++) { field[i] = record.GetStringValue(i); }
-            return field;
+            ((List<string[]>)arg).Add(field);
+            return arg;
         }
         
         /// <summary> Returns all columns of all rows read from the given table. </summary>
@@ -61,23 +61,20 @@ namespace GoldenSparks.SQL
         public static List<string[]> GetRows(string table, string columns,
                                              string modifier = "", params object[] args) {
             List<string[]> fields = new List<string[]>();
-            ReadRows(table, columns, 
-                    record => fields.Add(ParseFields(record)),
-                    modifier, args);
+            ReadRows(table, columns, fields, ReadFields, modifier, args);
             return fields;
         }
         
         
         #region High level table management
         
-        /// <summary> Returns whether a table (case sensitive) exists by that name </summary>
+        /// <summary> Returns whether a table (case sensitive) exists by that name. </summary>
         public static bool TableExists(string table) {
             ValidateName(table);
             return Backend.TableExists(table); 
         }
         
-        /// <summary> Creates a new table in the database. </summary>
-        /// <remarks> Does nothing if a table with the same name already exists. </remarks>
+        /// <summary> Creates a new table in the database (unless it already exists). </summary>
         public static void CreateTable(string table, ColumnDesc[] columns) {
             ValidateName(table);
             string sql = Backend.CreateTableSql(table, columns);
@@ -93,7 +90,6 @@ namespace GoldenSparks.SQL
         }
         
         /// <summary> Completely removes the given table. </summary>
-        /// <remarks> Does nothing if no table with the given name exists. </remarks>
         public static void DeleteTable(string table) {
             ValidateName(table);
             string sql = Backend.DeleteTableSql(table);
@@ -114,59 +110,51 @@ namespace GoldenSparks.SQL
         
         /// <summary> Inserts/Copies all the rows from the source table into the destination table. </summary>
         /// <remarks> May NOT work correctly if the tables have different schema. </remarks>
-        /// <returns> The number of rows copied </returns>
-        public static int CopyAllRows(string srcTable, string dstTable) {
+        public static void CopyAllRows(string srcTable, string dstTable) {
             ValidateName(srcTable);
             ValidateName(dstTable);
-            
             string sql = Backend.CopyAllRowsSql(srcTable, dstTable);
-            return Execute(sql, null);
+            Execute(sql, null);
         }
         
         /// <summary> Iterates over read rows for the given table. </summary>
         /// <param name="modifier"> Optional SQL to filter which rows are read,
         /// return rows in a certain order, etc.</param>
-        public static void ReadRows(string table, string columns,
-                                    ReaderCallback callback, string modifier = "", params object[] args) {
+        public static object ReadRows(string table, string columns, object arg,
+                                      ReaderCallback callback, string modifier = "", params object[] args) {
             ValidateName(table);
-            
             string sql = Backend.ReadRowsSql(table, columns, modifier);
-            Iterate(sql, callback, args);
+            return Iterate(sql, arg, callback, args);
         }
         
-        /// <summary> Updates rows for the given table </summary>
-        /// <param name="modifier"> Optional SQL to filter which rows are updated. Can be just "" </param>
-        /// <returns> The number of rows updated </returns>
-        public static int UpdateRows(string table, string columns,
-                                     string modifier, params object[] args) {
+        /// <summary> Updates rows for the given table. </summary>
+        /// <param name="modifier"> Optional SQL to filter which rows are updated. </param>
+        public static void UpdateRows(string table, string columns,
+                                       string modifier = "", params object[] args) {
             ValidateName(table);
             string sql = Backend.UpdateRowsSql(table, columns, modifier);
-            return Execute(sql, args);
+            Execute(sql, args);
         }
         
         /// <summary> Deletes rows for the given table. </summary>
-        /// <param name="modifier"> Optional SQL to filter which rows are deleted. Can be just "" </param>
-        /// <returns> The number of rows deleted </returns>
-        public static int DeleteRows(string table, string modifier, params object[] args) {
+        /// <param name="modifier"> Optional SQL to filter which rows are deleted. </param>
+        public static void DeleteRows(string table, string modifier = "", params object[] args) {
             ValidateName(table);
-            
             string sql = Backend.DeleteRowsSql(table, modifier);
-            return Execute(sql, args);
+            Execute(sql, args);
         }
 
         /// <summary> Adds a row to the given table. </summary>
         public static void AddRow(string table, string columns, params object[] args) {
             ValidateName(table);
-            
-            string sql = Backend.AddRowSql(table, columns, args.Length);
+            string sql = Backend.AddRowSql(table, columns, args);
             Execute(sql, args);
         }
         
         /// <summary> Adds or replaces a row (same primary key) in the given table. </summary>
         public static void AddOrReplaceRow(string table, string columns, params object[] args) {
             ValidateName(table);
-            
-            string sql = Backend.AddOrReplaceRowSql(table, columns, args.Length);
+            string sql = Backend.AddOrReplaceRowSql(table, columns, args);
             Execute(sql, args);
         }
         
@@ -176,73 +164,82 @@ namespace GoldenSparks.SQL
         #region Low level functions
         
         /// <summary> Executes an SQL command that does not return any results. </summary>
-        public static int Execute(string sql, params object[] args) {
-            return Do(sql, false, null, args);
+        public static void Execute(string sql, params object[] args) {
+            Do(sql, false, null, null, args);
         }
 
         /// <summary> Executes an SQL query, invoking callback function on each returned row. </summary>
-        public static int Iterate(string sql, ReaderCallback callback, params object[] args) {
-            return Do(sql, false, callback, args);
+        public static object Iterate(string sql, object arg, ReaderCallback callback, params object[] args) {
+            return Do(sql, false, arg, callback, args);
         }
 
-        internal static int Do(string sql, bool createDB, ReaderCallback callback, object[] args) {
-            IDatabaseBackend db = Backend;
+        public static object Do(string sql, bool createDB, object arg,
+                                  ReaderCallback callback, params object[] args) {
             Exception e = null;
-            
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 10; i++) {
                 try {
                     if (callback != null) {
-                        return db.Iterate(sql, args, callback);
+                        arg = SqlQuery.Iterate(sql, args, arg, callback);
                     } else {
-                        return db.Execute(sql, args, createDB);
+                        SqlQuery.Execute(sql, args, createDB);
                     }
+                    
+                    return arg;
                 } catch (Exception ex) {
                     e = ex; // try yet again
                 }
             }
 
             Logger.LogError("Error executing SQL statement: " + sql, e);
-            return 0;
+            return arg;
         }
         #endregion
-        
-        
-        internal static bool ValidNameChar(char c) {
+
+        public static bool ValidNameChar(char c) {
             return 
                 c > ' '   && c != '"' && c != '%' && c != '&'  &&
                 c != '\'' && c != '*' && c != '/' && c != ':'  &&
                 c != '<'  && c != '>' && c != '?' && c != '\\' &&
                 c != '`'  && c != '|' && c <= '~';
         }
-        
-        internal static void ValidateName(string table) {
-            foreach (char c in table) 
-            {
+
+        public static void ValidateName(string table) {
+            foreach (char c in table) {
                 if (ValidNameChar(c)) continue;
-                throw new ArgumentException("Invalid character '" + c + "' in table name '" + table + "'");
+                throw new ArgumentException("Invalid character in table name: " + c);
             }
         }
+    }
+    
+    public static class DatabaseExts {
+        public static string GetText(this IDataRecord record, int col) {
+            return record.IsDBNull(col) ? "" : record.GetString(col);
+        }
 
-        public static void UpdateActiveBackend() {
-#if MCG_STANDALONE
-            Backend = SQLiteBackend.Instance;
-#else
-            Backend = Server.Config.UseMySQL ? MySQLBackend.Instance : SQLiteBackend.Instance;
-#endif
+        public static string GetText(this IDataRecord record, string name) {
+            int col = record.GetOrdinal(name);
+            return record.IsDBNull(col) ? "" : record.GetString(col);
         }
-        
-        
-        internal static TimeSpan ParseOldDBTimeSpent(string value) {
-            string[] parts = value.SplitSpaces();
-            return new TimeSpan(int.Parse(parts[0]), int.Parse(parts[1]),
-                                int.Parse(parts[2]), int.Parse(parts[3]));
+
+        public static int GetInt(this IDataRecord record, string name) {
+            int col = record.GetOrdinal(name);
+            return record.IsDBNull(col) ? 0 : record.GetInt32(col);
         }
-        
-        public static DateTime ParseDBDate(string value) {
-            DateTime date;
-            // prefer the exact format
-            if (DateTime.TryParseExact(value, DateFormat, null, 0, out date)) return date;
-            return DateTime.Parse(value);
+
+        public static long GetLong(this IDataRecord record, string name) {
+            int col = record.GetOrdinal(name);
+            return record.IsDBNull(col) ? 0 : record.GetInt64(col);
         }
+
+        public static string GetStringValue(this IDataRecord record, int col) {
+            if (record.IsDBNull(col)) return "";
+            Type type = record.GetFieldType(col);
+            
+            if (type == typeof(string)) return record.GetString(col);
+            if (type == typeof(DateTime)) {
+                return Database.Backend.RawGetDateTime(record, col);
+            }
+            return record.GetValue(col).ToString();
+        }        
     }
 }

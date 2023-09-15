@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,15 +18,14 @@
 using System;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks.Config 
-{    
-    public abstract class ConfigIntegerAttribute : ConfigAttribute 
-    {
+namespace GoldenSparks.Config {
+    
+    public abstract class ConfigIntegerAttribute : ConfigAttribute {        
         public ConfigIntegerAttribute(string name, string section) 
             : base(name, section) { }
-         
+
         // separate function to avoid boxing in derived classes
-        protected int ParseInteger(string raw, int def, int min, int max) {
+        public int ParseInteger(string raw, int def, int min, int max) {
             int value;
             if (!int.TryParse(raw, out value)) {
                 Logger.Log(LogType.Warning, "Config key \"{0}\" has invalid integer '{2}', using default of {1}", Name, def, raw);
@@ -45,8 +44,7 @@ namespace GoldenSparks.Config
         }
     }
     
-    public sealed class ConfigIntAttribute : ConfigIntegerAttribute 
-    {
+    public sealed class ConfigIntAttribute : ConfigIntegerAttribute {
         int defValue, minValue, maxValue;
         
         public ConfigIntAttribute()
@@ -60,22 +58,20 @@ namespace GoldenSparks.Config
         }
     }
     
-    public sealed class ConfigBlockAttribute : ConfigIntegerAttribute 
-    {
+    public sealed class ConfigBlockAttribute : ConfigIntegerAttribute {
         BlockID defBlock;
         public ConfigBlockAttribute() : this(null, null, Block.Air) { }
         public ConfigBlockAttribute(string name, string section, BlockID def)
             : base(name, section) { defBlock = def; }
         
         public override object Parse(string raw) {
-            BlockID block = (BlockID)ParseInteger(raw, defBlock, 0, Block.SUPPORTED_COUNT - 1);
+            BlockID block = (BlockID)ParseInteger(raw, defBlock, 0, Block.ExtendedCount - 1);
             if (block == Block.Invalid) return Block.Invalid;
             return Block.MapOldRaw(block);
         }
     }
     
-    public class ConfigByteAttribute : ConfigIntegerAttribute 
-    {
+    public class ConfigByteAttribute : ConfigIntegerAttribute {        
         public ConfigByteAttribute() : this(null, null) { }
         public ConfigByteAttribute(string name, string section) : base(name, section) { }
         
@@ -84,8 +80,7 @@ namespace GoldenSparks.Config
         }
     }
     
-    public class ConfigUShortAttribute : ConfigIntegerAttribute 
-    {
+    public class ConfigUShortAttribute : ConfigIntegerAttribute {
         public ConfigUShortAttribute() : this(null, null) { }
         public ConfigUShortAttribute(string name, string section) : base(name, section) { }
         
@@ -94,8 +89,7 @@ namespace GoldenSparks.Config
         }
     }
     
-    public abstract class ConfigRealAttribute : ConfigAttribute 
-    {
+    public abstract class ConfigRealAttribute : ConfigAttribute {
         public ConfigRealAttribute(string name, string section) 
             : base(name, section) { }
         
@@ -124,8 +118,7 @@ namespace GoldenSparks.Config
         }
     }
     
-    public class ConfigFloatAttribute : ConfigRealAttribute 
-    {
+    public class ConfigFloatAttribute : ConfigRealAttribute {
         float defValue, minValue, maxValue;
         
         public ConfigFloatAttribute()
@@ -139,18 +132,13 @@ namespace GoldenSparks.Config
         }
     }
     
-    public class ConfigTimespanAttribute : ConfigRealAttribute 
-    {
+    public class ConfigTimespanAttribute : ConfigRealAttribute {
         bool mins; int def;
         public ConfigTimespanAttribute(string name, string section, int def, bool mins)
             : base(name, section) { this.def = def; this.mins = mins; }
         
         public override object Parse(string raw) {
             double value = ParseReal(raw, def, 0, int.MaxValue);
-            return ParseInput(value);
-        }
-        
-        protected TimeSpan ParseInput(double value) {
             if (mins) {
                 return TimeSpan.FromMinutes(value);
             } else {
@@ -162,27 +150,6 @@ namespace GoldenSparks.Config
             TimeSpan span = (TimeSpan)value;
             double time = mins ? span.TotalMinutes : span.TotalSeconds;
             return time.ToString();
-        }
-    }
-    
-    public class ConfigOptTimespanAttribute : ConfigTimespanAttribute 
-    {
-        public ConfigOptTimespanAttribute(string name, string section, bool mins)
-            : base(name, section, -1, mins) { }
-        
-        public override object Parse(string raw) {
-            if (string.IsNullOrEmpty(raw)) return null;
-        	
-            double value = ParseReal(raw, -1, -1, int.MaxValue);
-            if (value < 0) return null;
-            
-            return ParseInput(value);
-        }
-        
-        public override string Serialise(object value) {
-            if (value == null) return "";
-            
-            return base.Serialise(value);
         }
     }
 }

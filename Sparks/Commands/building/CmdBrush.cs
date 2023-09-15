@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -19,12 +19,9 @@ using System;
 using GoldenSparks;
 using GoldenSparks.Drawing.Brushes;
 
-namespace GoldenSparks.Commands.Building 
-{
-    public sealed class CmdBrush : Command2 
-    {
+namespace GoldenSparks.Commands.Building {  
+    public sealed class CmdBrush : Command2 {
         public override string name { get { return "Brush"; } }
-        public override string shortcut { get { return "br"; } }
         public override string type { get { return CommandTypes.Building; } }
         public override LevelPermission defaultRank { get { return LevelPermission.AdvBuilder; } }
         public override bool SuperUseable { get { return false; } }
@@ -40,10 +37,10 @@ namespace GoldenSparks.Commands.Building
             BrushFactory brush = BrushFactory.Find(args[0]);
             
             if (IsListCommand(args[0])) {
-                BrushFactory.List(p);
+                List(p);
             } else if (brush == null) {
                 p.Message("No brush found with name \"{0}\".", args[0]);
-                BrushFactory.List(p);
+                List(p);
             } else {
                 p.Message("Set your brush to: " + brush.Name);
                 p.BrushName = brush.Name;
@@ -51,12 +48,16 @@ namespace GoldenSparks.Commands.Building
             }
         }
         
+        public static void List(Player p) {
+            p.Message("&HAvailable brushes: &f" + BrushFactory.Brushes.Join(b => b.Name));
+        }
+        
         public override void Help(Player p) {
             p.Message("&T/Brush [name] <default brush args>");
             p.Message("&HSets your current brush to the brush with that name.");
             p.Message("&T/Help Brush [name]");
             p.Message("&HOutputs the help for the brush with that name.");
-            BrushFactory.List(p);
+            List(p);
             p.Message("&H- If \"skip\" is used for a block name, " +
                       "existing blocks in the map will not be replaced by this block.");
         }
@@ -65,7 +66,7 @@ namespace GoldenSparks.Commands.Building
             BrushFactory brush = BrushFactory.Find(message);
             if (brush == null) {
                 p.Message("No brush found with name \"{0}\".", message);
-                BrushFactory.List(p);
+                List(p);
             } else {
                 p.MessageLines(brush.Help);
             }

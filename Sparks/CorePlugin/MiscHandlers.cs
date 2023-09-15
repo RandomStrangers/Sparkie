@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,14 +17,18 @@
  */
 using System;
 using GoldenSparks.Blocks.Extended;
+using GoldenSparks.DB;
+using GoldenSparks.Events;
 using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Maths;
+using GoldenSparks.Network;
+using GoldenSparks.Util;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Core {
-    internal static class MiscHandlers {
-        
-        internal static void HandlePlayerMove(Player p, Position next, byte yaw, byte pitch, ref bool cancel) {
+    public static class MiscHandlers {
+
+        public static void HandlePlayerMove(Player p, Position next, byte yaw, byte pitch) {
             if (!p.frozen) return;
             
             bool movedX = Math.Abs(next.X - p.Pos.X) > 4;  // moved more than 0.125 blocks horizontally
@@ -33,10 +37,10 @@ namespace GoldenSparks.Core {
             p.SetYawPitch(yaw, pitch);
             
             if (movedX || movedY || movedZ) { p.SendPosition(p.Pos, p.Rot); }
-            cancel = true;
+            p.cancelmove = true;
         }
-        
-        internal static void HandleSentMap(Player p, Level prevLevel, Level level) {
+
+        public static void HandleSentMap(Player p, Level prevLevel, Level level) {
             p.AFKCooldown = DateTime.UtcNow.AddSeconds(2);
             p.prevMsg = "";
             p.showMBs = false;
@@ -59,8 +63,8 @@ namespace GoldenSparks.Core {
                 p.Message("BlockDB is disabled here, &Wyou will not be able to /undo or /redo");
             }
         }
-        
-        internal static void HandleChangedZone(Player p) {
+
+        public static void HandleChangedZone(Player p) {
             if (p.Supports(CpeExt.InstantMOTD)) p.SendMapMotd();
             p.SendCurrentEnv();
             
@@ -69,8 +73,8 @@ namespace GoldenSparks.Core {
                 p.isFlying = false;
             }
         }
-        
-        internal static void HandlePlayerClick(Player p, MouseButton button, MouseAction action, ushort yaw, ushort pitch,
+
+        public static void HandlePlayerClick(Player p, MouseButton button, MouseAction action, ushort yaw, ushort pitch,
                                                byte entity, ushort x, ushort y, ushort z, TargetBlockFace face) {
             if (action != MouseAction.Pressed) return;           
             if (entity != Entities.SelfID && ClickOnBot(p, entity)) return;

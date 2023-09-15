@@ -24,11 +24,8 @@ using System;
 
 namespace LibNoise
 {
-    public abstract class IModule
+    public interface IModule
     {
-        public double Frequency = 1.0;
-        public int Seed;
-        
-        public abstract double GetValue(double x, double y, double z);
+        double GetValue(double x, double y, double z);
     }
 }

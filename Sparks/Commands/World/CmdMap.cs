@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -32,11 +32,7 @@ namespace GoldenSparks.Commands.World {
 
         public override void Use(Player p, string message, CommandData data) {
             if (CheckSuper(p, message, "level name")) return;
-
-            if (message.Length == 0) {
-                PrintMapInfo(p, p.level.Config); return;
-            }
-
+            if (message.Length == 0) message = p.level.name;
             string[] args = message.SplitSpaces(3);
             Level lvl = null;
             string optName = null, value = null;
@@ -93,7 +89,7 @@ namespace GoldenSparks.Commands.World {
         
         static void PrintMapInfo(Player p, LevelConfig cfg) {
             p.Message("&TPhysics settings:");
-            p.Message("  Finite mode: {0}&S, Random flow: {1}",
+            p.Message("  Finite mode: {0}&S, Sparks flow: {1}",
                            GetBool(cfg.FiniteLiquids), GetBool(cfg.RandomFlow));
             p.Message("  Animal hunt AI: {0}&S, Edge water: {1}",
                            GetBool(cfg.AnimalHuntAI), GetBool(cfg.EdgeWater));

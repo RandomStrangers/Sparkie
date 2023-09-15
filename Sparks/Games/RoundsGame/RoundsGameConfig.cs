@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -25,11 +25,11 @@ using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Events.ServerEvents;
 using GoldenSparks.Network;
 
-namespace GoldenSparks.Games 
-{
+namespace GoldenSparks.Games {
+
     /// <summary> Stores map-specific game configuration state. </summary>
-    public abstract class RoundsGameMapConfig 
-    {
+    public abstract class RoundsGameMapConfig {
+
         public void LoadFrom(ConfigElement[] cfg, string propsDir, string map) {
             string path = propsDir + map + ".properties";
             ConfigElement.ParseFile(cfg, path, this);
@@ -51,36 +51,35 @@ namespace GoldenSparks.Games
     }
     
     /// <summary> Stores overall game configuration state. </summary>
-    public abstract class RoundsGameConfig 
-    {
-        [ConfigBool("start-on-server-start", "General", false)] 
+    public abstract class RoundsGameConfig {
+        [ConfigBool("start-on-server-start", "Game", false)] 
         public bool StartImmediately;
-        [ConfigBool("set-main-level", "General", false)] 
+        [ConfigBool("set-main-level", "Game", false)] 
         public bool SetMainLevel;
-        [ConfigBool("map-in-heartbeat", "General", false)]
+        [ConfigBool("map-in-heartbeat", "Game", false)]
         public bool MapInHeartbeat;
-        [ConfigStringList("maps", "General")] 
+        [ConfigStringList("maps", "Game")] 
         public List<string> Maps = new List<string>();
 
         /// <summary> Whether users are allowed to auto-join maps used by this game. </summary>
         /// <remarks> If false, users can only join these maps when manually /load ed. </remarks>
         public abstract bool AllowAutoload { get; }
+        public abstract string PropsPath { get; }
         public abstract string GameName { get; }
-        public string Path;
         
         ConfigElement[] cfg;
         public virtual void Save() {
             if (cfg == null) cfg = ConfigElement.GetAll(GetType());
             
-            using (StreamWriter w = new StreamWriter(Path)) {
+            using (StreamWriter w = new StreamWriter(PropsPath)) {
                 w.WriteLine("#" + GameName + " configuration");
-                ConfigElement.Serialise(cfg, w, this);
+                ConfigElement.SerialiseElements(cfg, w, this);
             }
         }
         
         public virtual void Load() {
             if (cfg == null) cfg = ConfigElement.GetAll(GetType());
-            ConfigElement.ParseFile(cfg, Path, this);
+            ConfigElement.ParseFile(cfg, PropsPath, this);
         }
         
         

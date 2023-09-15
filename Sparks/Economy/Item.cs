@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,13 +17,14 @@
  */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using GoldenSparks.Commands;
 
-namespace GoldenSparks.Eco 
-{ 
+namespace GoldenSparks.Eco {
+    
     /// <summary> An abstract object that can be bought in the economy. (e.g. a rank, title, levels, etc) </summary>
-    public abstract class Item
-    {
+    public abstract class Item {
+        
         /// <summary> Simple name for this item. </summary>
         public abstract string Name { get; }
         
@@ -39,42 +40,22 @@ namespace GoldenSparks.Eco
         /// <summary> Whether this item can currently be bought in the economy. </summary>
         public bool Enabled;
         
+        /// <summary> Reads the given property of this item from the economy.properties file. </summary>
+        /// <remarks> args is line split by the : character. </remarks>
+        public abstract void Parse(string line, string[] args);
         
-        public void LoadConfig(string line) {
-            string prop, value;
-            line.Separate(':', out prop, out value);
-            
-            if (prop.CaselessEq("enabled")) {
-                Enabled = value.CaselessEq("true");
-            } else if (prop.CaselessEq("purchaserank")) {
-                PurchaseRank = (LevelPermission)int.Parse(value);
-            } else {
-                Parse(prop, value);
-            }
-        }
-        
-        /// <summary> Parses item-specific properties from the given configuration </remarks>
-        public abstract void Parse(string prop, string value);
-        
-        public void SaveConfig(List<string> cfg) {
-            cfg.Add("enabled:" + Enabled);
-            cfg.Add("purchaserank:" + (int)PurchaseRank);
-            Serialise(cfg);
-        }
-        
-        /// <summary> Saves item-specific properties to the given configuration </summary>
-        public abstract void Serialise(List<string> cfg);
-        
-        
-        /// <summary> Called when a player is attempting to purchase this item </summary>
-        /// <remarks> Usually called when a player does /buy [item name] &lt;args&gt; </remarks>
+        /// <summary> Writes the properties of this item to the economy.properties file. </summary>
+        public abstract void Serialise(StreamWriter writer);
+
+
+        /// <summary> Called when the player does /buy [item name] &lt;value&gt; </summary>
         public abstract void OnPurchase(Player p, string args);
-        
+
         /// <summary> Called when the player does /eco [item name] [option] &lt;value&gt; </summary>
-        protected internal abstract void OnSetup(Player p, string[] args);
-        
+        public abstract void OnSetup(Player p, string[] args);
+
         /// <summary> Called when the player does /eco help [item name] </summary>
-        protected internal virtual void OnSetupHelp(Player p) {
+        public virtual void OnSetupHelp(Player p) {
             p.Message("&T/Eco {0} enable/disable", Name.ToLower());
             p.Message("&HEnables/disables purchasing this item.");
             p.Message("&T/Eco {0} purchaserank [rank]", Name.ToLower());
@@ -82,14 +63,13 @@ namespace GoldenSparks.Eco
         }
 
         /// <summary> Called when the player does /store </summary>
-        protected internal abstract void OnStoreOverview(Player p);
-        
-        /// <summary> Outputs detailed information about how to purchase this item to the given player </summary>
-        /// <remarks> Usually called when the player does /store [item name] </remarks>
-        protected internal abstract void OnStoreCommand(Player p);
-        
+        public abstract void OnStoreOverview(Player p);
 
-        internal void Setup(Player p, string[] args) {
+        /// <summary> Called when the player does /store [item name] </summary>
+        public abstract void OnStoreCommand(Player p);
+
+
+        public void Setup(Player p, string[] args) {
             string cmd = args[1];
             if (cmd.CaselessEq("enable")) {
                 p.Message("&aThe {0} item is now enabled.", Name);
@@ -108,8 +88,8 @@ namespace GoldenSparks.Eco
                 OnSetup(p, args);
             }
         }
-        
-        protected static bool CheckPrice(Player p, int price, string item) {
+
+        public static bool CheckPrice(Player p, int price, string item) {
             if (p.money < price) {
                 p.Message("&WYou don't have enough &3{1} &Wto buy {0}.", item, Server.Config.Currency); 
                 return false;
@@ -119,23 +99,23 @@ namespace GoldenSparks.Eco
     }
     
     /// <summary> Simple item, in that it only has one cost value. </summary>
-    public abstract class SimpleItem : Item 
-    {        
+    public abstract class SimpleItem : Item {
+        
         /// <summary> How much this item costs to purchase. </summary>
         public int Price = 100;
         
-        public override void Parse(string prop, string value) {
-            if (prop.CaselessEq("price"))
-                Price = int.Parse(value);
+        public override void Parse(string line, string[] args) {
+            if (args[1].CaselessEq("price"))
+                Price = int.Parse(args[2]);
         }
         
-        public override void Serialise(List<string> cfg) {
-            cfg.Add("price:" + Price);
+        public override void Serialise(StreamWriter writer) {
+            writer.WriteLine(Name + ":price:" + Price);
         }
-        
-        protected bool CheckPrice(Player p) { return CheckPrice(p, Price, "a " + Name); }
-        
-        protected internal override void OnSetup(Player p, string[] args) {
+
+        public bool CheckPrice(Player p) { return CheckPrice(p, Price, "a " + Name); }
+
+        public override void OnSetup(Player p, string[] args) {
             if (args[1].CaselessEq("price")) {
                 int cost = 0;
                 if (!CommandParser.GetInt(p, args[2], "Price", ref cost)) return;
@@ -146,14 +126,14 @@ namespace GoldenSparks.Eco
                 p.Message("Supported actions: enable, disable, price [cost]");
             }
         }
-        
-        protected internal override void OnSetupHelp(Player p) {
+
+        public override void OnSetupHelp(Player p) {
             base.OnSetupHelp(p);
             p.Message("&T/Eco {0} price [amount]", Name.ToLower());
             p.Message("&HSets how many &3{0} &Hthis item costs.", Server.Config.Currency);
         }
-        
-        protected internal override void OnStoreOverview(Player p) {
+
+        public override void OnStoreOverview(Player p) {
             if (p.Rank >= PurchaseRank) {
                 p.Message("&6{0} &S- &a{1} &S{2}", Name, Price, Server.Config.Currency);
             } else {
@@ -161,23 +141,21 @@ namespace GoldenSparks.Eco
                 p.Message("&6{0} &S({3}&S+) - &a{1} &S{2}", Name, Price, Server.Config.Currency, grpName);
             }
         }
-        
-        protected internal override void OnStoreCommand(Player p) {
+
+        public override void OnStoreCommand(Player p) {
             p.Message("&T/Buy {0} [value]", Name);
             OutputItemInfo(p);
         }
-        
-        protected void OutputItemInfo(Player p) {
+
+        public void OutputItemInfo(Player p) {
             p.Message("&HCosts &a{0} {1} &Heach time the item is bought.", Price, Server.Config.Currency);
             List<string> shortcuts = new List<string>();
-            foreach (Alias a in Alias.aliases) 
-            {
+            foreach (Alias a in Alias.aliases) {
                 if (!a.Target.CaselessEq("buy") || a.Format == null) continue;
                 
                 // Find if there are any custom aliases for this item
                 bool matchFound = false;
-                foreach (string alias in Aliases) 
-                {
+                foreach (string alias in Aliases) {
                     if (!a.Format.CaselessEq(alias)) continue;
                     matchFound = true; break;
                 }

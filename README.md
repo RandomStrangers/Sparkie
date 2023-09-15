@@ -1,20 +1,17 @@
-MCGalaxy is a fully featured and customisable **ClassiCube Server Software** based on MCForge/MCLawl.
+GoldenSparks is a fully featured and customizable **ClassiCube Server Software** based on [RandomStrangers](https://github.com/RandomStrangers/RandomStrangers).
 
 **Setup**
 -----------------
-Download the latest MCGalaxy release [from here](https://github.com/UnknownShadow200/MCGalaxy/releases)
-* Windows: You need to install .NET framework 4.0. Windows 8/10/11 already have this included.
-* macOS:   You need to install the [Mono framework](https://www.mono-project.com).
-* Linux:   You need to install the [Mono framework](https://www.mono-project.com). (or just `apt install mono-complete` if on Ubuntu)
+Download the latest GoldenSparks release [from here](https://github.com/GoldenSparks/GoldenSparks/tree/master/Uploads)
+* Windows: You will need to install Net Framework 4.8 (Most already have this built-in)
+* Linux/macOS: You need to install the [Mono framework](https://www.mono-project.com).
 
-Run **MCGalaxy.exe** for a graphical interface, or run **MCGalaxyCLI.exe** for command line only.
+Run **GoldenSparks.exe** for a graphical interface, or run **GoldenSparksCLI.exe** for command line only.
 
 Joining your server
 -----------------
-Run MCGalaxy.exe or MCGalaxyCLI.exe firstly. You'll see something like:
-![opt3](https://user-images.githubusercontent.com/6509348/60258728-0e05bd00-9919-11e9-9ae8-f1262719cd50.png)
 
-If you are signed in to classicube.net, you can copy this URL straight into your web browser and start playing.
+If you are signed in to classicube.net, you can copy the URL sent using /URL straight into your web browser and start playing.
 
 #### Joining from the ClassiCube client
 Click **Direct connect** at the main menu.
@@ -23,12 +20,11 @@ Click **Direct connect** at the main menu.
 Type your username into *Username*, ```127.0.0.1:25565``` into *IP:Port*, and leave *Mppass* blank. Then click **Connect**.
 ![opt2](https://user-images.githubusercontent.com/6509348/60258727-0e05bd00-9919-11e9-890d-5c25cdf385c1.png)
 
-#### Make yourself owner
-After joining, you will want to rank yourself owner so you can use all commands.
+#### Make yourself the owner
+After joining, you will want to rank yourself as the owner so you can use all commands.
 
-Type ```/rank [your account] owner``` into the bottom text box, then press Enter.
+Type ```/rank [your account] Random``` into the bottom text box, then press Enter.
 
-![opt4](https://user-images.githubusercontent.com/6509348/60258729-0e9e5380-9919-11e9-921d-ea7e0c4365af.png)
 
 
 Letting others join your server
@@ -62,43 +58,32 @@ Enter the server URL into the web browser
 
 
 ### Show on classicube.net server list
-Click **Settings** in the MCGalaxy window, then tick the **Public** checkbox. Then click **Save**.
+Click **Settings** in the GoldenSparks window, then tick the **Public** checkbox. Then click **Save**.
 
 This makes your server appear in the server list on classicube.net and in the ClassiCube client.
 
-Compiling - mono and .NET framework
+Compiling
 -----------------
 **With an IDE:**
-* Visual Studio : Open `MCGalaxy.sln`, click `Build` in the menubar, then click `Build Solution`. (Or press F6)
-* SharpDevelop: Open `MCGalaxy.sln`, click `Build` in the menubar, then click `Build Solution`. (Or press F8)
+* Visual Studio: Open `Sparks.sln`, click `Build` in the Menubar, then click `Build Solution`. (Or press F6)
+* SharpDevelop: Open `Sparks.sln`, click `Build` in the menu, then click `Build Solution`. (Or press F8)
 
 **Command line:**
-* For Windows: Run `MSBuild command prompt for VS`, then type `msbuild MCGalaxy.sln` into command prompt
-* Modern mono: Type `msbuild MCGalaxy.sln` into Terminal
-* Older mono: Type `xbuild MCGalaxy.sln` into Terminal
-
-Compiling - .NET 6 / .NET 5 / .NET Core
------------------
-
-* Compiling for .NET 6: No changes necessary
-* Compiling for .NET 5: Change `TargetFramework` in CLI/MCGalaxyCLI_Core.csproj to `net5.0`
-* Compiling for .NET Core: Change `TargetFramework` in CLI/MCGalaxyCLI_Core.csproj to `netcoreapp3.1`
-
-Then navigate into `CLI` directory, and then run `dotnet build MCGalaxyCLI_Core.csproj`
-
-**You will also need to copy `libsqlite3.so.0` from system libraries to `libsqlite3.so` in the server folder**
+* For Windows: Run `MSBuild command prompt for VS`, then type `msbuild Sparks.sln` into the command prompt
+* Modern mono: Type `msbuild Sparks.sln` into Terminal
+* Older mono: Type `xbuild Sparks.sln` into Terminal
 
 Copyright/License
 -----------------
-See LICENSE for MCGalaxy license, and license.txt for code used from other software.
+See LICENSE for GoldenSparks license, and license.txt for code used from other software.
 
-Docker support
+Docker support(MCGalaxy)
 -----------------
 Some **unofficial** dockerfiles for running MCGalaxy in Docker:
 * [using Mono](https://github.com/UnknownShadow200/MCGalaxy/pull/577/files)
 * [using .NET core](https://github.com/UnknownShadow200/MCGalaxy/pull/629/files)
 
-Documentation
+Documentation(MCGalaxy)
 -----------------
 * [General documentation](https://github.com/UnknownShadow200/MCGalaxy/wiki)
 * [API documentation](https://github.com/ClassiCube/MCGalaxy-API-Documentation)

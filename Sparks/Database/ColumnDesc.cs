@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.osedu.org/licenses/ECL-2.0
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,11 +17,10 @@
  */
 using System;
 
-namespace GoldenSparks.SQL 
-{
+namespace GoldenSparks.SQL {
+
     /// <summary> Describes a column for an SQL create statement. </summary>
-    public struct ColumnDesc 
-    {
+    public struct ColumnDesc {
         public readonly string Column;
         public readonly ColumnType Type;
         public readonly ushort MaxLength;
@@ -58,8 +57,7 @@ namespace GoldenSparks.SQL
         };
     }
     
-    public enum ColumnType 
-    {
+    public enum ColumnType {
         UInt8, UInt16, UInt24, UInt32, UInt64,
         Int8, Int16, Int24, Int32, Int64,
         Integer, DateTime, Char, VarChar

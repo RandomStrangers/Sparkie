@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -53,15 +53,15 @@ namespace GoldenSparks {
         
         public override List<string> Whitelisted { get { return cfg.BuildWhitelist; } }
         public override List<string> Blacklisted { get { return cfg.BuildBlacklist; } }
-        
-        protected override string ColoredName { get { return "zone " + cfg.Color + cfg.Name; } }
-        protected override string Action { get { return "build in"; } }
-        protected override string ActionIng { get { return "building in"; } }
-        protected override string Type { get { return "build"; } }
-        protected override string MaxCmd { get { return null; } }
 
-        
-        protected override void ApplyChanges(Player p, Level lvl, string msg) {
+        public override string ColoredName { get { return "zone " + cfg.Color + cfg.Name; } }
+        public override string Action { get { return "build in"; } }
+        public override string ActionIng { get { return "building in"; } }
+        public override string Type { get { return "build"; } }
+        public override string MaxCmd { get { return null; } }
+
+
+        public override void ApplyChanges(Player p, Level lvl, string msg) {
             lvl.Save(true);
             msg += " &Sin " + ColoredName;
             Logger.Log(LogType.UserActivity, "{0} &Son {1}", msg, lvl.name);

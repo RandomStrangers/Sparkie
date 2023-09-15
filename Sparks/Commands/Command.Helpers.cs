@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,29 +20,46 @@ using GoldenSparks.Commands;
 using GoldenSparks.Eco;
 using GoldenSparks.Games;
 
-namespace GoldenSparks 
-{    
-    public abstract partial class Command 
-    {
-        protected bool CheckSuper(Player p, string message, string type) {
+namespace GoldenSparks {
+    
+    public abstract partial class Command {
+
+        const CommandEnable bothFlags = CommandEnable.Lava | CommandEnable.Zombie;
+        public static string GetDisabledReason(CommandEnable enable) {
+            if (enable == CommandEnable.Always) return null;
+            if (enable == CommandEnable.Economy && !Economy.Enabled)
+                return "economy is disabled.";
+            
+            if (enable == bothFlags && !(ZSGame.Instance.Running || LSGame.Instance.Running))
+                return "neither zombie nor lava survival is running.";
+            if (enable == CommandEnable.Zombie && !ZSGame.Instance.Running)
+                return "zombie survival is not running.";
+            if (enable == CommandEnable.Lava)
+                return "lava survival is not running.";
+            return null;
+        }
+        
+        public bool CheckSuper(Player p, string message, string type) {
             if (message.Length > 0 || !p.IsSuper) return false;
-            SuperRequiresArgs(p, type);
+            SuperRequiresArgs(name, p, type);
             return true;
         }
         
-        protected void SuperRequiresArgs(Player p, string type) {
-            p.Message("When using /{0} from {2}, you must provide a {1}.", name, type, p.SuperName);
+        public void SuperRequiresArgs(Player p, string type) { SuperRequiresArgs(name, p, type); }
+        
+        public static void SuperRequiresArgs(string cmd, Player p, string type) {
+            p.Message("When using /{0} from {2}, you must provide a {1}.", cmd, type, p.SuperName);
         }
         
-        protected bool HasExtraPerm(Player p, string cmd, LevelPermission plRank, int num) {
+        public bool HasExtraPerm(Player p, string cmd, LevelPermission plRank, int num) {
             return CommandExtraPerms.Find(cmd, num).UsableBy(plRank);
         }
         
-        protected bool HasExtraPerm(Player p, LevelPermission plRank, int num) {
+        public bool HasExtraPerm(Player p, LevelPermission plRank, int num) {
             return HasExtraPerm(p, name, plRank, num);
         }
         
-        protected bool CheckExtraPerm(Player p, CommandData data, int num) {
+        public bool CheckExtraPerm(Player p, CommandData data, int num) {
             if (HasExtraPerm(p, data.Rank, num)) return true;
             
             CommandExtraPerms perms = CommandExtraPerms.Find(name, num);
@@ -50,15 +67,16 @@ namespace GoldenSparks
             return false;
         }
         
-        protected internal static bool CheckRank(Player p, CommandData data, Player target, 
+        public static bool CheckRank(Player p, CommandData data, Player target, 
                                                  string action, bool canAffectOwnRank) {
             return CheckRank(p, data, target.name, target.Rank, action, canAffectOwnRank);
         }
         
-        protected internal static bool CheckRank(Player p, CommandData data, 
+        public static bool CheckRank(Player p, CommandData data, 
                                                  string plName, LevelPermission plRank,
                                                  string action, bool canAffectOwnRank) {
             if (p.name.CaselessEq(plName)) return true;
+
             if (p.IsSparkie || plRank < data.Rank) return true;
             if (canAffectOwnRank && plRank == data.Rank) return true;
             
@@ -70,7 +88,7 @@ namespace GoldenSparks
             return false;
         }
         
-        protected string CheckOwn(Player p, string name, string type) {
+        public string CheckOwn(Player p, string name, string type) {
             if (name.CaselessEq("-own")) {
                 if (p.IsSuper) { SuperRequiresArgs(p, type); return null; }
                 return p.name;
@@ -79,43 +97,42 @@ namespace GoldenSparks
         }
         
         
-        protected static bool IsListModifier(string str) {
+        public static bool IsListModifier(string str) {
             int ignored;
             return str.CaselessEq("all") || int.TryParse(str, out ignored);
         }      
         
-        protected internal static bool IsCreateCommand(string str) {
+        public static bool IsCreateCommand(string str) {
             return str.CaselessEq("create") || str.CaselessEq("add") || str.CaselessEq("new");
         } 
         
-        protected internal static bool IsDeleteCommand(string str) {
+        public static bool IsDeleteCommand(string str) {
             return str.CaselessEq("del") || str.CaselessEq("delete") || str.CaselessEq("remove");
         }
         
-        protected internal static bool IsEditCommand(string str) {
+        public static bool IsEditCommand(string str) {
             return str.CaselessEq("edit") || str.CaselessEq("change") || str.CaselessEq("modify")
                 || str.CaselessEq("move") || str.CaselessEq("update");
         }  
 
-        protected internal static bool IsInfoCommand(string str) {
+        public static bool IsInfoCommand(string str) {
             return str.CaselessEq("about") || str.CaselessEq("info") || str.CaselessEq("status")
                 || str.CaselessEq("check");
         }
         
-        protected internal static bool IsListCommand(string str) {
+        public static bool IsListCommand(string str) {
             return str.CaselessEq("list") || str.CaselessEq("view");
         }
     }
     
-    public sealed class CommandTypes 
-    {
-        public const string Building = "Building";
-        public const string Chat = "Chat";
-        public const string Economy = "Economy";
-        public const string Games = "Games";
-        public const string Information = "Info";
-        public const string Moderation = "Moderation";
-        public const string Other = "Other";
-        public const string World = "World";
+    public sealed class CommandTypes {
+        public const string Building = "build";
+        public const string Chat = "chat";
+        public const string Economy = "economy";
+        public const string Games = "game";
+        public const string Information = "information";
+        public const string Moderation = "mod";
+        public const string Other = "other";
+        public const string World = "world";
     }
 }

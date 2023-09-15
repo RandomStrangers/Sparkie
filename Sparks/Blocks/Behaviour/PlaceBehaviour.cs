@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,15 +20,15 @@ using System;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Blocks {
-    
-    internal static class PlaceBehaviour {
+
+    public static class PlaceBehaviour {
 
         static bool SkipGrassDirt(Player p, BlockID block) {
             Level lvl = p.level;
             return !lvl.Config.GrassGrow || p.ModeBlock == block || !(lvl.physics == 0 || lvl.physics == 5);
         }
-        
-        internal static ChangeResult GrassDie(Player p, BlockID block, ushort x, ushort y, ushort z) {
+
+        public static ChangeResult GrassDie(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (SkipGrassDirt(p, block)) return p.ChangeBlock(x, y, z, block);
             Level lvl = p.level;
             BlockID above = lvl.GetBlock(x, (ushort)(y + 1), z);
@@ -38,8 +38,8 @@ namespace GoldenSparks.Blocks {
             }
             return p.ChangeBlock(x, y, z, block);
         }
-        
-        internal static ChangeResult DirtGrow(Player p, BlockID block, ushort x, ushort y, ushort z) {
+
+        public static ChangeResult DirtGrow(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (SkipGrassDirt(p, block)) return p.ChangeBlock(x, y, z, block);
             Level lvl = p.level;
             BlockID above = lvl.GetBlock(x, (ushort)(y + 1), z);
@@ -50,7 +50,7 @@ namespace GoldenSparks.Blocks {
             return p.ChangeBlock(x, y, z, block);
         }
 
-        internal static ChangeResult Stack(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        public static ChangeResult Stack(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.GetBlock(x, (ushort)(y - 1), z) != block) {
                 return p.ChangeBlock(x, y, z, block);
             }
@@ -59,9 +59,9 @@ namespace GoldenSparks.Blocks {
             BlockID stack = p.level.Props[block].StackBlock;
             p.ChangeBlock(x, (ushort)(y - 1), z, stack);
             return ChangeResult.Modified;
-        }        
-        
-        internal static ChangeResult C4(Player p, BlockID block, ushort x, ushort y, ushort z) {
+        }
+
+        public static ChangeResult C4(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.physics == 0 || p.level.physics == 5) return ChangeResult.Unchanged;
             
             // Use red wool to detonate c4
@@ -77,7 +77,7 @@ namespace GoldenSparks.Blocks {
                 p.c4circuitNumber = num;
                 
                 string detonatorName = Block.GetName(p, Block.Red);
-                p.Message("Place more blocks for more c4, then place a &c{0} &Sblock for the detonator.", 
+                p.Message("Place more blocks for more c4, then place a &4{0} &Sblock for the detonator.", 
                                detonatorName);
             }
             
@@ -85,8 +85,8 @@ namespace GoldenSparks.Blocks {
             if (c4 != null) c4.list.Add(p.level.PosToInt(x, y, z));
             return p.ChangeBlock(x, y, z, Block.C4);
         }
-        
-        internal static ChangeResult C4Det(Player p, BlockID block, ushort x, ushort y, ushort z) {
+
+        public static ChangeResult C4Det(Player p, BlockID block, ushort x, ushort y, ushort z) {
             if (p.level.physics == 0 || p.level.physics == 5) {
                 p.c4circuitNumber = -1;
                 return ChangeResult.Unchanged;

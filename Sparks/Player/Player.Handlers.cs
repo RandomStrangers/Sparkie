@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-https://opensource.org/license/ecl-2-0/
-https://www.gnu.org/licenses/gpl-3.0.html
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -31,20 +31,20 @@ using GoldenSparks.SQL;
 using GoldenSparks.Util;
 using BlockID = System.UInt16;
 
-namespace GoldenSparks
+namespace GoldenSparks 
 {
-    public partial class Player : IDisposable
+    public partial class Player : IDisposable 
     {
         const string mustAgreeMsg = "You must read /rules then agree to them with /agree!";
         
         readonly object blockchangeLock = new object();
         internal bool HasBlockChange() { return Blockchange != null; }
-        
-        internal bool DoBlockchangeCallback(ushort x, ushort y, ushort z, BlockID block) {
+
+        public bool DoBlockchangeCallback(ushort x, ushort y, ushort z, BlockID block) {
             lock (blockchangeLock) {
                 lastClick.X = x; lastClick.Y = y; lastClick.Z = z;
                 if (Blockchange == null) return false;
-                
+            
                 Blockchange(this, x, y, z, block);
                 return true;
             }
@@ -65,12 +65,14 @@ namespace GoldenSparks
             bool deletingBlock = !painting && !placing;
 
             if (Unverified) {
-                PassAuthenticator.Current.RequiresVerification(this, "modify blocks");
+                Authenticator.Current.RequiresVerification(this, "modify blocks");
                 RevertBlock(x, y, z); return;
             }
 
-            IGame game = IGame.GameOn(level);
-            if (game != null && game.HandlesBlockchange(this, x, y, z)) return;
+            if ( LSGame.Instance.Running && LSGame.Instance.Map == level && LSGame.Instance.IsPlayerDead(this) ) {
+                Message("You are out of the round, and cannot build.");
+                RevertBlock(x, y, z); return;
+            }
 
             if (ClickToMark && DoBlockchangeCallback(x, y, z, block)) return;
             
@@ -130,8 +132,8 @@ namespace GoldenSparks
             }
             OnBlockChangedEvent.Call(this, x, y, z, result);
         }
-        
-        internal bool CheckManualChange(BlockID old, bool deleteMode) {
+
+        public bool CheckManualChange(BlockID old, bool deleteMode) {
             if (!group.Blocks[old] && !level.BuildIn(old) && !Block.AllowBreak(old)) {
                 string action = deleteMode ? "delete" : "replace";
                 BlockPerms.Find(old).MessageCannotUse(this, action);
@@ -169,7 +171,7 @@ namespace GoldenSparks
                 flags = BlockDBFlags.Painted;
             }
             
-            level.BlockDB.Cache.Add(this, x, y, z, flags, old, block);
+            level.BlockDB.Cache.Add(this, x, y, z, flags, old, block); 
             y--; // check for growth at block below
             
             bool grow = level.Config.GrassGrow && (level.physics == 0 || level.physics == 5);
@@ -207,7 +209,7 @@ namespace GoldenSparks
                 }
                 
                 if (held >= Block.Extended) {
-                    if (!Session.hasBlockDefs || level.CustomBlockDefs[held] == null) {
+                    if (!hasBlockDefs || level.CustomBlockDefs[held] == null) {
                         Message("Invalid block type: " + Block.ToRaw(held));
                         RevertBlock(x, y, z); return;
                     }
@@ -220,7 +222,7 @@ namespace GoldenSparks
                 Logger.LogError(e);
             }
         }
-        
+
         public void ProcessMovement(int x, int y, int z, byte yaw, byte pitch, int held) {
             if (held >= 0) ClientHeldBlock = (BlockID)held;
 
@@ -228,9 +230,8 @@ namespace GoldenSparks
             Position next = new Position(x, y, z);
             CheckBlocks(Pos, next);
 
-            bool cancel = false;
-            OnPlayerMoveEvent.Call(this, next, yaw, pitch, ref cancel);
-            if (cancel) { cancel = false; return; }
+            OnPlayerMoveEvent.Call(this, next, yaw, pitch);
+            if (cancelmove) { cancelmove = false; return; }
             
             Pos = next;
             SetYawPitch(yaw, pitch);
@@ -275,9 +276,9 @@ namespace GoldenSparks
             if (zone != null && zone.Config.GetEnvProp(i) != default_) {
                 value = zone.Config.GetEnvProp(i);
             }
-            
-            if (value == default_) value = EnvConfig.DefaultEnvProp(i, level.Height);
-            if (block)             value = Session.ConvertBlock((BlockID)value);
+                
+            if (value == default_) value = level.Config.DefaultEnvProp(i, level.Height);
+            if (block)             value = ConvertBlock((BlockID)value);
             return value;
         }
         
@@ -295,7 +296,7 @@ namespace GoldenSparks
                 Session.SendSetEnvColor((byte)i, col);
             }
             
-            if (Supports(CpeExt.EnvMapAspect) || Supports(CpeExt.EnvMapAspect, 2)) {
+            if (Supports(CpeExt.EnvMapAspect)) {
                 for (EnvProp i = 0; i < EnvProp.Max; i++) {
                     int value = CurrentEnvProp(i, zone);
                     Send(Packet.EnvMapProperty(i, value));
@@ -311,7 +312,7 @@ namespace GoldenSparks
                 Vec3U16 P = (Vec3U16)prev.BlockCoords;
                 AABB bb = ModelBB.OffsetPosition(next);
                 int index = level.PosToInt(P.X, P.Y, P.Z);
-                
+                    
                 if (level.Config.SurvivalDeath) {
                     bool movingDown = next.Y < prev.Y;
                     PlayerPhysics.Drown(this, bb);
@@ -326,9 +327,9 @@ namespace GoldenSparks
             }
         }
         
-        bool Moved() { return _lastRot.RotY != Rot.RotY || _lastRot.HeadX != Rot.HeadX; }
+        bool Moved() { return lastRot.RotY != Rot.RotY || lastRot.HeadX != Rot.HeadX; }
         
-        public void AnnounceDeath(string msg) {
+        void AnnounceDeath(string msg) {
             //Chat.MessageFrom(ChatScope.Level, this, msg.Replace("@p", "λNICK"), level, Chat.FilterVisible(this));
             if (hidden) {
                 // Don't show usual death message to avoid confusion about whether others see your death
@@ -339,14 +340,14 @@ namespace GoldenSparks
         }
         
         public bool HandleDeath(BlockID block, string customMsg = "", bool explode = false, bool immediate = false) {
-            if (!immediate && DateTime.UtcNow < deathCooldown) return false;
-            if (invincible) return false;
+            if (!immediate && lastDeath.AddSeconds(2) > DateTime.UtcNow) return false;
+            if (invulnerable) return false;
             
-            bool cancel = false;
-            OnPlayerDyingEvent.Call(this, block, ref cancel);
-            if (cancel) { cancel = false; return false; }
+            cancelDeath = false;
+            OnPlayerDeathEvent.Call(this, block);
+            if (cancelDeath) { cancelDeath = false; return false; }
 
-            onTrain = false; trainInvincible = false; trainGrab = false;
+            onTrain = false; trainInvulnerable = false; trainGrab = false;
             ushort x = (ushort)Pos.BlockX, y = (ushort)Pos.BlockY, z = (ushort)Pos.BlockZ;
             
             string deathMsg = level.Props[block].DeathMessage;
@@ -365,18 +366,17 @@ namespace GoldenSparks
             }
             
             PlayerActions.Respawn(this);
-            
             TimesDied++;
             // NOTE: If deaths column is ever increased past 16 bits, remove this clamp
-            if (TimesDied > short.MaxValue && Database.Backend.EnforcesIntegerLimits)
-                TimesDied = short.MaxValue;
+            if (TimesDied > short.MaxValue) TimesDied = short.MaxValue;
 
             if (Server.Config.AnnounceDeathCount && (TimesDied > 0 && TimesDied % 10 == 0)) {
                 AnnounceDeath("@p &Shas died &3" + TimesDied + " times");
             }
+            lastDeath = DateTime.UtcNow;
             return true;
         }
-        
+
         public void ProcessChat(string text, bool continued) {
             LastAction = DateTime.UtcNow;
             if (FilterChat(ref text, continued)) return;
@@ -410,6 +410,12 @@ namespace GoldenSparks
             Chat.MessageChat(this, "λFULL: &f" + text, null, true);
         }
         
+        void LimitPartialMessage() {
+            if (partialMessage.Length < 1024 * 64) return;
+            partialMessage = "";
+            Message("&WPartial message cleared due to exceeding 1024 lines");
+        }
+        
         bool FilterChat(ref string text, bool continued) {
             // Handle /womid [version] which informs the server of the WoM client version
             if (text.StartsWith("/womid")) {
@@ -418,9 +424,8 @@ namespace GoldenSparks
             }
             
             if (continued) {
-                if (text.Length < NetUtils.StringSize) text += " ";
                 partialMessage += text;
-                
+                if (text.Length < NetUtils.StringSize) partialMessage += " ";
                 LimitPartialMessage();
                 return true;
             }
@@ -431,10 +436,14 @@ namespace GoldenSparks
             }
 
             if (IsPartialSpaced(text)) {
-                AppendPartialMessage(text.Substring(0, text.Length - 2) + " ");
+                partialMessage += text.Substring(0, text.Length - 2) + " ";
+                Message("&3Partial message: &f" + partialMessage);
+                LimitPartialMessage();
                 return true;
             } else if (IsPartialJoined(text)) {
-                AppendPartialMessage(text.Substring(0, text.Length - 2));
+                partialMessage += text.Substring(0, text.Length - 2);
+                Message("&3Partial message: &f" + partialMessage);
+                LimitPartialMessage();
                 return true;
             } else if (partialMessage.Length > 0) {
                 text = partialMessage + text;
@@ -456,24 +465,6 @@ namespace GoldenSparks
             return text.EndsWith(" <") || text.EndsWith(" \\");
         }
         
-        void LimitPartialMessage() {
-            if (partialMessage.Length < 100 * 64) return;
-            partialMessage = "";
-            Message("&WPartial message cleared due to exceeding 100 lines");
-        }
-
-        void AppendPartialMessage(string part) {
-            if (!partialLog.AddSpamEntry(20, TimeSpan.FromSeconds(1))) {
-                Message("&WTried to add over 20 partial message in one second, slow down");
-                return;
-            }
-
-            partialMessage += part;
-            SendRawMessage("&3Partial message: &f" + partialMessage);
-            LimitPartialMessage();
-        }
-
-        
         void DoCommand(string text) {
             // Typing / repeats last command executed
             if (text.Length == 0) {
@@ -484,8 +475,8 @@ namespace GoldenSparks
                 Message("Repeating &T/" + text);
             }
             
-            string cmd, args;
-            text.Separate(' ', out cmd, out args);
+            string cmd, args;            
+            text.Separate(out cmd, out args);
             HandleCommand(cmd, args, DefaultCmdData);
         }
         
@@ -510,23 +501,12 @@ namespace GoldenSparks
                 Command command = GetCommand(ref cmd, ref args, data);
                 if (command == null) return;
                 
-                bool parallel = command.Parallelism == CommandParallelism.Yes
-                                    || data.Context == CommandContext.MessageBlock;
-                if (!parallel && !EnqueueSerialCommand(command, args, data)) return;
-                
-                ThreadStart callback;
-                if (parallel) {
-                    callback = () => UseCommand(command, args, data);
-                } else {
-                    callback = ExecuteSerialCommands;
-                }
-                
-                Thread thread = new Thread(callback);
+                Thread thread = new Thread(() => UseCommand(command, args, data));
                 try { thread.Name = "CMD_" + cmd; } catch { }
                 thread.IsBackground = true;
                 thread.Start();
             } catch (Exception e) {
-                Logger.LogError(e);
+                Logger.LogError(e); 
                 Message("&WCommand failed");
             }
         }
@@ -553,7 +533,7 @@ namespace GoldenSparks
                 thread.IsBackground = true;
                 thread.Start();
             } catch (Exception e) {
-                Logger.LogError(e);
+                Logger.LogError(e); 
                 Message("&WCommand failed.");
             }
         }
@@ -567,8 +547,8 @@ namespace GoldenSparks
                     Message("&WInfinite message block loop detected, aborting");
                     return false;
                 }
-            } else if (data.Context == CommandContext.Normal) {
-                mbRecursion = 0;
+            } else if (data.Context == CommandContext.Normal) { 
+                mbRecursion = 0; 
             }
             return true;
         }
@@ -582,10 +562,10 @@ namespace GoldenSparks
                 Message("You cannot use any commands while jailed."); return false;
             }
             if (Unverified && !(cmd == "pass" || cmd == "setpass")) {
-                PassAuthenticator.Current.RequiresVerification(this, "use /" + cmd);
+                Authenticator.Current.RequiresVerification(this, "use /" + cmd);
                 return false;
             }
-            
+
             TimeSpan delta = cmdUnblocked - DateTime.UtcNow;
             if (delta.TotalSeconds > 0) {
                 int secs = (int)Math.Ceiling(delta.TotalSeconds);
@@ -601,10 +581,10 @@ namespace GoldenSparks
             byte bindIndex;
             if (CmdBindings.TryGetValue(cmdName, out bound)) {
                 // user defined command shortcuts take priority
-                bound.Separate(' ', out cmdName, out cmdArgs);
+                bound.Separate(out cmdName, out cmdArgs);
             } else if (byte.TryParse(cmdName, out bindIndex) && bindIndex < 10) {
                 // backwards compatibility for old /cmdbind behaviour
-                Message("No command is bound to: &T/" + cmdName);
+                Message("No command is bound to: &T/" + cmdName); 
                 return null;
             }
             
@@ -624,10 +604,14 @@ namespace GoldenSparks
             }
 
             if (!CanUse(command)) {
-                command.Permissions.MessageCannotUse(this);
-                return null;
+                CommandPerms.Find(command.name).MessageCannotUse(this);
+                return null; 
             }
             
+            string reason = Command.GetDisabledReason(command.Enabled);
+            if (reason != null) {
+                Message("Command is disabled as " + reason); return null;
+            }
             if (level != null && level.IsMuseum && !command.museumUsable) {
                 Message("Cannot use &T/{0} &Swhile in a museum.", command.name); return null;
             }
@@ -672,56 +656,6 @@ namespace GoldenSparks
                 if (leftServer) return false;
             }
             return true;
-        }
-        
-        
-        bool EnqueueSerialCommand(Command cmd, string args, CommandData data) {
-            SerialCommand head = default(SerialCommand);
-            SerialCommand scmd;
-            
-            scmd.cmd  = cmd;
-            scmd.args = args;
-            scmd.data = data;
-            
-            lock (serialCmdsLock) {
-                if (serialCmds.Count > 0)
-                    head = serialCmds.Peek();
-                
-                serialCmds.Enqueue(scmd);
-            }
-            if (head.cmd == null) return true;
-            
-            if (cmd.Parallelism == CommandParallelism.NoAndWarn) {
-                Message("Waiting for &T/{0} {1} &Sto finish first before running &T/{2} {3}",
-                        head.cmd.name, head.args, cmd.name, args);
-            }
-            
-            // Overly punish triggering forced serial execution of commands
-            spamChecker.CheckCommandSpam();
-            return false;
-        }
-        
-        void ExecuteSerialCommands() {
-            for (;;) 
-            {
-                SerialCommand scmd;
-                
-                lock (serialCmdsLock) {
-                    if (serialCmds.Count == 0) return;
-                    scmd = serialCmds.Peek();
-                }
-                UseCommand(scmd.cmd, scmd.args, scmd.data);
-                
-                // only dequeue AFTER finished (for long running commands)
-                lock (serialCmdsLock) {
-                    if (serialCmds.Count == 0) return;
-                    serialCmds.Dequeue();
-                }
-            }
-        }
-        
-        void ClearSerialCommands() {
-            lock (serialCmdsLock) { serialCmds.Clear(); }
         }
     }
 }

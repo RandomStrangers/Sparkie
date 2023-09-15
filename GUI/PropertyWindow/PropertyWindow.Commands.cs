@@ -51,7 +51,8 @@ namespace GoldenSparks.Gui {
             if (!CommandsChanged()) { LoadCommands(); return; }
             
             foreach (CommandPerms changed in commandPermsChanged) {
-                CommandPerms.ApplyChanges();
+                CommandPerms.Set(changed.CmdName, changed.MinRank,
+                                 changed.Allowed, changed.Disallowed);
             }            
             foreach (CommandExtraPerms changed in commandExtraPermsChanged) {
                 CommandExtraPerms orig = CommandExtraPerms.Find(changed.CmdName, changed.Num);
@@ -79,7 +80,7 @@ namespace GoldenSparks.Gui {
             
             // fix for when command is added to server but doesn't have permissions defined
             if (commandPermsOrig == null) {
-                commandPermsOrig = new CommandPerms(cmdName, cmd.defaultRank);
+                commandPermsOrig = new CommandPerms(cmdName, cmd.defaultRank, null, null);
             }
             
             commandItems.SupressEvents = true;

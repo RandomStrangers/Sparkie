@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,6 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Data;
 using System.Net;
 using GoldenSparks.DB;
 using GoldenSparks.SQL;
@@ -56,7 +57,7 @@ namespace GoldenSparks.Commands.Maintenance {
                 SetInteger(p, args, PlayerData.ColumnLogins, 1000000000, who,
                            v => who.TimesVisited = v, type_norm);
             } else if (opt == "deaths") {
-                SetInteger(p, args, PlayerData.ColumnDeaths, 100000000, who,
+                SetInteger(p, args, PlayerData.ColumnDeaths, short.MaxValue, who,
                            v => who.TimesDied = v, type_norm);
             } else if (opt == "money") {
                 SetInteger(p, args, PlayerData.ColumnMoney, 100000000, who,
@@ -176,12 +177,10 @@ namespace GoldenSparks.Commands.Maintenance {
             MessageDataChanged(p, args[0], args[1], span.Shorten(true));
         }
         
+        static object ReadLong(IDataRecord record, object arg) { return record.GetInt64(0); }
         static long GetLong(string name, string column) {
-            long value = 0;
-            Database.ReadRows("Players", column, 
-                                record => value = record.GetInt64(0), 
-                                "WHERE Name=@0", name);
-            return value;
+            return (long)Database.ReadRows("Players", column, null, ReadLong,
+                                           "WHERE Name=@0", name);
         }
         
         static void SetInteger(Player p, string[] args, string column, int max, Player who,

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -21,10 +21,9 @@ using GoldenSparks.Events.PlayerEvents;
 using GoldenSparks.Games;
 using GoldenSparks.Commands.World;
 
-namespace GoldenSparks 
-{
-    public static class PlayerActions 
-    {      
+namespace GoldenSparks {
+    public static class PlayerActions {
+        
         public static bool ChangeMap(Player p, string name) { return ChangeMap(p, null, name); }
         public static bool ChangeMap(Player p, Level lvl)   { return ChangeMap(p, lvl, null); }
         
@@ -82,7 +81,9 @@ namespace GoldenSparks
             
             AccessController visitAccess = new LevelAccessController(cfg, map, true);
             bool skip = p.summonedMap != null && p.summonedMap.CaselessEq(map);
+
             LevelPermission plRank = skip ? LevelPermission.Sparkie : p.Rank;
+
             if (!visitAccess.CheckDetailed(p, plRank)) return false;
             
             LevelActions.Load(p, map, false);
@@ -119,8 +120,8 @@ namespace GoldenSparks
             Entities.SpawnEntities(p, p.Pos, p.Rot);
             p.Loading = false;
         }
-        
-        internal static void PostSentMap(Player p, Level prev, Level lvl, bool announce) {
+
+        public static void PostSentMap(Player p, Level prev, Level lvl, bool announce) {
             Position pos = lvl.SpawnPos;
             Orientation rot = p.Rot;
             byte yaw = lvl.rotx, pitch = lvl.roty;
@@ -158,11 +159,8 @@ namespace GoldenSparks
             pos.Z = 16 + (cpSpawn ? p.checkpointZ : p.level.spawnz) * 32;
             byte yaw   = cpSpawn ? p.checkpointRotX : p.level.rotx;
             byte pitch = cpSpawn ? p.checkpointRotY : p.level.roty;
-            RespawnAt(p, pos, yaw, pitch);
-        }
-
-        public static void RespawnAt(Player p, Position pos, byte yaw, byte pitch) {
             OnPlayerSpawningEvent.Call(p, ref pos, ref yaw, ref pitch, true);
+            
             p.SendPos(Entities.SelfID, pos, new Orientation(yaw, pitch));
         }
     }

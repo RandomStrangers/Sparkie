@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -26,7 +26,7 @@ using BlockRaw = System.Byte;
 
 namespace GoldenSparks.Drawing 
 {
-    internal struct PendingDrawOp 
+    public struct PendingDrawOp 
     {
         public DrawOp Op;
         public Brush Brush;
@@ -109,8 +109,8 @@ namespace GoldenSparks.Drawing.Ops
                 Execute(p, item.Op, item.Brush, item.Marks);
             }
         }
-        
-        internal static void Execute(Player p, DrawOp op, Brush brush, Vec3S32[] marks) {
+
+        public static void Execute(Player p, DrawOp op, Brush brush, Vec3S32[] marks) {
             UndoDrawOpEntry entry = new UndoDrawOpEntry();
             entry.Init(op.Name, op.Level.name);
             
@@ -137,7 +137,7 @@ namespace GoldenSparks.Drawing.Ops
         
         class DrawOpOutputter {
             readonly DrawOp op;
-            internal readonly int reloadThreshold;
+            public readonly int reloadThreshold;
             
             public DrawOpOutputter(DrawOp op) {
                 this.op = op;
@@ -152,12 +152,9 @@ namespace GoldenSparks.Drawing.Ops
                 
                 int index = b.X + lvl.Width * (b.Z + b.Y * lvl.Length);
                 BlockID old = lvl.blocks[index];
-                #if TEN_BIT_BLOCKS
                 BlockID extended = Block.ExtendedBase[old];
                 if (extended > 0) old = (BlockID)(extended | lvl.FastGetExtTile(b.X, b.Y, b.Z));
-                #else
-                if (old == Block.custom_block) old = (BlockID)(Block.Extended | lvl.FastGetExtTile(b.X, b.Y, b.Z));
-                #endif
+
                 
                 // Check to make sure the block is actually different and that can be used
                 if (old == b.Block || !p.group.Blocks[old] || !p.group.Blocks[b.Block]) return;
@@ -175,11 +172,8 @@ namespace GoldenSparks.Drawing.Ops
                 // Set the block (inlined)
                 lvl.Changed = true;
                 if (b.Block >= Block.Extended) {
-                    #if TEN_BIT_BLOCKS
                     lvl.blocks[index] = Block.ExtendedClass[b.Block >> Block.ExtendedShift];
-                    #else
-                    lvl.blocks[index] = Block.custom_block;
-                    #endif
+
                     lvl.FastSetExtTile(b.X, b.Y, b.Z, (BlockRaw)b.Block);
                 } else {
                     lvl.blocks[index] = (BlockRaw)b.Block;
@@ -199,7 +193,7 @@ namespace GoldenSparks.Drawing.Ops
                     lvl.blockqueue.ClearAll();
                 } else if (op.TotalModified < reloadThreshold) {
                     if (!Block.VisuallyEquals(old, b.Block)) {
-                        lvl.blockqueue.Add(index, b.Block);
+                        lvl.blockqueue.Add(p, index, b.Block);
                     }
 
                     if (lvl.physics > 0) {

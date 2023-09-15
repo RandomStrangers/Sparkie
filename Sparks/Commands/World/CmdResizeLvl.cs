@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -42,7 +42,7 @@ namespace GoldenSparks.Commands.World {
                       args[0], args[1], args[2], args[3]);
         }
         
-        internal static bool DoResize(Player p, string[] args, CommandData data, out bool needConfirm) {
+        public static bool DoResize(Player p, string[] args, CommandData data, out bool needConfirm) {
             needConfirm = false;
             Level lvl = Matcher.FindLevels(p, args[0]);
             

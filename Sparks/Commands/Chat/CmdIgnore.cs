@@ -8,8 +8,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -18,15 +18,13 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.IO;
 
-namespace GoldenSparks.Commands.Chatting 
-{
-    public sealed class CmdIgnore : Command2
-    {
+namespace GoldenSparks.Commands.Chatting {
+    public sealed class CmdIgnore : Command2 {
         public override string name { get { return "Ignore"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool SuperUseable { get { return false; } }
-        public override bool MessageBlockRestricted { get { return true; } }
         public override CommandAlias[] Aliases {
             get { return new [] { new CommandAlias("Deafen", "all") }; }
         }
@@ -41,6 +39,30 @@ namespace GoldenSparks.Commands.Chatting
             } else if (action == "irc") {
                 if (args.Length > 1) { IgnoreIRCNick(p, args[1]); } 
                 else { Toggle(p, ref p.Ignores.IRC, "{0} ignoring IRC chat"); }
+                return;
+            }
+            else if (action == "irc1")
+            {
+                if (args.Length > 1) { IgnoreIRC1Nick(p, args[1]); }
+                else { Toggle(p, ref p.Ignores.IRC1, "{0} ignoring IRC1 chat"); }
+                return;
+            }
+            else if (action == "irc2")
+            {
+                if (args.Length > 1) { IgnoreIRC2Nick(p, args[1]); }
+                else { Toggle(p, ref p.Ignores.IRC2, "{0} ignoring IRC2 chat"); }
+                return;
+            }
+            else if (action == "globalirc")
+            {
+                if (args.Length > 1) { IgnoreGlobalIRCNick(p, args[1]); }
+                else { Toggle(p, ref p.Ignores.GlobalIRC, "{0} ignoring GlobalIRC chat"); }
+                return;
+            }
+            else if (action == "globalchat")
+            {
+                if (args.Length > 1) { IgnoreGlobalIRCNick(p, args[1]); }
+                else { Toggle(p, ref p.Ignores.GlobalIRC, "{0} ignoring GlobalIRC chat"); }
                 return;
             } else if (action == "titles") {
                 Toggle(p, ref p.Ignores.Titles, "{1}Player titles {0} show before names in chat"); return;
@@ -96,7 +118,45 @@ namespace GoldenSparks.Commands.Chatting
             }
             p.Ignores.Save(p);
         }
-
+        static void IgnoreIRC1Nick(Player p, string nick)
+        {
+            if (p.Ignores.IRCNicks1.CaselessRemove(nick))
+            {
+                p.Message("&aNo longer ignoring IRC1 nick: {0}", nick);
+            }
+            else
+            {
+                p.Ignores.IRCNicks1.Add(nick);
+                p.Message("&cNow ignoring IRC1 nick: {0}", nick);
+            }
+            p.Ignores.Save(p);
+        }
+        static void IgnoreIRC2Nick(Player p, string nick)
+        {
+            if (p.Ignores.IRCNicks2.CaselessRemove(nick))
+            {
+                p.Message("&aNo longer ignoring IRC2 nick: {0}", nick);
+            }
+            else
+            {
+                p.Ignores.IRCNicks2.Add(nick);
+                p.Message("&cNow ignoring IRC2 nick: {0}", nick);
+            }
+            p.Ignores.Save(p);
+        }
+        static void IgnoreGlobalIRCNick(Player p, string nick)
+        {
+            if (p.Ignores.GlobalIRCNicks.CaselessRemove(nick))
+            {
+                p.Message("&aNo longer ignoring GlobalIRC nick: {0}", nick);
+            }
+            else
+            {
+                p.Ignores.GlobalIRCNicks.Add(nick);
+                p.Message("&cNow ignoring GlobalIRC nick: {0}", nick);
+            }
+            p.Ignores.Save(p);
+        }
         public override void Help(Player p) {
             p.Message("&T/Ignore [name]");
             p.Message("&HSee &T/Help ignore special &Hfor special names when ignoring.");
@@ -110,6 +170,12 @@ namespace GoldenSparks.Commands.Chatting
             p.Message("&H all - all chat is ignored.");
             p.Message("&H irc - IRC chat is ignored.");
             p.Message("&H irc [nick] - IRC chat by that IRC nick ignored.");
+            p.Message("&H irc1 - IRC1 chat is ignored.");
+            p.Message("&H irc1 [nick] - IRC1 chat by that IRC1 nick ignored.");
+            p.Message("&H irc2 - IRC2 chat is ignored.");
+            p.Message("&H irc2 [nick] - IRC2 chat by that IRC2 nick ignored.");
+            p.Message("&H globalirc - GlobalIRC chat is ignored.");
+            p.Message("&H globalirc [nick] - GlobalIRC chat by that GlobalIRC nick ignored.");
             p.Message("&H titles - player titles before names are ignored.");
             p.Message("&H nicks - custom player nicks do not show in chat.");
             p.Message("&H 8ball - &T/8ball &His ignored.");

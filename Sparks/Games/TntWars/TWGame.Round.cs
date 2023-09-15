@@ -113,7 +113,7 @@ namespace GoldenSparks.Games {
         
         void GracePeriod() {
             if (!cfg.GracePeriod) return;
-            int duration = 30;
+            int duration = (int)cfg.GracePeriodTime.SecondsLong();
             
             Map.Message("Grace period of &a" + duration + " &Sseconds");
             Map.Message("Building is disabled during this time!");

@@ -1,11 +1,11 @@
 ﻿/*
-Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
 Dual-licensed under the Educational Community License, Version 2.0 and
 the GNU General Public License, Version 3 (the "Licenses"); you may
 not use this file except in compliance with the Licenses. You may
 obtain a copy of the Licenses at
-https://opensource.org/license/ecl-2-0/
-https://www.gnu.org/licenses/gpl-3.0.html
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
 Unless required by applicable law or agreed to in writing,
 software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -14,7 +14,6 @@ permissions and limitations under the Licenses.
  */
 using System;
 using System.Text;
-using System.Collections.Generic;
 using GoldenSparks.Commands;
 using GoldenSparks.Events.ServerEvents;
 
@@ -91,7 +90,7 @@ namespace GoldenSparks {
         
         static bool DeprecatedFilter(Player pl, object arg)   { return false; }    
         public static bool FilterRank(Player pl, object arg)  { return pl.Rank == (LevelPermission)arg; }
-        public static bool FilterPerms(Player pl, object arg) { return ((ItemPerms)arg).UsableBy(pl); }
+        public static bool FilterPerms(Player pl, object arg) { return ((ItemPerms)arg).UsableBy(pl.Rank); }
         public static bool FilterPM(Player pl, object arg)    { return pl == arg; }
         
         public static ChatMessageFilter[] scopeFilters = new ChatMessageFilter[] {
@@ -228,8 +227,8 @@ namespace GoldenSparks {
                 return msg.Replace("λFULL", src.FullName);
             }
         }
-        
-        internal static string ParseInput(string text, out bool isCommand) {
+
+        public static string ParseInput(string text, out bool isCommand) {
             isCommand = false;
             // Typing //Command appears in chat as /command
             // Suggested by McMrCat
@@ -239,80 +238,5 @@ namespace GoldenSparks {
             isCommand = true;
             return text.Substring(1);
         }
-    }
-    
-    internal class PersistentMessages 
-    {
-        class PersistentMessage 
-        {
-            public string message; 
-            public PersistentMessagePriority priority;
-        }
-        
-        readonly object locker = new object();
-        Dictionary<CpeMessageType, List<PersistentMessage>> persistentMsgs = 
-            new Dictionary<CpeMessageType, List<PersistentMessage>>();
-        
-        /// <returns> false if there is currently a higher priority persistent message set for the given type </returns>
-        public bool Handle(CpeMessageType type, ref string message, PersistentMessagePriority priority) {
-            if (!IsPersistent(type)) return true;
-            
-            lock (locker) {
-                List<PersistentMessage> field = null;
-                
-                if (!persistentMsgs.TryGetValue(type, out field)) {
-                    field = new List<PersistentMessage>();
-                    persistentMsgs[type] = field;
-                }
-
-                PersistentMessage curMsg = null;
-                foreach (var msg in field) 
-                {
-                    if (msg.priority == priority) { curMsg = msg; break; }
-                }
-
-                if (string.IsNullOrEmpty(message)) {
-                    field.Remove(curMsg);
-                    PersistentMessage highestRemainingMsg = null;
-                    
-                    foreach (var msg in field)
-                    {
-                        if (highestRemainingMsg == null || msg.priority > highestRemainingMsg.priority) highestRemainingMsg = msg;
-                    }
-                    
-                    // revert to the highest priority remaining message
-                    if (highestRemainingMsg != null) message = highestRemainingMsg.message;
-                } else {
-                    if (curMsg == null) {
-                        curMsg = new PersistentMessage();
-                        curMsg.priority = priority;
-                        field.Add(curMsg);
-                    }
-                    curMsg.message = message;
-                }
-            
-                // don't send if there is a a higher priority message currently in this field
-                foreach (var msg in field) 
-                {
-                    if (msg.priority > priority) return false;
-                }
-            }
-            return true;
-        }
-        
-        static bool IsPersistent(CpeMessageType type) {
-            return 
-                type == CpeMessageType.Status1 || type == CpeMessageType.Status2 || type == CpeMessageType.Status3 ||
-                type == CpeMessageType.BottomRight1 || type == CpeMessageType.BottomRight2 || type == CpeMessageType.BottomRight3;
-        }
-    }
-    
-    public enum PersistentMessagePriority 
-    {
-        Lowest  = 0,
-        Low     = 5,
-        Normal  = 10,
-        High    = 15,
-        Highest = 20
     }
 }

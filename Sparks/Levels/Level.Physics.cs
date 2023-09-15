@@ -1,13 +1,13 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCForge)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -20,6 +20,7 @@ using System.Threading;
 using GoldenSparks.Blocks;
 using GoldenSparks.Blocks.Physics;
 using GoldenSparks.Events.LevelEvents;
+using GoldenSparks.Games;
 using GoldenSparks.Network;
 using BlockID = System.UInt16;
 
@@ -37,11 +38,9 @@ namespace GoldenSparks {
         	
             if (physics == 0 && level != 0 && blocks != null) {
                 for (int i = 0; i < blocks.Length; i++)
-                {
                     // Optimization hack, since no blocks under 183 ever need a restart
                     if (blocks[i] > 183 && Block.NeedRestart(blocks[i]))
                         AddCheck(i);
-                }
             }
             
             if (physics != level) OnPhysicsLevelChangedEvent.Call(this, level);
@@ -157,16 +156,11 @@ namespace GoldenSparks {
                         OnPhysicsUpdateEvent.Call(C.X, C.Y, C.Z, C.Data, this);
                     
                     C.Block = blocks[chk.Index];
-                    #if TEN_BIT_BLOCKS
                     BlockID extended = Block.ExtendedBase[C.Block];
                     if (extended > 0) {
                         C.Block = (BlockID)(extended | FastGetExtTile(C.X, C.Y, C.Z));
                     }
-                    #else
-                    if (C.Block == Block.custom_block) {
-                        C.Block = (BlockID)(Block.Extended | FastGetExtTile(C.X, C.Y, C.Z));
-                    }
-                    #endif
+
                     
                     if ((C.Data.Raw & mask) == 0 || C.Data.Type1 == PhysicsArgs.Custom || extraHandler(this, ref C)) {
                         HandlePhysics handler = handlers[C.Block];
@@ -183,7 +177,6 @@ namespace GoldenSparks {
                     ListCheck.RemoveAt(i);
                 }
             }
-            // TODO: Inline this into the prior for loop, and remove PhysicsArgs.RemoveFromChecks
             RemoveExpiredChecks();
             
             lastUpdate = ListUpdate.Count;
@@ -214,13 +207,10 @@ namespace GoldenSparks {
             ListUpdate.Clear(); listUpdateExists.Clear();
         }
         
-        
-        /// <summary> Adds the given coordinates to the list of ticked coordinates with empty data </summary>
         public void AddCheck(int index, bool overRide = false) {
             AddCheck(index, overRide, default(PhysicsArgs));
         }
         
-        /// <summary> Adds the given coordinates to the list of ticked coordinates with the given data </summary>
         public void AddCheck(int index, bool overRide, PhysicsArgs data) {
             try {
                 int x = index % Width;
@@ -249,16 +239,12 @@ namespace GoldenSparks {
             }
         }
 
-        /// <summary> Adds the given entry to the list of updates to be applied at the end of the current physics tick </summary>
-        /// <remarks> Must only be called from the physics thread (i.e. in a HandlePhysics handler function) </remarks>
         public bool AddUpdate(int index, BlockID block, bool overRide = false) {
             PhysicsArgs args = default(PhysicsArgs);
             args.Raw |= (uint)(PhysicsArgs.ExtBit * (block >> Block.ExtendedShift));
             return AddUpdate(index, block, args, overRide);
         }
-        
-        /// <summary> Adds the given entry to the list of updates to be applied at the end of the current physics tick </summary>
-        /// <remarks> Must only be called from the physics thread (i.e. in a HandlePhysics handler function) </remarks>
+
         public bool AddUpdate(int index, BlockID block, PhysicsArgs data, bool overRide = false) {
             try {
                 int x = index % Width;
@@ -333,10 +319,8 @@ namespace GoldenSparks {
         }
         
         public void ClearPhysics() {
-            for (int i = 0; i < ListCheck.Count; i++)
-            {
+            for (int i = 0; i < ListCheck.Count; i++ )
                 RevertPhysics(ListCheck.Items[i]);
-            }
             ClearPhysicsLists();
         }
         
@@ -364,16 +348,16 @@ namespace GoldenSparks {
                 Logger.LogError(e);
             }
         }
-        
-        
-        internal bool ActivatesPhysics(BlockID block) {
+
+
+        public bool ActivatesPhysics(BlockID block) {
             if (Props[block].IsMessageBlock || Props[block].IsPortal) return false;
             if (Props[block].IsDoor || Props[block].IsTDoor) return false;
             if (Props[block].OPBlock) return false;
             return PhysicsHandlers[block] != null;
         }
-        
-        internal bool CheckSpongeWater(ushort x, ushort y, ushort z) {
+
+        public bool CheckSpongeWater(ushort x, ushort y, ushort z) {
             for (int yy = y - 2; yy <= y + 2; ++yy) {
                 if (yy < 0 || yy >= Height) continue;
                 for (int zz = z - 2; zz <= z + 2; ++zz) {
@@ -387,8 +371,8 @@ namespace GoldenSparks {
             }
             return false;
         }
-        
-        internal bool CheckSpongeLava(ushort x, ushort y, ushort z) {
+
+        public bool CheckSpongeLava(ushort x, ushort y, ushort z) {
             for (int yy = y - 2; yy <= y + 2; ++yy) {
                 if (yy < 0 || yy >= Height) continue;
                 for (int zz = z - 2; zz <= z + 2; ++zz) {
@@ -408,27 +392,19 @@ namespace GoldenSparks {
         }
     }
     
-    /// <summary> Represents a physics tick entry </summary>
-    public struct PhysInfo 
-    {
-        /// <summary> X/Y/Z coordinates of this tick entry </summary>
+    public struct PhysInfo {
         public ushort X, Y, Z;
-        /// <summary> Block ID that is located at the coordinates of this tick entry </summary>
         public BlockID Block;
-        /// <summary> Packed coordinates of this tick entry </summary>
         public int Index;
-        /// <summary> Data/State of this tick entry </summary>
         public PhysicsArgs Data;
     }
     
-    internal struct Check 
-    {
+    public struct Check {
         public int Index;
         public PhysicsArgs data;
     }
 
-    internal struct Update 
-    {
+    public struct Update {
         public int Index;
         public PhysicsArgs data;
     }

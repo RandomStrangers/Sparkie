@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -49,24 +49,28 @@ namespace GoldenSparks.Config {
             : base(name, section) { defPerm = def; }
         
         public override object Parse(string raw) {
-            LevelPermission perm = Group.ParsePermOrName(raw, LevelPermission.Null);
-            if (perm == LevelPermission.Null) {
-                Logger.Log(LogType.Warning, "Config key \"{0}\" has invalid permission '{2}', using default of {1}", 
-                                            Name, defPerm, raw);
+            LevelPermission perm = Group.ParsePermOrName(raw, LevelPermission.Sparkie);
+            if (perm > LevelPermission.Sparkie)
+            {
+                Logger.Log(LogType.Warning, "Config key \"{0}\" has invalid permission '{2}', using default of {1}", Name, defPerm, raw);
                 perm = defPerm;
             }
-            
-            if (perm < LevelPermission.Banned) {
+
+            if (perm < LevelPermission.Banned)
+            {
                 Logger.Log(LogType.Warning, "Config key \"{0}\" cannot be below banned rank.", Name);
                 perm = LevelPermission.Banned;
             }
-            if (perm > LevelPermission.Sparkie) {
-                Logger.Log(LogType.Warning, "Config key \"{0}\" cannot be above console rank.", Name);
+            if (perm > LevelPermission.Sparkie)
+            {
+                Logger.Log(LogType.Warning, "Config key \"{0}\" cannot be above GoldenSparks.", Name);
                 perm = LevelPermission.Sparkie;
             }
             return perm;
         }
-        
+
+
+
         public override string Serialise(object value) {
             LevelPermission perm = (LevelPermission)value;
             return ((sbyte)perm).ToString();
@@ -103,7 +107,7 @@ namespace GoldenSparks.Config {
                 value = new Vec3U16(ushort.Parse(p[0]), ushort.Parse(p[1]), ushort.Parse(p[2]));
             } catch {
                 Logger.Log(LogType.Warning, "Config key \"{0}\" is not a valid vec3, using default", Name);
-                value = default(Vec3U16);
+                value = default;
             }
             return value;
         }

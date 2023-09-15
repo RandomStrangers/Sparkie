@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,12 +17,26 @@
  */
 using System;
 using System.Collections.Generic;
+using GoldenSparks.SQL;
 
 namespace GoldenSparks 
 {
     /// <summary> Extension methods relating to dates. </summary>
     public static class DateExts 
-    {
+    {        
+        public static TimeSpan ParseOldDBTimeSpent(this string value) {
+            string[] parts = value.SplitSpaces();
+            return new TimeSpan(int.Parse(parts[0]), int.Parse(parts[1]),
+                                int.Parse(parts[2]), int.Parse(parts[3]));
+        }
+        
+        public static DateTime ParseDBDate(this string value) {
+            DateTime date;
+            // prefer the exact format
+            if (DateTime.TryParseExact(value, Database.DateFormat, null, 0, out date)) return date;
+            return DateTime.Parse(value);
+        }
+        
         /// <summary> Origin point in time for Unix time (Midnight January 1, 1970) </summary>
         public static DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         

@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -17,13 +17,10 @@
  */
 using GoldenSparks.Network;
 
-namespace GoldenSparks.Commands.Chatting 
-{
-    public sealed class CmdPing : Command2 
-    {
+namespace GoldenSparks.Commands.Chatting {
+    public sealed class CmdPing : Command2 {
         public override string name { get { return "Ping"; } }
         public override string type { get { return CommandTypes.Information; } }
-        public override bool UseableWhenFrozen { get { return true; } }
         public override CommandPerm[] ExtraPerms {
             get { return new[] { new CommandPerm(LevelPermission.Operator, "can see ping of other players") }; }
         }
@@ -34,30 +31,25 @@ namespace GoldenSparks.Commands.Chatting
 
                 Player who = PlayerInfo.FindMatches(p, message);
                 if (who == null) return;
-
                 if (p != who && !CheckExtraPerm(p, data, 1)) return;
-                PingList ping = who.Session.Ping;
-
+                
                 if (!who.Supports(CpeExt.TwoWayPing)) {
                     p.Message("{0} client does not support measuring ping", 
                               p == who ? "Your" : p.FormatNick(who) + "&S's");
-                } else if (ping.Measures() == 0) {
+                } else if (who.Ping.Measures() == 0) {
                     p.Message("No ping measurements yet. Try again in a bit.");
                 } else {
-                    p.Message(p.FormatNick(who) + " &S- " + ping.Format());
+                    p.Message(p.FormatNick(who) + " &S- " + who.Ping.Format());
                 }
             } else {
                 if (!CheckExtraPerm(p, data, 1)) return;
                 Player[] players = PlayerInfo.Online.Items;
                 p.Message("Ping/latency list of online players: (&aLo&S:&7Avg&S:&cHi&S)ms");
 
-                foreach (Player target in players) 
-                {
+                foreach (Player target in players) {
                     if (!p.CanSee(target, data.Rank)) continue;
-                    PingList ping = target.Session.Ping;
-
-                    if (ping.Measures() == 0) continue;
-                    p.Message(ping.FormatAll() + " &S- " + p.FormatNick(target));
+                    if (target.Ping.Measures() == 0) continue;
+                    p.Message(target.Ping.FormatAll() + " &S- " + p.FormatNick(target));
                 }
             }
         }

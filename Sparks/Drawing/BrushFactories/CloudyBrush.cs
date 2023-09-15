@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -16,7 +16,6 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Collections.Generic;
 using GoldenSparks.Commands;
 using BlockID = System.UInt16;
 
@@ -38,7 +37,7 @@ namespace GoldenSparks.Drawing.Brushes
         };
         
         public override Brush Construct(BrushArgs args) {
-            NoiseArgs n = default(NoiseArgs);
+            NoiseArgs n = default;
             // Constants borrowed from fCraft to match it
             n.Amplitude = 1;
             n.Frequency = 0.08f;
@@ -47,14 +46,12 @@ namespace GoldenSparks.Drawing.Brushes
             n.Persistence = 0.75f;
             n.Lacunarity = 2;
             
-            List<BlockID> toAffect;
-            List<int> freqs;
+            int[] count;
+            BlockID[] toAffect = FrequencyBrush.GetBlocks(args, out count,
+                                            Filter, arg => Handler(arg, args.Player, ref n));
             
-            bool ok = FrequencyBrush.GetBlocks(args, out toAffect, out freqs,
-                                               Filter, arg => Handler(arg, args.Player, ref n));
-            if (!ok) return null;
-            
-            return new CloudyBrush(toAffect, freqs, n);
+            if (toAffect == null) return null;
+            return new CloudyBrush(toAffect, count, n);
         }
         
         // Only want to handle non block options.
@@ -64,9 +61,9 @@ namespace GoldenSparks.Drawing.Brushes
             char opt = arg[0];
             arg = arg.Substring(2); // get part after _ or =
             
-            if (opt == 'l') return ParseDecimal(p, arg, ref args.Lacunarity , 2.00f);
-            if (opt == 'a') return ParseDecimal(p, arg, ref args.Amplitude,   1.00f);
-            if (opt == 'f') return ParseDecimal(p, arg, ref args.Frequency,   0.08f);
+            if (opt == 'l') return ParseDecimal(p, arg, ref args.Lacunarity, 2.00f);
+            if (opt == 'a') return ParseDecimal(p, arg, ref args.Amplitude, 1.00f);
+            if (opt == 'f') return ParseDecimal(p, arg, ref args.Frequency, 0.08f);
             if (opt == 'p') return ParseDecimal(p, arg, ref args.Persistence, 0.75f);
             
             if (opt == 'o') {

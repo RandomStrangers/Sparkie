@@ -6,8 +6,8 @@
     not use this file except in compliance with the Licenses. You may
     obtain a copy of the Licenses at
     
-    https://opensource.org/license/ecl-2-0/
-    https://www.gnu.org/licenses/gpl-3.0.html
+    http://www.opensource.org/licenses/ecl2.php
+    http://www.gnu.org/licenses/gpl-3.0.html
     
     Unless required by applicable law or agreed to in writing,
     software distributed under the Licenses are distributed on an "AS IS"
@@ -23,7 +23,6 @@ using BlockRaw = System.Byte;
 
 namespace GoldenSparks.Drawing 
 {
-    /// <summary> Represents a copied region/area of blocks plus some additional data </summary>
     public sealed class CopyState 
     {  
         byte[] blocks;
@@ -34,20 +33,16 @@ namespace GoldenSparks.Drawing
         public bool PasteAir;
         public int UsedBlocks;
         public Vec3S32 Offset;
-        /// <summary> Point at time at which this copy was created </summary>
         public DateTime CopyTime;
-        /// <summary> Origin of this copy/where this copy came from </summary>
-        /// <example> "level example1", "file example2" </example>
         public string CopySource;
-        
-        internal int OppositeOriginX { get { return OriginX == X ? X + Width - 1 : X; } }
-        internal int OppositeOriginY { get { return OriginY == Y ? Y + Height - 1 : Y; } }
-        internal int OppositeOriginZ { get { return OriginZ == Z ? Z + Length - 1 : Z; } }
+
+        public int OppositeOriginX { get { return OriginX == X ? X + Width - 1 : X; } }
+        public int OppositeOriginY { get { return OriginY == Y ? Y + Height - 1 : Y; } }
+        public int OppositeOriginZ { get { return OriginZ == Z ? Z + Length - 1 : Z; } }
         
         const int chunkSize = 0x1000, chunkShift = 12, chunkMask = 0xFFF;
         public int Volume { get { return Width * Height * Length; } }
         public int ExtChunks { get { return (Volume + (chunkSize - 1)) / chunkSize; } }
-        
         public string Summary {
             get { return Volume + " blocks from " + CopySource + ", " + (DateTime.UtcNow - CopyTime).Shorten(true) + " ago"; }
         }
@@ -85,25 +80,17 @@ namespace GoldenSparks.Drawing
         
         public BlockID Get(int index) {
             byte raw = blocks[index];            
-            #if TEN_BIT_BLOCKS
             BlockID extended = Block.ExtendedBase[raw];
             if (extended == 0) return raw;
             byte[] chunk = extBlocks[index >> chunkShift];
             return chunk == null ? Block.Air : (BlockID)(extended | chunk[index & chunkMask]);
-            #else
-            if (raw != Block.custom_block) return raw;
-            byte[] chunk = extBlocks[index >> chunkShift];
-            return chunk == null ? Block.Air : (BlockID)(Block.Extended | chunk[index & chunkMask]);
-            #endif
+
         }
         
         public void Set(BlockID block, int index) {
             if (block >= Block.Extended) {
-                #if TEN_BIT_BLOCKS
                 blocks[index] = Block.ExtendedClass[block >> Block.ExtendedShift];
-                #else
-                blocks[index] = Block.custom_block;
-                #endif
+
                 
                 byte[] chunk = extBlocks[index >> chunkShift];
                 if (chunk == null) {
@@ -137,8 +124,7 @@ namespace GoldenSparks.Drawing
             w.Write(data.Length);
             w.Write(data);
             
-            for (int i = 0; i < extBlocks.Length; i++) 
-            {
+            for (int i = 0; i < extBlocks.Length; i++) {
                 if (extBlocks[i] == null) {
                     w.Write((byte)0); continue;
                 }
@@ -199,8 +185,7 @@ namespace GoldenSparks.Drawing
                     allExtBlocks = r.ReadBytes(dataLen).Decompress((Volume + 7) / 8);
                     UnpackPackedExtBlocks(allExtBlocks);
                 } else {
-                    for (int i = 0; i < extBlocks.Length; i++) 
-                    {
+                    for (int i = 0; i < extBlocks.Length; i++) {
                         if (r.ReadByte() == 0) continue;
                         dataLen = r.ReadUInt16();
                         extBlocks[i] = r.ReadBytes(dataLen).Decompress(chunkSize);
@@ -210,16 +195,14 @@ namespace GoldenSparks.Drawing
         }
         
         void UnpackExtBlocks(byte[] allExtBlocks) {
-            for (int i = 0; i < blocks.Length; i++) 
-            {
+            for (int i = 0; i < blocks.Length; i++) {
                 if (blocks[i] != Block.custom_block) continue;
                 Set((BlockID)(Block.Extended | allExtBlocks[i]), i);
             }
         }
         
         void UnpackPackedExtBlocks(byte[] allExtBlocks) {
-            for (int i = 0; i < blocks.Length; i++) 
-            {
+            for (int i = 0; i < blocks.Length; i++) {
                 bool isExt = (allExtBlocks[i >> 3] & (1 << (i & 0x7))) != 0;
                 if (isExt) { Set((BlockID)(Block.Extended | blocks[i]), i); }
             }
@@ -229,12 +212,11 @@ namespace GoldenSparks.Drawing
         public void LoadFromOld(Stream stream, Stream underlying) {
             byte[] raw = new byte[underlying.Length];
             underlying.Read(raw, 0, (int)underlying.Length);
-            raw = raw.Decompress(16);
+            raw = raw.Decompress();
             if (raw.Length == 0) return;
             
             CalculateBounds(raw);
-            for (int i = 0; i < raw.Length; i += 7) 
-            {
+            for (int i = 0; i < raw.Length; i += 7) {
                 ushort x = BitConverter.ToUInt16(raw, i + 0);
                 ushort y = BitConverter.ToUInt16(raw, i + 2);
                 ushort z = BitConverter.ToUInt16(raw, i + 4);
@@ -249,9 +231,7 @@ namespace GoldenSparks.Drawing
         void CalculateBounds(byte[] raw) {
             int minX = int.MaxValue, minY = int.MaxValue, minZ = int.MaxValue;
             int maxX = int.MinValue, maxY = int.MinValue, maxZ = int.MinValue;
-            
-            for (int i = 0; i < raw.Length; i += 7) 
-            {
+            for (int i = 0; i < raw.Length; i += 7) {
                 ushort x = BitConverter.ToUInt16(raw, i + 0);
                 ushort y = BitConverter.ToUInt16(raw, i + 2);
                 ushort z = BitConverter.ToUInt16(raw, i + 4);

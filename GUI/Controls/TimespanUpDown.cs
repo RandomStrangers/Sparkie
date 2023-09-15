@@ -93,7 +93,7 @@ namespace GoldenSparks.Gui {
 
         void ParseEditText() {
             try {
-               // Value = Text.ParseShort("s");
+                Value = Text.ParseShort("s");
             } catch {
             } finally {
                 UserEdit = false;
