@@ -41,7 +41,7 @@ namespace GoldenSparks {
         public static PlayerMetaList Notes = new PlayerMetaList("text/notes.txt");
         
         /// <summary> *** DO NOT USE THIS! *** Use VersionString, as this field is a constant and is inlined if used. </summary>
-        public const string InternalVersion = "1.0.5";
+        public const string InternalVersion = "1.0.6";
         public static string Version { get { return InternalVersion; } }
 
 
@@ -94,9 +94,6 @@ namespace GoldenSparks {
         public const byte VERSION_0019 = 5; // classic 0.0.19
         public const byte VERSION_0020 = 6; // classic 0.0.20 / 0.0.21 / 0.0.23
         public const byte VERSION_0030 = 7; // classic 0.30 (final)
-        public const byte VERSION_0000 = 8; // classic 0.0.00 (Doesn't really exist, here for fun, if a player connects using this
-                                            // then we have a real problem
-
         public static bool chatmod, flipHead;
         public static bool shuttingDown;
     }

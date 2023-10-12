@@ -550,7 +550,6 @@ namespace GoldenSparks.Network
         public string ClientName() {
             if (!string.IsNullOrEmpty(player.appName)) return player.appName; 
             byte version = player.ProtocolVersion;
-            if (version == Server.VERSION_0000) return "uh Classic 0.0.00 how tf?";
             if (version == Server.VERSION_0016) return "Classic 0.0.16";
             if (version == Server.VERSION_0017) return "Classic 0.0.17-0.0.18";
             if (version == Server.VERSION_0019) return "Classic 0.0.19";
