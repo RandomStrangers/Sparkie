@@ -172,8 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="GSC.ico" />
-    <Content Include="Resources\%24this.Icon.ico" />
-    <None Include="Resources\RandomStrangers.ico" />
+    <Content Include="Resources\GSC.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
