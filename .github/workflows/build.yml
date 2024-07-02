@@ -1,0 +1,37 @@
+name: Build latest
+on: [push]
+
+concurrency:
+  group: ${{ github.ref }}-latest
+  cancel-in-progress: true
+
+jobs:
+  build-mono:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Compile Sparkie using mono
+        shell: bash
+        id: compile
+        run: |
+          msbuild Sparks.sln /p:Configuration=Release
+          cp -R bin/Release bin/Release_normal
+          rm bin/Release/GoldenSparks_.dll bin/Release/GoldenSparks_.pdb
+          msbuild Sparks/GoldenSparks_.csproj /p:Configuration=Release
+          msbuild GUI/GoldenSparksGUI.csproj /p:Configuration=Release
+          msbuild CLI/GoldenSparksCLI.csproj /p:Configuration=Release
+
+      - uses: ./.github/actions/notify_failure
+        if: ${{ always() && steps.compile.outcome == 'failure' }}
+        with:
+          NOTIFY_MESSAGE: 'Failed to compile Sparkie .NET build! <@999409543001931788>'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
+          
+      - uses: ./.github/actions/notify_success
+        if: ${{ always() && steps.compile.outcome == 'success' }}
+        with:
+          SOURCE_FILE: 'bin/Release_normal'
+          DEST_NAME: 'Sparkie'
+          NOTIFY_MESSAGE: 'Successfully compiled Sparkie .NET build.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
