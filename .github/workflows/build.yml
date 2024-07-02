@@ -19,6 +19,8 @@ jobs:
           cp -R bin/Release bin/Release_normal
           rm bin/Release/GoldenSparks_.dll bin/Release/GoldenSparks_.pdb
           msbuild Sparks/GoldenSparks.csproj /p:Configuration=Release
+          msbuild GUI/GoldenSparksGUI.csproj /p:Configuration=Release
+          msbuild CLI/GoldenSparksCLI.csproj /p:Configuration=Release
 
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
