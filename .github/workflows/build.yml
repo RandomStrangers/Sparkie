@@ -15,12 +15,9 @@ jobs:
         shell: bash
         id: compile
         run: |
-          msbuild Sparks.sln /p:Configuration=Release
+          msbuild Sparks.sln /p:Configuration=Release /p:DefineConstants=""
           cp -R bin/Release bin/Release_normal
-          rm bin/Release/GoldenSparks_.dll bin/Release/GoldenSparks_.pdb
-          msbuild Sparks/GoldenSparks.csproj /p:Configuration=Release
-          msbuild GUI/GoldenSparksGUI.csproj /p:Configuration=Release
-          msbuild CLI/GoldenSparksCLI.csproj /p:Configuration=Release
+          msbuild Sparks/GoldenSparks.csproj /p:Configuration=Release /p:DefineConstants=""
 
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
@@ -31,7 +28,7 @@ jobs:
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          SOURCE_FILE: 'bin/Release_normal'
+          SOURCE_FILE: 'bin/Release'
           DEST_NAME: 'Sparkie'
           NOTIFY_MESSAGE: 'Successfully compiled Sparkie .NET build.'
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
