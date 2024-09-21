@@ -104,7 +104,7 @@ namespace GoldenSparks.Network
                 Logger.LogError(ex);
                 Logger.Log(LogType.Warning, "Failed to start listening on port {0} ({1})", port, ex.Message);
 
-                string msg = String.Format("Failed to start listening. Is another server or instance of {0} already running on port {1}?",
+                string msg = string.Format("Failed to start listening. Is another server or instance of {0} already running on port {1}?",
                                            Server.SoftwareName, port);
                 Server.UpdateUrl(msg);
                 socket = null; return;

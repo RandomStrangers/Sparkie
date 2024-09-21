@@ -73,8 +73,8 @@ namespace GoldenSparks {
             if (s != null && s.IndexOf(',') >= 0) s = s.Replace(',', '.');
             result = 0; float temp;
 
-            if (!Single.TryParse(s, style, NumberFormatInfo.InvariantInfo, out temp)) return false;
-            if (Single.IsInfinity(temp) || Single.IsNaN(temp)) return false;
+            if (!float.TryParse(s, style, NumberFormatInfo.InvariantInfo, out temp)) return false;
+            if (float.IsInfinity(temp) || float.IsNaN(temp)) return false;
             result = temp;
             return true;
         }
@@ -83,8 +83,8 @@ namespace GoldenSparks {
             if (s != null && s.IndexOf(',') >= 0) s = s.Replace(',', '.');
             result = 0; double temp;
             
-            if (!Double.TryParse(s, style, NumberFormatInfo.InvariantInfo, out temp)) return false;
-            if (Double.IsInfinity(temp) || Double.IsNaN(temp)) return false;
+            if (!double.TryParse(s, style, NumberFormatInfo.InvariantInfo, out temp)) return false;
+            if (double.IsInfinity(temp) || double.IsNaN(temp)) return false;
             result = temp;
             return true;
         }

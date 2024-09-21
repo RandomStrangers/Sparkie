@@ -30,6 +30,8 @@ namespace GoldenSparks.Core {
             switch (action.Type) {
                     case ModActionType.Frozen: DoFreeze(action); break;
                     case ModActionType.Unfrozen: DoUnfreeze(action); break;
+                    case ModActionType.Jailed: DoJail(action); break;
+                    case ModActionType.Unjailed: DoUnjail(action); break;
                     case ModActionType.Muted: DoMute(action); break;
                     case ModActionType.Unmuted: DoUnmute(action); break;
                     case ModActionType.Ban: DoBan(action); break;
@@ -83,8 +85,28 @@ namespace GoldenSparks.Core {
             ModerationTasks.FreezeCalcNextRun();
             Server.frozen.Save();
         }
-        
-        
+        [Obsolete("Use ModActionHandler.DoFreeze(ModAction) instead.")]
+        static void DoJail(ModAction e)
+        {
+            Player who = PlayerInfo.FindExact(e.Target);
+            if (who != null) who.jailed = true;
+            LogAction(e, who, "&7jailed");
+
+            Server.jailed.Update(e.Target, FormatModTaskData(e));
+            ModerationTasks.JailCalcNextRun();
+            Server.jailed.Save();
+        }
+        [Obsolete("Use ModActionHandler.DoUnfreeze(ModAction instead.")]
+        static void DoUnjail(ModAction e)
+        {
+            Player who = PlayerInfo.FindExact(e.Target);
+            if (who != null) who.jailed = false;
+            LogAction(e, who, "&aunjailed");
+
+            Server.jailed.Remove(e.Target);
+            ModerationTasks.JailCalcNextRun();
+            Server.jailed.Save();
+        }
         static void DoMute(ModAction e) {
             Player who = PlayerInfo.FindExact(e.Target);
             if (who != null) who.muted = true;

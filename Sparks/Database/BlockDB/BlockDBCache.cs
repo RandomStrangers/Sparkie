@@ -37,7 +37,7 @@ namespace GoldenSparks.DB {
 
         /// <summary> Dimensions used to pack coordinates into an index. </summary>
         /// <remarks> May be different from actual level's dimensions, such as when the level has been resized. </remarks>        
-        public Vec3U16 Dims;
+        public Vec3S32 Dims;
         
         public void Add(Player p, ushort x, ushort y, ushort z, ushort flags, BlockID old, BlockID block) {
             if (!Enabled) return;

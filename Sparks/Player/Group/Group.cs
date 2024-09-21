@@ -77,7 +77,7 @@ namespace GoldenSparks {
         
         private Group(LevelPermission perm, int drawLimit, int undoSecs, string name, char colCode) {
             Permission = perm;
-            DrawLimit = (int)drawLimit;
+            DrawLimit = drawLimit;
             MaxUndo = TimeSpan.FromSeconds(undoSecs);
             Name = name;
             Color = "&" + colCode;
@@ -232,7 +232,7 @@ namespace GoldenSparks {
             
                 
         static void UpdateGroup(Player p) {
-            Group grp = Group.Find(p.group.Permission);
+            Group grp = Find(p.group.Permission);
             if (grp == null) grp = DefaultRank;
             p.group = grp;
             

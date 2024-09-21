@@ -131,7 +131,7 @@ namespace GoldenSparks.Network
 
         bool NeedsProcessing(string text)
         {
-            if (String.IsNullOrEmpty(text)) return false;
+            if (string.IsNullOrEmpty(text)) return false;
             if (text == LastResponse) return false;
 
             // only need to process responses that have changed

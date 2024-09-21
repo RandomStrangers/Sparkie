@@ -161,7 +161,7 @@ namespace GoldenSparks.Commands.Moderation {
             }
 
             if (confirmed != null) return name;
-            string msgReason = String.IsNullOrEmpty(reason) ? "" : " " + reason;
+            string msgReason = string.IsNullOrEmpty(reason) ? "" : " " + reason;
             p.Message("If you still want to {0} \"{1}\", use &T/{3} {1}{4}{2} confirm",
                            action, name, msgReason, cmd, cmdSuffix);
             return null;

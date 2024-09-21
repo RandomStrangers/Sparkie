@@ -58,7 +58,7 @@ namespace GoldenSparks.Gui {
 Trying to mix two versions is unsupported - you may experience issues";
             string msg = string.Format(fmt, Server.SoftwareName, 
                                        gui_version, AssemblyFile(typeof(Window), "GoldenSparks.exe"),
-                                       dll_version, AssemblyFile(typeof(Server), "RandomStrangers_.dll"));
+                                       dll_version, AssemblyFile(typeof(Server), "GoldenSparks_.dll"));
             RunAsync(() => Popup.Warning(msg));
         }
         
@@ -78,7 +78,7 @@ Trying to mix two versions is unsupported - you may experience issues";
             if (loaded) return;
             loaded = true;
             
-            Text = "Starting " + Server.SoftwareNameVersioned + "...";
+            Text = "Starting " + Colors.Strip(Server.SoftwareNameVersioned) + "...";
             Show();
             BringToFront();
             WindowState = FormWindowState.Normal;
@@ -90,7 +90,7 @@ Trying to mix two versions is unsupported - you may experience issues";
                 map_cmbType.Items.Add(gen.Theme);
             }
             
-            Text = Server.Config.Name + " - " + Server.SoftwareNameVersioned;
+            Text = Colors.Strip(Server.Config.Name + " - " + Server.SoftwareNameVersioned);
             MakeNotifyIcon();
             
             main_Players.Font = new Font("Calibri", 8.25f);
@@ -112,7 +112,7 @@ Trying to mix two versions is unsupported - you may experience issues";
             string players = " (" + playerCount + " players)";
             
             // ArgumentException thrown if text length is > 63
-            string text = (Server.Config.Name + players);
+            string text = Colors.Strip(Server.Config.Name + players);
             if (text.Length > 63) text = text.Substring(0, 63);
             notifyIcon.Text = text;
         }
@@ -289,13 +289,13 @@ Trying to mix two versions is unsupported - you may experience issues";
         void SettingsUpdate() {
             RunOnUI_Async(() => {
                 if (Server.shuttingDown) return;
-                Text = Server.Config.Name + " - " + Server.SoftwareNameVersioned;
+                Text = Colors.Strip(Server.Config.Name + " - " + Server.SoftwareNameVersioned);
                 UpdateNotifyIconText();
             });
         }
 
         public void PopupNotify(string message, ToolTipIcon icon = ToolTipIcon.Info) {
-            notifyIcon.ShowBalloonTip(3000, Server.Config.Name, message, icon);
+            notifyIcon.ShowBalloonTip(3000, Colors.Strip(Server.Config.Name), message, icon);
         }
 
         void UpdateUrl(string s) {

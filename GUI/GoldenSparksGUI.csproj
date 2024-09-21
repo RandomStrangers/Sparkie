@@ -128,12 +128,6 @@
     <Compile Include="PropertyWindow\PropertyWindow.General.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PropertyWindow\PropertyWindow.Relay2.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PropertyWindow\PropertyWindow.Relay1.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="PropertyWindow\PropertyWindow.Relay.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -40,7 +40,7 @@ using System.Reflection;
 namespace GoldenSparks {
     public sealed partial class Server {
         
-        public Server() { Server.s = this; }
+        public Server() { s = this; }
 
         //True = cancel event
         //Fale = dont cacnel event
@@ -164,11 +164,9 @@ namespace GoldenSparks {
             EnsureDirectoryExists("blockdefs");
             EnsureDirectoryExists(IScripting.DllDir);
             EnsureDirectoryExists(ICompiler.SourceDir);
-            EnsureDirectoryExists("text/discord"); // TODO move to discord plugin
-            EnsureDirectoryExists("globalchat/"); // TODO move to globalchat plugins
         }
         
-        static void EnsureDirectoryExists(string dir) {
+        public static void EnsureDirectoryExists(string dir) {
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
         }
         
@@ -233,7 +231,7 @@ namespace GoldenSparks {
         static readonly object stopLock = new object();
         static volatile Thread stopThread;
         public static Thread Stop(bool restart, string msg) {
-            Server.shuttingDown = true;
+            shuttingDown = true;
             lock (stopLock) {
                 if (stopThread != null) return stopThread;
                 stopThread = new Thread(() => ShutdownThread(restart, msg));
@@ -243,7 +241,7 @@ namespace GoldenSparks {
         }
         public static Thread Update(bool restart, string msg)
         {
-            Server.shuttingDown = true;
+            shuttingDown = true;
             lock (stopLock)
             {
                 if (stopThread != null) return stopThread;
@@ -299,7 +297,7 @@ namespace GoldenSparks {
                     lvl.SaveBlockDBChanges();
                 }
 
-                if (Server.SetupFinished && !Server.Config.AutoLoadMaps)
+                if (SetupFinished && !Config.AutoLoadMaps)
                 {
                     File.WriteAllText("text/autoload.txt", autoload);
                 }
@@ -331,9 +329,11 @@ namespace GoldenSparks {
 
 
         static void ShutdownThread(bool restarting, string msg) {
+            if (Config.SayBye)
+            {
+                Command.Find("say").Use(Player.Sparks, Colors.Strip(SoftwareNameVersioned) + " &Sshutting down!");
+            }
             try {
-                Command.Find("say").Use(Player.Sparks, Server.SoftwareName + " " + Server.InternalVersion + " shutting down... :(");
-                Logger.Log(LogType.SystemActivity, "&fGoodbye Cruel World!");
 
                 Logger.Log(LogType.SystemActivity, "Server shutting down ({0})", msg);
             } catch { }
@@ -368,7 +368,7 @@ namespace GoldenSparks {
                     lvl.SaveBlockDBChanges();
                 }
                 
-                if (Server.SetupFinished && !Server.Config.AutoLoadMaps) {
+                if (SetupFinished && !Config.AutoLoadMaps) {
                     File.WriteAllText("text/autoload.txt", autoload);
                 }
             } catch (Exception ex) { Logger.LogError(ex); }
@@ -450,7 +450,7 @@ namespace GoldenSparks {
         }
         
         public static bool SetMainLevel(string map) {
-            string main = mainLevel != null ? mainLevel.name : Server.Config.MainLevel;
+            string main = mainLevel != null ? mainLevel.name : Config.MainLevel;
             if (map.CaselessEq(main)) return false;
             
             Level lvl = LevelInfo.FindExact(map);
@@ -465,7 +465,7 @@ namespace GoldenSparks {
         public static void SetMainLevel(Level lvl) {
             Level oldMain = mainLevel;
             mainLevel = lvl;
-            Server.Config.MainLevel = lvl.name;         
+            Config.MainLevel = lvl.name;         
             oldMain.AutoUnload();
         }
         

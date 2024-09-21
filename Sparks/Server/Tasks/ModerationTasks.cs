@@ -24,15 +24,23 @@ namespace GoldenSparks.Tasks {
     public static class ModerationTasks {
 
         static SchedulerTask temprankTask, freezeTask, muteTask;
+        [Obsolete("Use ModerationTasks.freezeTask instead.")]
+
+        static SchedulerTask jailTask;
         public static void QueueTasks() {
             temprankTask = Server.MainScheduler.QueueRepeat(
                 TemprankCheckTask, null, NextRun(Server.tempRanks));
-            freezeTask = Server.MainScheduler.QueueRepeat(
-                FreezeCheckTask, null, NextRun(Server.frozen));
             muteTask = Server.MainScheduler.QueueRepeat(
                 MuteCheckTask, null, NextRun(Server.muted));
+            freezeTask = Server.MainScheduler.QueueRepeat(
+                FreezeCheckTask, null, NextRun(Server.frozen));
         }
-
+        [Obsolete("Use ModerationTasks.QueueTasks() instead.")]
+        public static void QueueJailTask()
+        {
+            jailTask = Server.MainScheduler.QueueRepeat(
+                JailCheckTask, null, NextRun(Server.jailed));
+        }
 
         public static void TemprankCheckTask(SchedulerTask task) {
             DoTask(task, Server.tempRanks, TemprankCallback);
@@ -56,12 +64,24 @@ namespace GoldenSparks.Tasks {
 
         public static void FreezeCalcNextRun() { CalcNextRun(freezeTask, Server.frozen); }
         
-        static void FreezeCallback(string[] args) {
+        public static void FreezeCallback(string[] args) {
             ModAction action = new ModAction(args[0], Player.Sparks, ModActionType.Unfrozen, "auto unfreeze");
 
             OnModActionEvent.Call(action);
         }
-
+        [Obsolete("Use ModerationTasks.FreezeCheckTask instead.")]
+        public static void JailCheckTask(SchedulerTask task)
+        {
+            DoTask(task, Server.jailed, JailCallback);
+        }
+        [Obsolete("Use ModerationTasks.FreezeCalcNextRun instead.")]
+        public static void JailCalcNextRun() { CalcNextRun(jailTask, Server.jailed); }
+        [Obsolete("Use ModerationTasks.FreezeCallback instead.")]
+       public static void JailCallback(string[] args)
+        {
+            ModAction action = new ModAction(args[0], Player.Sparks, ModActionType.Unjailed, "auto unjail");
+            OnModActionEvent.Call(action);
+        }
 
         public static void MuteCheckTask(SchedulerTask task) {
             DoTask(task, Server.muted, MuteCallback);
@@ -69,14 +89,14 @@ namespace GoldenSparks.Tasks {
 
         public static void MuteCalcNextRun() { CalcNextRun(muteTask, Server.muted); }
         
-        static void MuteCallback(string[] args) {
+       public static void MuteCallback(string[] args) {
             ModAction action = new ModAction(args[0], Player.Sparks, ModActionType.Unmuted, "auto unmute");
 
             OnModActionEvent.Call(action);
         }
         
         
-        static void DoTask(SchedulerTask task, PlayerExtList list, Action<string[]> callback) {
+        public static void DoTask(SchedulerTask task, PlayerExtList list, Action<string[]> callback) {
             List<string> lines = list.AllLines();
             foreach (string line in lines) {
                 string[] args = line.SplitSpaces();

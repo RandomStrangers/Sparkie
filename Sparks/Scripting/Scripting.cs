@@ -209,7 +209,7 @@ namespace GoldenSparks.Scripting
             try
             {
                 Assembly lib = LoadAssembly(path);
-                List<Plugin> plugins = IScripting.LoadTypes<Plugin>(lib);
+                List<Plugin> plugins = LoadTypes<Plugin>(lib);
 
                 foreach (Plugin plugin in plugins)
                 {

@@ -285,6 +285,7 @@
     <Compile Include="Commands\Moderation\CmdFreeze.cs" />
     <Compile Include="Commands\Moderation\CmdHide.cs" />
     <Compile Include="Commands\Moderation\CmdHighlight.cs" />
+    <Compile Include="Commands\Moderation\CmdJail.cs" />
     <Compile Include="Commands\Moderation\CmdJoker.cs" />
     <Compile Include="Commands\Moderation\CmdKick.cs" />
     <Compile Include="Commands\Moderation\CmdLocation.cs" />
@@ -380,7 +381,7 @@
     <Compile Include="CorePlugin\CorePlugin.cs" />
     <Compile Include="CorePlugin\ConnectHandler.cs" />
     <Compile Include="CorePlugin\EcoHandlers.cs" />
-    <Compile Include="CorePlugin\HelloWorldPlugin.cs" />
+    <Compile Include="CorePlugin\ServerURLSender.cs" />
     <Compile Include="CorePlugin\MiscHandlers.cs" />
     <Compile Include="CorePlugin\ModActionHandler.cs" />
     <Compile Include="Database\Backends\SQLite.cs" />
@@ -540,6 +541,7 @@
     <Compile Include="Levels\EnvPreset.cs" />
     <Compile Include="Levels\Hacks.cs" />
     <Compile Include="Levels\IO\Exporters\LvlExporter.cs" />
+    <Compile Include="Levels\IO\Exporters\PKLvlExporter.cs" />
     <Compile Include="Levels\IO\fNbt.cs" />
     <Compile Include="Levels\IO\Importers\CwImporter.cs" />
     <Compile Include="Levels\IO\Importers\DatImporter.cs" />
@@ -547,6 +549,7 @@
     <Compile Include="Levels\IO\Importers\LvlImporter.cs" />
     <Compile Include="Levels\IO\Importers\McfImporter.cs" />
     <Compile Include="Levels\IO\Importers\McLevelImporter.cs" />
+    <Compile Include="Levels\IO\Importers\PKLvlImporter.cs" />
     <Compile Include="Levels\IO\MapFormats.cs" />
     <Compile Include="Levels\Level.Blocks.cs" />
     <Compile Include="Levels\Level.Fields.cs" />
@@ -656,7 +659,6 @@
     <Compile Include="Network\Player.Networking.cs" />
     <Compile Include="Scripting\Backends.cs" />
     <Compile Include="Server\Authentication\Authenticator.cs" />
-    <Compile Include="Server\Authentication\AuthService.cs" />
     <Compile Include="Scripting\Plugin.cs" />
     <Compile Include="Scripting\Scripting.cs" />
     <Compile Include="Player\Ban.cs" />
@@ -666,7 +668,6 @@
     <Compile Include="Levels\BlockQueue.cs" />
     <Compile Include="Levels\Level.cs" />
     <Compile Include="Scripting\ScriptingOperations.cs" />
-    <Compile Include="Server\Authentication\Authenticator.cs" />
     <Compile Include="Server\Authentication\AuthService.cs" />
     <Compile Include="Server\FileLogger.cs" />
     <Compile Include="Server\Logger.cs" />

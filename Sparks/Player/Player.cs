@@ -33,14 +33,14 @@ namespace GoldenSparks
 {
 
     sealed class GoldenPlayer : Player {
-        public GoldenPlayer() : base("&e(&6S&ep&6a&er&6k&ei&6e)") {
+        public GoldenPlayer() : base("&e(&6S&ep&6a&er&6k&ei&6e&e)") {
             group = Group.GoldenRank;
             color = "&S";
             SuperName = "&6S&ep&6a&er&6k&ei&6e";
         }
         
         public override string FullName {
-            get { return "&6S&ep&6a&er&6k&ei&6e [&6" + Server.Config.CoreState + "&S]"; }
+            get { return "&6S&ep&6a&er&6k&ei&6e &S[&6" + Server.Config.CoreState + "&S]"; }
         }
         
         public override void Message(byte type, string message) {
@@ -52,6 +52,7 @@ namespace GoldenSparks
 
         static int sessionCounter;
         public static Player Sparks = new GoldenPlayer();
+        public static Player Console = new GoldenPlayer();
 
 
 
@@ -79,8 +80,7 @@ namespace GoldenSparks
                 BlockBindings[b] = (BlockID)b;
             }
         }
-        public static List<Player> players2 = new List<Player>();
-        public static byte number { get { return (byte)players2.Count; } }
+        public static int number { get { return PlayerInfo.Online.Count; } }
         public override byte EntityID { get { return id; } }
         public override Level Level { get { return level; } }
         public override bool RestrictsScale { get { return true; } }
@@ -115,7 +115,7 @@ namespace GoldenSparks
             
             // fallback to level MOTD, then rank MOTD, then server MOTD            
             if (motd == "ignore") motd = level.Config.MOTD;           
-            if (motd == "ignore") motd = String.IsNullOrEmpty(group.MOTD) ? Server.Config.MOTD : group.MOTD;
+            if (motd == "ignore") motd = string.IsNullOrEmpty(group.MOTD) ? Server.Config.MOTD : group.MOTD;
             
             OnGettingMotdEvent.Call(this, ref motd);
             return motd;
@@ -344,8 +344,10 @@ namespace GoldenSparks
         
         public bool CheckCanSpeak(string action) {
             if (IsSparkie) return true;
-
-            
+            if (jailed)
+            {
+                Message("Cannot {0} &Swhile jailed", action); return false; 
+            }
             if (muted) { 
                 Message("Cannot {0} &Swhile muted", action); return false; 
             }

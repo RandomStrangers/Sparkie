@@ -67,7 +67,7 @@ namespace GoldenSparks.Bots {
                 if (obj == null || obj.Meta == null) continue;
                 
                 BotProperties data = (BotProperties)obj.Meta;
-                if (String.IsNullOrEmpty(data.DisplayName)) data.DisplayName = data.Name;
+                if (string.IsNullOrEmpty(data.DisplayName)) data.DisplayName = data.Name;
                 props.Add(data);
             }
             return props;
@@ -101,7 +101,7 @@ namespace GoldenSparks.Bots {
         }
 
         public static void LoadAi(BotProperties props, PlayerBot bot) {
-            if (String.IsNullOrEmpty(props.AI)) return;
+            if (string.IsNullOrEmpty(props.AI)) return;
             try {
                 ScriptFile.Parse(Player.Sparks, bot, props.AI);
 

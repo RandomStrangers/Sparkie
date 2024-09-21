@@ -49,14 +49,19 @@ namespace GoldenSparks {
         public bool AllowIPForwarding = true;
         [ConfigString("default-rank", "Server", "guest")]
         public string DefaultRankName = "guest";
-        
+        [ConfigBool("send-url", "Server", true)]
+        public bool SendURL = true;
+        [ConfigBool("say-hello", "Server", true)]
+        public bool SayHello = true;
+        [ConfigBool("say-bye", "Server", true)]
+        public bool SayBye = true;
         [ConfigBool("autoload", "Level", true)]
         public bool AutoLoadMaps = true;        
         /// <summary> true if maps sees server-wide chat, false if maps have level-only/isolated chat </summary>
         [ConfigBool("world-chat", "Level", true)]
         public bool ServerWideChat = true;
-        [ConfigString("main-name", "Level", "sparks", false, "()._+,-")]
-        public string MainLevel = "randomstrangers";
+        [ConfigString("main-name", "Level", "goldensparks", false, "()._+,-")]
+        public string MainLevel = "goldensparks";
         [ConfigString("default-texture-url", "Level", "", true)]
         public string DefaultTerrain = "";
         [ConfigString("default-texture-pack-url", "Level", "", true)]
@@ -391,10 +396,10 @@ namespace GoldenSparks {
         public string GlobalIRCServer = "irc.esper.net";
         [ConfigString("global-irc-nick", "Global IRC bot", "GlobalIRCBot")]
         public string GlobalIRCNick = "GlobalIRCBot";
-        [ConfigString("global-irc-channel", "Global IRC bot", "#ClassiCube_IRC", true)]
-        public string GlobalIRCChannels = "#changethis2";
-        [ConfigString("global-irc-opchannel", "Global IRC bot", "#ClassiCube_op_IRC", true)]
-        public string GlobalIRCOpChannels = "#ClassiCube_op_IRC";
+        [ConfigString("global-irc-channel", "Global IRC bot", "#changethis3", true)]
+        public string GlobalIRCChannels = "#changethis3";
+        [ConfigString("global-irc-opchannel", "Global IRC bot", "#changethistoo3", true)]
+        public string GlobalIRCOpChannels = "#changethistoo3";
         [ConfigBool("global-irc-identify", "Global IRC bot", false)]
         public bool GlobalIRCIdentify = false;
         [ConfigString("global-irc-nickserv-name", "Global IRC bot", "NickServ", true)]
@@ -411,8 +416,8 @@ namespace GoldenSparks {
         public bool GlobaIRCShowWorldChanges = false;
         [ConfigBool("global-irc-show-afk", "Global IRC bot", false)]
         public bool GlobalIRCShowAFK = false;
-        [ConfigString("global-irc-command-prefix", "Global IRC bot", "?x", true)]
-        public string GlobalIRCCommandPrefix = "?x";
+        [ConfigString("global-irc-command-prefix", "Global IRC bot", ";x", true)]
+        public string GlobalIRCCommandPrefix = ";x";
         [ConfigEnum("global-irc-controller-verify", "Global IRC bot", GlobalIRCControllerVerify.HalfOp, typeof(GlobalIRCControllerVerify))]
         public GlobalIRCControllerVerify GlobalIRCVerify = GlobalIRCControllerVerify.HalfOp;
         [ConfigPerm("global-irc-controller-rank", "Global IRC bot", LevelPermission.Admin)]

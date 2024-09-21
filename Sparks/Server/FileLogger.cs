@@ -57,7 +57,7 @@ namespace GoldenSparks {
         }
         
         static void LogMessage(LogType type, string message) {
-            if (String.IsNullOrEmpty(message)) return;
+            if (string.IsNullOrEmpty(message)) return;
             if (!Server.Config.FileLogging[(int)type]) return;
             
             if (type == LogType.Error) {

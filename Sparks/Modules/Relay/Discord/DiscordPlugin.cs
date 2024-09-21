@@ -74,7 +74,7 @@ namespace GoldenSparks.Modules.Relay.Discord
             
             using (StreamWriter w = new StreamWriter(PROPS_PATH)) {
                 w.WriteLine("# Discord relay bot configuration");
-                w.WriteLine("# See " + Updater.WikiURL + "/wiki/Discord-relay-bot/");
+                w.WriteLine("# See " + Updater.WikiURL + "Discord-relay-bot/");
                 w.WriteLine();
                 ConfigElement.SerialiseElements(cfg, w, this);
             }
@@ -94,6 +94,7 @@ namespace GoldenSparks.Modules.Relay.Discord
         public static DiscordBot Bot = new DiscordBot();
         
         public override void Load(bool startup) {
+            Server.EnsureDirectoryExists("text/discord");
             Bot.Config = Config;
             Bot.ReloadConfig();
             Bot.Connect();

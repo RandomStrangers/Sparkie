@@ -17,6 +17,7 @@
  */
 
 
+
 namespace GoldenSparks.Commands.Scripting
 {
     public sealed class CmdPlugin_simpleCompile : Command2
@@ -30,7 +31,7 @@ namespace GoldenSparks.Commands.Scripting
 
         public override void Use(Player p, string message, CommandData data)
         {
-            Command.Find("SimplePlugin").Use(p, "Compile " + message, data);
+            Find("SimplePlugin").Use(p, "Compile " + message, data);
         }
 
         public override void Help(Player p)

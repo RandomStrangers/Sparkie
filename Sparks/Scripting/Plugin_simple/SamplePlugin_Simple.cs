@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GoldenSparks.Scripting.Plugin_simple
+﻿namespace GoldenSparks.Scripting.Plugin_simple
 {
-    internal class SamplePlugin_Simple 
+    internal class SamplePlugin_Simple
     {
         public string SimplePluginSkeleton
         {
@@ -17,16 +11,11 @@ Imports System
 
 Namespace GoldenSparks
 \tPublic Class {0}
-\t\tInherits Plugin
+\t\tInherits Plugin_Simple
 
 \t\tPublic Overrides ReadOnly Property name() As String
 \t\t\tGet
 \t\t\t\tReturn ""{0}""
-\t\t\tEnd Get
-\t\t End Property
-\t\tPublic Overrides ReadOnly Property GoldenSparks_Version() As String
-\t\t\tGet
-\t\t\t\tReturn ""{2}""
 \t\t\tEnd Get
 \t\t End Property
 \t\tPublic Overrides ReadOnly Property creator() As String

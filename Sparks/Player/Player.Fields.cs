@@ -72,6 +72,7 @@ namespace GoldenSparks {
         public bool painting;
         public bool checkingBotInfo;
         public bool muted;
+        [Obsolete("Use Player.frozen instead.")]
         public bool jailed;
         public bool agreed = true;
         public bool invulnerable;
@@ -87,9 +88,9 @@ namespace GoldenSparks {
         public string SuperName;
         /// <summary> Whether this player is a 'Super' player (Sparks, IRC, etc) </summary>
         public bool IsSuper;
-        /// <summary> Whether this player is the digital form of me(GoldenSparks) (Not fully implemented here yet, this is just for when 
-        /// I finally am.)</summary>
+        /// <summary> Whether this player is GoldenSparks </summary>
         public bool IsSparkie { get { return this == Sparks; } }
+        public bool IsConsole { get { return IsSparkie;  } }
 
         
         public virtual string FullName { get { return color + prefix + DisplayName; } }  

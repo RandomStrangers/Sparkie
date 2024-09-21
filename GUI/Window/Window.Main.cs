@@ -176,7 +176,7 @@ namespace GoldenSparks.Gui {
         }
 
         void tsLog_CopySelected_Click(object sender, EventArgs e) {
-            if (String.IsNullOrEmpty(main_txtLog.SelectedText)) return;
+            if (string.IsNullOrEmpty(main_txtLog.SelectedText)) return;
             Clipboard.SetText(main_txtLog.SelectedText, TextDataFormat.Text);
         }
         

@@ -176,7 +176,7 @@ namespace GoldenSparks {
                 if (parts.Length > 2 && parts[1] == who) {
                     found = true;
                     parts[2] = reason;
-                    sb.AppendLine(String.Join(" ", parts));
+                    sb.AppendLine(string.Join(" ", parts));
                 } else {
                     sb.AppendLine(line);
                 }

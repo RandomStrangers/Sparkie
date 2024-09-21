@@ -138,11 +138,7 @@ namespace GoldenSparks.Generator
         }
         
         static bool CheckMapVolume(Player p, int x, int y, int z) {
-#if DEV_BUILD_RS
             if (p.IsSparkie) return true;
-#else
-            if (p.IsSparkie) return true;
-#endif
             int limit = p.group.GenVolume;
             if ((long)x * y * z <= limit) return true;
             
@@ -155,22 +151,6 @@ namespace GoldenSparks.Generator
         }
 
         /// <summary> Sets default permissions for a newly generated realm map. </summary>
-#if DEV_BUILD_RS
-        public static void SetRealmPerms(Player p, Level lvl)
-        {
-            lvl.Config.RealmOwner = p.name;
-            const LevelPermission rank = LevelPermission.Sparkie;
-            lvl.BuildAccess.Whitelist(Player.Sparks, rank, lvl, p.name);
-            lvl.VisitAccess.Whitelist(Player.Sparks, rank, lvl, p.name);
-
-            Group grp = Group.Find(Server.Config.OSPerbuildDefault);
-            if (grp == null) return;
-
-            lvl.BuildAccess.SetMin(Player.Sparks, rank, lvl, grp);
-        }
-    }
-}
-#else
         public static void SetRealmPerms(Player p, Level lvl) {
             lvl.Config.RealmOwner = p.name;
             const LevelPermission rank = LevelPermission.Sparkie;
@@ -184,4 +164,3 @@ namespace GoldenSparks.Generator
         }
     }
 }
-#endif

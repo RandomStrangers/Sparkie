@@ -38,11 +38,10 @@ namespace GoldenSparks
     {
         Banned = -20, Guest = 0, Builder = 30,
         AdvBuilder = 50, Operator = 80,
-        Admin = 100, Nobody = 120, Owner = 120, // So newer MCGalaxy commands/plugins
-                                                // can still work with this
-
-        Sparkie = 150
-
+        Admin = 100, Nobody = 120, Sparkie = 150,
+        // So newer MCGalaxy commands/plugins
+        // can still work with this
+        Owner = 120, Console = 127, Null = 150
     }
     
     public enum BuildType { Normal, ModifyOnly, NoModify };

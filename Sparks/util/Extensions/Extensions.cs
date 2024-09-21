@@ -161,7 +161,9 @@ namespace GoldenSparks {
         }
         
         const StringComparison comp = StringComparison.OrdinalIgnoreCase;
-        public static bool CaselessEq(this string a, string b) { return a.Equals(b, comp); }       
+        public static bool CaselessEq(this string a, string b) { return a.Equals(b, comp); }
+        public static bool Eq(this string a, string b) { return a.Equals(b); }
+
         public static bool CaselessStarts(this string a, string b) { return a.StartsWith(b, comp); }        
         public static bool CaselessEnds(this string a, string b) { return a.EndsWith(b, comp); }
         public static bool CaselessContains(this string a, string b) { return a.IndexOf(b, comp) >= 0; }

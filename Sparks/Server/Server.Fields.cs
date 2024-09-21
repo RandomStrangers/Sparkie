@@ -31,7 +31,6 @@ namespace GoldenSparks {
         public delegate void VoidHandler();
         
         public static event MessageEventHandler OnURLChange;
-        public static event MessageEventHandler OnURL2Change;
         public static event VoidHandler OnSettingsUpdate;
         public static ServerConfig Config = new ServerConfig();
         public static DateTime StartTime;
@@ -41,7 +40,7 @@ namespace GoldenSparks {
         public static PlayerMetaList Notes = new PlayerMetaList("text/notes.txt");
         
         /// <summary> *** DO NOT USE THIS! *** Use VersionString, as this field is a constant and is inlined if used. </summary>
-        public const string InternalVersion = "1.1.0.7";
+        public const string InternalVersion = "1.1.0.8";
         public static string Version { get { return InternalVersion; } }
 
 
@@ -54,7 +53,7 @@ namespace GoldenSparks {
             set { fullName = value; }
         }
         // URL for connecting to the server
-        public static string URL = String.Empty;
+        public static string URL = string.Empty;
         public static INetListen Listener = new TcpListen();
         public static Scheduler Heartbeats = new Scheduler("GS_HeartbeatsScheduler");
 
@@ -65,6 +64,8 @@ namespace GoldenSparks {
         public static PlayerList ignored, hidden, agreed, vip, noEmotes, lockdown;
         public static PlayerExtList models, skins, reach, rotations, modelScales;
         public static PlayerExtList frozen, muted, tempBans, tempRanks;
+        [Obsolete("Use Server.frozen instead.")]
+        public static PlayerExtList jailed;
 
         public static readonly List<string> Devs = new List<string>() {
             "DarkBurningFlame", "BurningFlame", "SuperNova", "DeadNova",

@@ -74,7 +74,7 @@ namespace GoldenSparks.Modules.GlobalRelay.GlobalDiscord
             
             using (StreamWriter w = new StreamWriter(PROPS_PATH)) {
                 w.WriteLine("# Discord relay bot configuration");
-                w.WriteLine("# See " + Updater.WikiURL + "/wiki/Discord-relay-bot/");
+                w.WriteLine("# See " + Updater.WikiURL + "Discord-relay-bot/");
                 w.WriteLine();
                 ConfigElement.SerialiseElements(cfg, w, this);
             }
@@ -94,6 +94,7 @@ namespace GoldenSparks.Modules.GlobalRelay.GlobalDiscord
         public static GlobalDiscordBot Bot = new GlobalDiscordBot();
         
         public override void Load(bool startup) {
+            Server.EnsureDirectoryExists("globalchat/");
             Bot.Config = Config;
             Bot.ReloadConfig();
             Bot.Connect();

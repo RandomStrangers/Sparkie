@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCGalaxy)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -15,13 +15,9 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-using System;
-using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.Blocks.Extended;
 using GoldenSparks.Blocks.Physics;
 using GoldenSparks.Network;
-using GoldenSparks.SQL;
 using BlockID = System.UInt16;
 
 namespace GoldenSparks.Blocks {

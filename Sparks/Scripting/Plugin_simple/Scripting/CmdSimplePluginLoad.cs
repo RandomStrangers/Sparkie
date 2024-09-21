@@ -15,10 +15,10 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-
-
-namespace GoldenSparks.Commands.Scripting {
-    public sealed class CmdPlugin_simpleLoad : Command2 {
+namespace GoldenSparks.Commands.Scripting
+{
+    public sealed class CmdPlugin_simpleLoad : Command2
+    {
         public override string name { get { return "PSLoad"; } }
         public override string shortcut { get { return "p_sload"; } }
 
@@ -28,10 +28,11 @@ namespace GoldenSparks.Commands.Scripting {
 
         public override void Use(Player p, string message, CommandData data)
         {
-            Command.Find("SimplePlugin").Use(p, "Load " + message, data);
+            Find("SimplePlugin").Use(p, "Load " + message, data);
         }
-        
-        public override void Help(Player p) {
+
+        public override void Help(Player p)
+        {
             p.Message("&T/SimplePlugin create [name]");
             p.Message("&HCreate a example .cs simple plugin file");
             p.Message("&T/SimplePlugin compile [name]");

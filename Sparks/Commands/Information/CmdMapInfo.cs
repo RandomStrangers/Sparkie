@@ -160,7 +160,7 @@ namespace GoldenSparks.Commands.Info {
         }
         
         class MapInfo {
-            public ushort Width, Height, Length;
+            public int Width, Height, Length;
             public string Name, MapName;
             public long BlockDBEntries = -1;
             public AccessController Visit, Build;

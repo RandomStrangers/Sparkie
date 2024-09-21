@@ -50,7 +50,7 @@ namespace GoldenSparks {
                 // If a bad word is found anywhere in the word, replace the word            
                 words[i] = Replace(words[i]);
             }            
-            return String.Join(" ", words);
+            return string.Join(" ", words);
         }
         
         static string Replace(string word) {

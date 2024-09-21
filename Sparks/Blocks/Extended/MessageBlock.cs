@@ -17,7 +17,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using GoldenSparks.Maths;
 using GoldenSparks.SQL;
 
@@ -58,7 +57,7 @@ namespace GoldenSparks.Blocks.Extended {
         
         public static bool Validate(Player p, string message, bool allCmds) {
             string text;
-            List<string> cmds = MessageBlock.GetParts(message, out text);
+            List<string> cmds = GetParts(message, out text);
             foreach (string cmd in cmds) {
                 if (!CheckCommand(p, cmd, allCmds)) return false;
             }

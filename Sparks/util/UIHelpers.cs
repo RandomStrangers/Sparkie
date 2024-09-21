@@ -28,7 +28,7 @@ namespace GoldenSparks.UI
         public static void HandleChat(string text)
         {
             if (text != null) text = text.Trim();
-            if (String.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text)) return;
 
             Player p = Player.Sparks;
             if (ChatModes.Handle(p, text)) return;
@@ -50,7 +50,7 @@ namespace GoldenSparks.UI
         public static void HandleCommand(string text)
         {
             if (text != null) text = text.Trim();
-            if (String.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text))
             {
                 Logger.Log(LogType.CommandUsage, "(Sparks): Whitespace commands are not allowed.");
                 return;
@@ -95,7 +95,7 @@ namespace GoldenSparks.UI
                         Logger.Log(LogType.CommandUsage, "(Sparks): FAILED COMMAND");
                     }
                 });
-            thread.Name = "RandomCMD_" + name;
+            thread.Name = "SparksCMD_" + name;
             thread.IsBackground = true;
             thread.Start();
         }

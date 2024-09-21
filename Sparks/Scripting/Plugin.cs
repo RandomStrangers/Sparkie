@@ -29,6 +29,8 @@ using GoldenSparks.Modules.GlobalRelay.GlobalDiscord;
 using GoldenSparks.Modules.GlobalRelay.GlobalIRC;
 using GoldenSparks.Modules.Security;
 using GoldenSparks.Scripting;
+using GoldenSparks.Network;
+using System.Net;
 
 namespace GoldenSparks 
 {
@@ -52,7 +54,9 @@ namespace GoldenSparks
         /// <summary> Name of the plugin. </summary>
         public abstract string name { get; }
         /// <summary> Oldest version of GoldenSparks this plugin is compatible with. </summary>
-        public abstract string GoldenSparks_Version { get; }
+        public virtual string GoldenSparks_Version { get; }
+        /// <summary> Oldest version of MCGalaxy this plugin is compatible with. </summary>
+        public virtual string MCGalaxy_Version { get; }
         /// <summary> Version of this plugin. </summary>
         public virtual int build { get { return 0; } }
         /// <summary> Message to display once this plugin is loaded. </summary>
@@ -67,8 +71,25 @@ namespace GoldenSparks
         public static List<Plugin> all = new List<Plugin>();
         
         public static bool Load(Plugin p, bool auto) {
-            try {
-                string ver = p.GoldenSparks_Version;
+            string ver = p.GoldenSparks_Version;
+            if (p.GoldenSparks_Version == null && p.MCGalaxy_Version != null)
+            {
+                ver = p.MCGalaxy_Version;
+            }
+            if (p.GoldenSparks_Version != null)
+            {
+                ver = p.GoldenSparks_Version;
+            }
+            string MCGalaxy_Ver = "1.9.3.9";
+
+            if (!string.IsNullOrEmpty(p.MCGalaxy_Version) && new Version(p.MCGalaxy_Version) > new Version(MCGalaxy_Ver))
+            {
+                string msg = string.Format("Plugin '{0}' cannot be loaded on this version of {1}!", p.name, Server.SoftwareName);
+                throw new InvalidOperationException(msg);
+            }
+            try
+            {
+
                 if (!string.IsNullOrEmpty(ver) && new Version(ver) > new Version(Server.Version)) {
                     Logger.Log(LogType.Warning, "Plugin ({0}) requires a more recent version of {1}!", p.name, Server.SoftwareName);
                     return false;
@@ -122,7 +143,7 @@ namespace GoldenSparks
             LoadCorePlugin(new IRCPlugin2());
             LoadCorePlugin(new GlobalDiscordPlugin());
             LoadCorePlugin(new GlobalIRCPlugin());
-            LoadCorePlugin(new HelloWorld());
+            LoadCorePlugin(new ServerURLSender());
             LoadCorePlugin(new IPThrottler());
             IScripting.AutoloadPlugins();
         }

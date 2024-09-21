@@ -1,7 +1,7 @@
 ﻿/*
-    Copyright 2010 MCLawl Team - Written by Valek (Modified by GoldenSparks)
+    Copyright 2010 MCLawl Team - Written by Valek (Modified by MCGalaxy)
 
-    Edited for use with GoldenSparks
+    Edited for use with MCGalaxy
  
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -17,7 +17,6 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-using GoldenSparks;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -32,6 +31,7 @@ namespace GoldenSparks.Scripting
     {
 
         /// <summary> Returns the default .dll path for the plugin with the given name </summary>
+
         public static string SimplePluginPath(string name) { return "" + name + ".dll"; }
 
         /// <summary> Constructs instances of all types which derive from T in the given assembly. </summary>
@@ -93,11 +93,20 @@ namespace GoldenSparks.Scripting
 
         public static void AutoloadSimplePlugins()
         {
-            string[] files = AtomicIO.TryGetFiles("", "*.dll");
+            string simplepluginpath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
+            string[] files = AtomicIO.TryGetFiles(simplepluginpath, "*.dll");
             if (files != null)
             {
-                foreach (string path in files) { LoadSimplePlugin(path, true); }
+                foreach (string file in files)
+                {
+                    //TODO: Some system files might not contain these
+                    if (!file.CaselessContains("SQL") || file.CaselessContains("Newtonsoft")
+                        || file.CaselessContains("System"))
+                    {
+                        LoadSimplePlugin(file, true);
+                    }
+                }
             }
             else
             {
@@ -168,8 +177,6 @@ namespace GoldenSparks.Scripting
             return FormatSource(SimplePluginSkeleton, plugin, creator, Server.Version);
         }
 
-
-        const int maxLog = 2;
         /// <summary> Attempts to compile the given source code file to a .dll file. </summary>
         /// <remarks> If dstPath is null, compiles to an in-memory .dll instead. </remarks>
         /// <remarks> Logs errors to IScripting.ErrorPath. </remarks>
@@ -222,7 +229,11 @@ namespace GoldenSparks.Scripting
             string type = err.IsWarning ? "Warning" : "Error";
             string file = Path.GetFileName(err.FileName);
             // TODO line 0 shouldn't appear
-
+            if (err.Line == 0) 
+            {
+                return string.Format("{0}{1} on line {2}{3}", type, text, err.Line+1,
+                     srcs.Length > 1 ? " in " + file : "");
+            }
             // Include filename if compiling multiple source code files
             return string.Format("{0}{1} on line {2}{3}", type, text, err.Line,
                                  srcs.Length > 1 ? " in " + file : "");
@@ -282,9 +293,11 @@ namespace GoldenSparks.Scripting
 
         public override CompilerResults DoCompile(string[] srcPaths, string dstPath)
         {
-            CompilerParameters args = new CompilerParameters();
-            args.GenerateExecutable = false;
-            args.IncludeDebugInformation = true;
+            CompilerParameters args = new CompilerParameters
+            {
+                GenerateExecutable = false,
+                IncludeDebugInformation = true
+            };
 
             if (dstPath != null) args.OutputAssembly = dstPath;
             if (dstPath == null) args.GenerateInMemory = true;

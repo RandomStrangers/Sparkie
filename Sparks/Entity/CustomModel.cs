@@ -28,8 +28,8 @@ namespace GoldenSparks {
         // if true, uses skin from your account
         public bool usesHumanSkin = true;
         public bool calcHumanAnims = true;
-        public UInt16 uScale = 64;
-        public UInt16 vScale = 64;
+        public ushort uScale = 64;
+        public ushort vScale = 64;
         public byte partCount;
     }
 
@@ -39,10 +39,10 @@ namespace GoldenSparks {
         public Vec3F32 max;
 
         /* uv coords in order: top, bottom, front, back, left, right */
-        public UInt16[] u1;
-        public UInt16[] v1;
-        public UInt16[] u2;
-        public UInt16[] v2;
+        public ushort[] u1;
+        public ushort[] v1;
+        public ushort[] u2;
+        public ushort[] v2;
         /* rotation origin point */
         public Vec3F32 rotationOrigin;
 

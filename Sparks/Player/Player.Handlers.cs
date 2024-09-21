@@ -390,6 +390,7 @@ namespace GoldenSparks
 
             // People who are muted can't speak or vote
             if (muted) { Message("You are muted."); return; } //Muted: Only allow commands
+            if (jailed) { Message("You are jailed."); return; } //Jailed: Allow nothing
 
             if (Server.voting) {
                 if (CheckVote(text, this, "y", "yes", ref Server.YesVotes) ||
@@ -451,9 +452,6 @@ namespace GoldenSparks
             }
 
             text = Regex.Replace(text, "  +", " ");
-            if (text.IndexOf('&') >= 0) {
-                Leave("Illegal character in chat message!", true); return true;
-            }
             return text.Length == 0;
         }
         

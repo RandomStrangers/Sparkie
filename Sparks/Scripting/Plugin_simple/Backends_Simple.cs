@@ -1,7 +1,7 @@
 ﻿/*
-    Copyright 2010 MCLawl Team - Written by Valek (Modified by GoldenSparks)
+    Copyright 2010 MCLawl Team - Written by Valek (Modified by MCGalaxy)
 
-    Edited for use with GoldenSparks
+    Edited for use with MCGalaxy
  
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -18,7 +18,6 @@
     permissions and limitations under the Licenses.
  */
 using System.CodeDom.Compiler;
-using System;
 
 
 namespace GoldenSparks.Scripting
@@ -52,7 +51,6 @@ namespace GoldenSparks
 \tpublic class {0} : Plugin_Simple
 \t{{
 \t\tpublic override string name {{ get {{ return ""{0}""; }} }}
-\t\tpublic override string GoldenSparks_Version {{ get {{ return ""{2}""; }} }}
 \t\tpublic override string creator {{ get {{ return ""{1}""; }} }}
 
 \t\tpublic override void Load(bool startup)
@@ -106,11 +104,6 @@ Namespace GoldenSparks
 \t\tPublic Overrides ReadOnly Property name() As String
 \t\t\tGet
 \t\t\t\tReturn ""{0}""
-\t\t\tEnd Get
-\t\t End Property
-\t\tPublic Overrides ReadOnly Property GoldenSparks_Version() As String
-\t\t\tGet
-\t\t\t\tReturn ""{2}""
 \t\t\tEnd Get
 \t\t End Property
 \t\tPublic Overrides ReadOnly Property creator() As String

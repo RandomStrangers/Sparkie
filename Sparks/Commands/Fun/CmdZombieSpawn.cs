@@ -24,7 +24,7 @@ namespace GoldenSparks
     public class CmdZombieSpawn : Command2
     {
         public override string name { get { return "Zombiespawn"; } }
-        public override string shortcut { get { return "zs1"; } }
+        public override string shortcut { get { return "zss"; } }
         public override string type { get { return CommandTypes.Games; } }
         public override bool museumUsable { get { return false; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
@@ -64,9 +64,9 @@ namespace GoldenSparks
             for (int num = 1; num <= wavesNum; num++)
             {
                 if (isRandom)
-                    randomZombies(p);
+                    RandomZombies(p);
                 else
-                    placedZombies(p, xBegin, zBegin);
+                    PlacedZombies(p, xBegin, zBegin);
 
                 p.level.Message("&aZombie wave # " + num);
                 Thread.Sleep(wavesLength * 1000);
@@ -74,7 +74,7 @@ namespace GoldenSparks
             p.level.Message("&aZombie attack is over.");
         }
 
-        public void randomZombies(Player p)
+        public void RandomZombies(Player p)
         {
             Random randomCoord = new Random();
             int x, y, z;
@@ -89,7 +89,7 @@ namespace GoldenSparks
             }
         }
 
-        public void placedZombies(Player p, int xBegin, int zBegin)
+        public void PlacedZombies(Player p, int xBegin, int zBegin)
         {
             for (int x = xBegin; x < xBegin + zombiesNum; x++)
             {

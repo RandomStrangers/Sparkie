@@ -43,7 +43,49 @@ namespace GoldenSparks.Config {
             return value;
         }
     }
-    
+    public abstract class ConfigInteger64Attribute : ConfigAttribute
+    {
+        public ConfigInteger64Attribute(string name, string section)
+            : base(name, section) { }
+
+        // separate function to avoid boxing in derived classes
+        public long ParseInteger64(string raw, long def, long min, long max)
+        {
+            long value;
+            if (!long.TryParse(raw, out value))
+            {
+                Logger.Log(LogType.Warning, "Config key \"{0}\" has invalid integer '{2}', using default of {1}", Name, def, raw);
+                value = def;
+            }
+
+            if (value < min)
+            {
+                Logger.Log(LogType.Warning, "Config key \"{0}\" is too small an integer, using {1}", Name, min);
+                value = min;
+            }
+            if (value > max)
+            {
+                Logger.Log(LogType.Warning, "Config key \"{0}\" is too big an integer, using {1}", Name, max);
+                value = max;
+            }
+            return value;
+        }
+    }
+    public sealed class ConfigLongAttribute : ConfigInteger64Attribute
+    {
+        long defValue, minValue, maxValue;
+
+        public ConfigLongAttribute()
+            : this(null, null, 0, long.MinValue, long.MaxValue) { }
+        public ConfigLongAttribute(string name, string section, long def,
+                                  long min = long.MinValue, long max = long.MaxValue)
+            : base(name, section) { defValue = def; minValue = min; maxValue = max; }
+
+        public override object Parse(string value)
+        {
+            return ParseInteger64(value, defValue, minValue, maxValue);
+        }
+    }
     public sealed class ConfigIntAttribute : ConfigIntegerAttribute {
         int defValue, minValue, maxValue;
         
@@ -57,7 +99,7 @@ namespace GoldenSparks.Config {
             return ParseInteger(value, defValue, minValue, maxValue);
         }
     }
-    
+
     public sealed class ConfigBlockAttribute : ConfigIntegerAttribute {
         BlockID defBlock;
         public ConfigBlockAttribute() : this(null, null, Block.Air) { }
@@ -131,7 +173,21 @@ namespace GoldenSparks.Config {
             return (float)ParseReal(raw, defValue, minValue, maxValue);
         }
     }
-    
+    public class ConfigDoubleAttribute : ConfigRealAttribute
+    {
+        double defValue, minValue, maxValue;
+
+        public ConfigDoubleAttribute()
+            : this(null, null, 0, double.NegativeInfinity, double.PositiveInfinity) { }
+        public ConfigDoubleAttribute(string name, string section, double def,
+                                    double min = double.NegativeInfinity, double max = double.PositiveInfinity)
+            : base(name, section) { defValue = def; minValue = min; maxValue = max; }
+
+        public override object Parse(string raw)
+        {
+            return ParseReal(raw, defValue, minValue, maxValue);
+        }
+    }
     public class ConfigTimespanAttribute : ConfigRealAttribute {
         bool mins; int def;
         public ConfigTimespanAttribute(string name, string section, int def, bool mins)

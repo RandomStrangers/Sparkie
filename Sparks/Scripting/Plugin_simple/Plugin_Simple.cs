@@ -1,5 +1,5 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCGalaxy)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -17,9 +17,8 @@
 */
 using System;
 using System.Collections.Generic;
-using GoldenSparks.Scripting;
 
-namespace GoldenSparks
+namespace GoldenSparks.Scripting
 {
     /// <summary> This class provides for simple modification to GoldenSparks </summary>
     public abstract class Plugin_Simple
@@ -40,11 +39,16 @@ namespace GoldenSparks
         }
 
         /// <summary> Name of the plugin. </summary>
-        public abstract string name { get; }
+        public virtual string name { get { return ""; } }
+
         /// <summary> Oldest version of GoldenSparks this plugin is compatible with. </summary>
-        public abstract string GoldenSparks_Version { get; }
+        public virtual string GoldenSparks_Version { get { return null; } }
+        /// <summary> Work on backwards compatibility with MCGalaxy </summary>
+        public virtual string MCGalaxy_Version { get { return null; } }
+
         /// <summary> The creator/author of this plugin. (Your name) </summary>
         public virtual string creator { get { return ""; } }
+
         /// <summary> Whether or not to auto load this plugin on server startup. </summary>
         public virtual bool LoadAtStartup { get { return true; } }
 
@@ -56,22 +60,15 @@ namespace GoldenSparks
         {
             try
             {
-                string ver = p.GoldenSparks_Version;
-                if (!string.IsNullOrEmpty(ver) && new Version(ver) > new Version(Server.Version))
-                {
-                    Logger.Log(LogType.Warning, "Simple plugin ({0}) requires a more recent version of {1}!", p.name, Server.SoftwareName);
-                    return false;
-                }
                 all.Add(p);
 
                 if (p.LoadAtStartup || !auto)
                 {
                     p.Load(auto);
-                    //Logger.Log(LogType.SystemActivity, "Simple plugin {0} loaded...build: 1", p.name);
                 }
                 else
                 {
-                    Logger.Log(LogType.SystemActivity, "Simple plugin {0} was not loaded, you can load it with /pload", p.name);
+                    Logger.Log(LogType.SystemActivity, "Simple plugin {0} was not loaded, you can load it with /psload", p.name);
                 }
 
                 return true;
@@ -111,9 +108,7 @@ namespace GoldenSparks
         }
         public static void LoadAll()
         {
-           // LoadCorePlugin(new CorePlugin());
             IScripting_Simple.AutoloadSimplePlugins();
         }
     }
 }
-

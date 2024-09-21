@@ -106,7 +106,18 @@ namespace GoldenSparks {
 
         static string TokenDate(Player p) { return DateTime.Now.ToString("yyyy-MM-dd"); }
         static string TokenTime(Player p) { return DateTime.Now.ToString("hh:mm tt"); }
-        static string TokenIRC(Player p)  { return Server.Config.IRCServer + " > " + Server.Config.IRCChannels; }
+        static string TokenIRC(Player p)  
+        {
+            if (p.CanUse("HasIRC"))
+            {
+                return Server.Config.IRCServer + " > " + Server.Config.IRCChannels;
+            }
+            else
+            {
+                p.Message("You cannot use /HasIRC, therefore you cannot use this token.");
+                return "";
+            }
+        }
         static string TokenBanned(Player p) { return Group.BannedRank.Players.Count.ToString(); }
         static string TokenServerName(Player p) { return Server.Config.Name; }
 
@@ -140,7 +151,7 @@ namespace GoldenSparks {
         static string TokenModel(Player p)   { return p.Model; }
         static string TokenSkin(Player p)    { return p.SkinName; }
         static string TokenLevel(Player p)   { return p.level == null ? null : p.level.name; }
-        static string TokenIP(Player p) { return p.ip; }
+        static string TokenIP(Player p) { return "Wait, $ip is a thing?"; }
         static string TokenClient(Player p) { return p.appName; }
 
 

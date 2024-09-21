@@ -52,8 +52,13 @@ namespace GoldenSparks {
             if (p.hidden && p.IsAfk) { name += " &f(Hid, &7AFK)"; return; }
             if (p.hidden) name += " &f(Hid)";
             if (p.IsAfk) name += " &7(AFK)";
+            if (p.frozen) name += " &b(Frozen)";
+            if (p.jailed) name += " &7(Jailed)";
+            if (p.muted) name += " &8(Muted)";
+            if (p.Game.Referee) name += " &2(Ref)";
+
         }
-        
+
         /// <summary> Adds the given bot to that player's tab list (if their client support it). </summary>
         public static void Add(Player dst, PlayerBot b) {
             if (!dst.hasExtList) return;

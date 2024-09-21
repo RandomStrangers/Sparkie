@@ -60,7 +60,8 @@ namespace GoldenSparks.Levels.IO {
                     try {
                         ParseZone(lvl, value);
                     } catch (Exception ex) {
-                        Logger.LogError("Error importing zone '" + key + "' from fCraft map", ex);
+                        FcmImporter importer = new FcmImporter();
+                        Logger.LogError("Error importing zone '" + key + "' from "+ importer.Description, ex);
                     }
                 }
                 ReadFully(ds, lvl.blocks, lvl.blocks.Length);

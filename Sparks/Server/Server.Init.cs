@@ -33,7 +33,7 @@ namespace GoldenSparks {
         static void LoadMainLevel(SchedulerTask task) {
             try {
 
-                mainLevel = LevelActions.Load(Player.Sparks, Server.Config.MainLevel, false);
+                mainLevel = LevelActions.Load(Player.Sparks, Config.MainLevel, false);
 
                 if (mainLevel == null) GenerateMain();
             } catch (Exception ex) {
@@ -43,7 +43,7 @@ namespace GoldenSparks {
         
         static void GenerateMain() {
             Logger.Log(LogType.SystemActivity, "main level not found, generating..");
-            mainLevel = new Level(Server.Config.MainLevel, 128, 64, 128);
+            mainLevel = new Level(Config.MainLevel, 128, 64, 128);
             MapGen.Find("Flat").Generate(Player.Sparks, mainLevel, "");
 
             mainLevel.Save();
@@ -53,8 +53,9 @@ namespace GoldenSparks {
 
         static void LoadAllPlugins(SchedulerTask task) { Plugin.LoadAll(); }
         
-        static void InitPlayerLists(SchedulerTask task) {
-            try {
+       public static void InitPlayerLists(SchedulerTask task) {
+            try
+            {
                 UpgradeTasks.UpgradeOldAgreed();
             } catch (Exception ex) {
                 Logger.LogError("Error upgrading agreed list", ex);
@@ -62,9 +63,11 @@ namespace GoldenSparks {
             
             LoadPlayerLists();
             ModerationTasks.QueueTasks();
+            ModerationTasks.QueueJailTask();
         }
 
         public static void LoadPlayerLists() {
+            jailed = PlayerExtList.Load("ranks/jailed.txt");
             agreed = PlayerList.Load("ranks/agreed.txt");
             invalidIds = PlayerList.Load("extra/invalidids.txt");
             Player.Sparks.DatabaseID = NameConverter.InvalidNameID("&e(&6S&ep&6a&er&6k&ei&6e)");
@@ -84,17 +87,17 @@ namespace GoldenSparks {
 
             muted  = PlayerExtList.Load("ranks/muted.txt");
             frozen = PlayerExtList.Load("ranks/frozen.txt");
+
             tempRanks = PlayerExtList.Load(Paths.TempRanksFile);
             tempBans  = PlayerExtList.Load(Paths.TempBansFile);
             whiteList = PlayerList.Load("ranks/whitelist.txt");
         }
-        
         static void LoadAutoloadMaps(SchedulerTask task) {
             AutoloadMaps = PlayerExtList.Load("text/autoload.txt", '=');
             List<string> maps = AutoloadMaps.AllNames();
             
             foreach (string map in maps) {
-                if (map.CaselessEq(Server.Config.MainLevel)) continue;
+                if (map.CaselessEq(Config.MainLevel)) continue;
                 LevelActions.Load(Player.Sparks, map, false);
             }
         }
@@ -103,11 +106,11 @@ namespace GoldenSparks {
             Listener = new TcpListen();            
             IPAddress ip;
             
-            if (!IPAddress.TryParse(Server.Config.ListenIP, out ip)) {
+            if (!IPAddress.TryParse(Config.ListenIP, out ip)) {
                 Logger.Log(LogType.Warning, "Unable to parse listen IP config key, listening on any IP");
                 ip = IPAddress.Any;
             }            
-            Listener.Listen(ip, Server.Config.Port);
+            Listener.Listen(ip, Config.Port);
         }
         
         static void InitHeartbeat(SchedulerTask task) {
@@ -116,9 +119,9 @@ namespace GoldenSparks {
 
         static void InitTimers(SchedulerTask task) {
             MainScheduler.QueueRepeat(RandomMessage, null, 
-                                      Server.Config.AnnouncementInterval);
+                                      Config.AnnouncementInterval);
             Critical.QueueRepeat(ServerTasks.UpdateEntityPositions, null,
-                                 TimeSpan.FromMilliseconds(Server.Config.PositionUpdateInterval));
+                                 TimeSpan.FromMilliseconds(Config.PositionUpdateInterval));
         }
         
         static void InitRest(SchedulerTask task) {

@@ -77,7 +77,7 @@ namespace GoldenSparks.Cli {
                 
                 EnableCLIMode();
                 Server.Start();
-                Console.Title = Server.Config.Name + " - " + Server.SoftwareNameVersioned;
+                Console.Title = Colors.Strip(Server.Config.Name + " - " + Server.SoftwareNameVersioned);
                 Console.CancelKeyPress += OnCancelKeyPress;
 
                 CheckNameVerification();

@@ -95,7 +95,7 @@ namespace GoldenSparks
         /// <summary> Finds the online player whose name caselessly exactly matches the given name. </summary>
         /// <returns> Player instance if an exact match is found, null if not. </returns>
         public static Player FindExact(string name) {
-            Player[] players = PlayerInfo.Online.Items;
+            Player[] players = Online.Items;
             name = Server.ToRawUsername(name);
             
             foreach (Player p in players) {
@@ -121,7 +121,7 @@ namespace GoldenSparks
             
             // TODO: should we instead do save() when the player logs in
             // by checking online players we avoid a DB write though
-            Player[] players = PlayerInfo.Online.Items;
+            Player[] players = Online.Items;
             foreach (Player p in players) {
                 if (p.ip != ip) continue;
                 if (!names.CaselessContains(p.name)) names.Add(p.name);
@@ -161,7 +161,7 @@ namespace GoldenSparks
             entry.group   = group;
             entry.players = new List<Player>();
             
-            Player[] online = PlayerInfo.Online.Items;
+            Player[] online = Online.Items;
             foreach (Player pl in online) {
                 if (pl.group != group || !p.CanSee(pl, plRank)) continue;
                 entry.players.Add(pl);
@@ -180,6 +180,8 @@ namespace GoldenSparks
             if (p.hidden)       flags += "-hidden";
             if (p.muted)        flags += "-muted";
             if (p.frozen)       flags += "-frozen";
+            if (p.jailed)       flags += "-jailed";
+
             if (p.Game.Referee) flags += "-ref";
             if (p.IsAfk)        flags += "-afk";
             if (p.Unverified)   flags += "-unverified";

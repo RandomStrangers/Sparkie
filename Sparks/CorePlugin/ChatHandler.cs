@@ -15,8 +15,8 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-using System;
 using GoldenSparks.Commands.Chatting;
+using GoldenSparks.Maths;
 
 namespace GoldenSparks.Core
 {
@@ -34,10 +34,6 @@ namespace GoldenSparks.Core
             {
                 logType = LogType.StaffChat;
             }
-            else if (scope == ChatScope.Chatroom || scope == ChatScope.AllChatrooms)
-            {
-                logType = LogType.ChatroomChat;
-            }
             else if (scope == ChatScope.Rank)
             {
                 logType = LogType.RankChat;
@@ -45,9 +41,21 @@ namespace GoldenSparks.Core
 
             if (scope != ChatScope.PM) Logger.Log(logType, msg);
         }
-
-            public static void HandleCommand(Player p, string cmd, string args, CommandData data)
+        // Need to find a better way to do this
+        public static void HandleCommand(Player p, string cmd, string args, CommandData data)
         {
+            // Really clunky design, but it works
+            Level lvl = p.level;
+            Command command = Command.Find(cmd);
+            bool IsDrawingCmd = command.type.CaselessEq(CommandTypes.Building);
+
+            if (IsDrawingCmd && !lvl.Config.Drawing)
+            {
+                p.Message("Drawing commands are turned off on this map.");
+                p.cancelcommand = true;
+                Vec3S32 pos = p.Pos.BlockCoords;
+                p.RevertBlock((ushort)pos.X, (ushort)pos.Y, (ushort)pos.Z);
+            }
             if (!Server.Config.CoreSecretCommands) return;
             // DO NOT REMOVE THE TWO COMMANDS BELOW, /PONY AND /RAINBOWDASHLIKESCOOLTHINGS. -EricKilla
             if (cmd.ToLower() == "pony")
@@ -94,8 +102,8 @@ namespace GoldenSparks.Core
 
                 if (used < 2)
                 {
-                    Chat.MessageFrom(p, "λNICK is now loved by Sparkie with all her heart. ^w^");
-                    p.Message("Sparkie now loves you with all her heart. ^w^");
+                    Chat.MessageFrom(p, "λNICK is now loved by Harmony with all her heart. ^w^");
+                    p.Message("Harmony now loves you with all her heart. ^w^");
                     Logger.Log(LogType.CommandUsage, "{0} used /{1}", p.name, cmd);
                 }
                 else
@@ -112,7 +120,7 @@ namespace GoldenSparks.Core
 
                 if (used < 2)
                 {
-                    p.Message("Seth's bot army just simultaneously facepalm'd at your use of this command.");
+                    p.Message("Harmony's bot army just simultaneously facepalm'd at your use of this command.");
                     Logger.Log(LogType.CommandUsage, "{0} used /{1}", p.name, cmd);
                 }
                 else

@@ -66,7 +66,7 @@ namespace GoldenSparks.Levels.IO
         /// <summary> List of all level format importers </summary>
         public static List<IMapImporter> Formats = new List<IMapImporter>() {
             new LvlImporter(), new CwImporter(), new FcmImporter(), new McfImporter(), 
-            new DatImporter(), new McLevelImporter(),
+            new DatImporter(), new McLevelImporter(), new PKLvlImporter(),
         };
         
         /// <summary> Returns an IMapImporter capable of decoding the given level file </summary>
@@ -103,7 +103,7 @@ namespace GoldenSparks.Levels.IO
         public abstract void Write(Stream dst, Level lvl);
         
         public static List<IMapExporter> Formats = new List<IMapExporter>() {
-            new LvlExporter()
+            new LvlExporter(), new PKLvlExporter()
         };
     }
 }

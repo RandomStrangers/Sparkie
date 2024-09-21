@@ -1,7 +1,7 @@
 ﻿/*
-    Copyright 2010 MCLawl Team - Written by Valek (Modified by GoldenSparks)
+    Copyright 2010 MCLawl Team - Written by Valek (Modified by MCGalaxy)
 
-    Edited for use with GoldenSparks
+    Edited for use with MCGalaxy
  
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -17,12 +17,8 @@
     or implied. See the Licenses for the specific language governing
     permissions and limitations under the Licenses.
  */
-using System;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Text;
 
 namespace GoldenSparks.Scripting
 {

@@ -146,7 +146,7 @@ namespace GoldenSparks
             if (Server.Config.PositionUpdateInterval > 1000)
                 Message("Lowlag mode is currently &aON.");
 
-            if (String.IsNullOrEmpty(appName)) {
+            if (string.IsNullOrEmpty(appName)) {
                 Logger.Log(LogType.UserActivity, "{0} [{1}] connected using Classic 0.28-0.30.", truename, IP);
             } else {
                 Logger.Log(LogType.UserActivity, "{0} [{1}] connected using {2}.", truename, IP, appName);
@@ -234,16 +234,24 @@ namespace GoldenSparks
             }
             gotSQLData = true;
         }
-        
-        void CheckState() {
-            if (Server.muted.Contains(name)) {
+
+        void CheckState()
+        {
+            if (Server.muted.Contains(name))
+            {
                 muted = true;
                 Chat.MessageFrom(this, "λNICK &Wis still muted from previously.");
             }
-            
-            if (Server.frozen.Contains(name)) {
+
+            if (Server.frozen.Contains(name))
+            {
                 frozen = true;
                 Chat.MessageFrom(this, "λNICK &Wis still frozen from previously.");
+            }
+            if (Server.jailed.Contains(name))
+            {
+                jailed = true;
+                Chat.MessageFrom(this, "λNICK &Wis still jailed from previously.");
             }
         }
         

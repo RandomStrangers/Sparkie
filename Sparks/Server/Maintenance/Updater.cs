@@ -1,5 +1,5 @@
 /*
-    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/GoldenSparks)
+    Copyright 2010 MCSharp team (Modified for use with MCZall/MCLawl/MCGalaxy)
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -16,10 +16,8 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Reflection;
 using GoldenSparks.Network;
 using GoldenSparks.Tasks;
 
@@ -27,12 +25,12 @@ namespace GoldenSparks {
     /// <summary> Checks for and applies software updates. </summary>
     public static class Updater {
         
-        public static string SourceURL = "https://github.com/GoldenSparks/Sparkie/";
-        public const string BaseURL    = "https://github.com/GoldenSparks/Sparkie/blob/Sparks/";
-        public const string UploadsURL = "https://github.com/GoldenSparks/Sparkie/tree/Sparks/Uploads";
-        public const string UpdatesURL = "https://github.com/GoldenSparks/Sparkie/raw/Sparks/Uploads/";
-        public const string SQLiteURL = "https://github.com/GoldenSparks/Sparkie/raw/Sparks/Uploads/sqlite3.dll";
-        public static string WikiURL = "https://github.com/UnknownShadow200/MCGalaxy";
+        public static string SourceURL = "https://github.com/RandomStrangers/Sparkie/";
+        public const string BaseURL    = "https://github.com/RandomStrangers/Sparkie/blob/Sparks/";
+        public const string UploadsURL = "https://github.com/RandomStrangers/Sparkie/tree/Sparks/Uploads";
+        public const string UpdatesURL = "https://github.com/RandomStrangers/Sparkie/raw/Sparks/Uploads/";
+        public const string SQLiteURL = "https://github.com/RandomStrangers/Sparkie/raw/Sparks/Uploads/sqlite3.dll";
+        public static string WikiURL = "https://github.com/ClassiCube/MCGalaxy/wiki/";
 
 
         const string CurrentVersionURL = BaseURL + "Uploads/current_version.txt";
